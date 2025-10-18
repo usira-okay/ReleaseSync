@@ -22,10 +22,12 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.10" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-rc.2.25502.107" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +38,12 @@
     <None Update="secure.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReleaseSync.Application\ReleaseSync.Application.csproj" />
+    <ProjectReference Include="..\ReleaseSync.Domain\ReleaseSync.Domain.csproj" />
+    <ProjectReference Include="..\ReleaseSync.Infrastructure\ReleaseSync.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,11 @@
+using System.CommandLine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using ReleaseSync.Console.Extensions;
+using Microsoft.Extensions.Logging;
+using ReleaseSync.Application.Exporters;
+using ReleaseSync.Application.Services;
+using ReleaseSync.Console.Commands;
+using ReleaseSync.Console.Handlers;
 using Serilog;
 
 namespace ReleaseSync.Console;
@@ -10,30 +14,74 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        // 設定 Serilog
+        // 檢查是否有 --verbose 參數以設定日誌等級
+        var verbose = args.Contains("--verbose") || args.Contains("-v");
+
+        // 建立設定
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile("appsettings.secure.json", optional: true, reloadOnChange: true)
+            .Build();
+
+        // 設定 Serilog (根據 verbose 參數設定日誌等級)
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.Is(verbose ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
             .WriteTo.Console()
             .CreateLogger();
 
         try
         {
-            Log.Information("ReleaseSync Console Tool 啟動中...");
+            // 建立 DI 容器
+            var services = new ServiceCollection();
 
-            // 建立 Host
-            var host = CreateHostBuilder(args).Build();
+            // 註冊 Logging
+            services.AddLogging(builder =>
+            {
+                builder.AddSerilog(dispose: true);
+                builder.SetMinimumLevel(verbose ? LogLevel.Debug : LogLevel.Information);
+            });
 
-            // 解析 ApplicationRunner 服務並執行
-            var runner = host.Services.GetRequiredService<Services.IApplicationRunner>();
-            var exitCode = await runner.RunAsync(args);
+            // 註冊 Configuration
+            services.AddSingleton<IConfiguration>(configuration);
 
-            Log.Information("ReleaseSync Console Tool 執行完畢,退出碼: {ExitCode}", exitCode);
-            return exitCode;
-        }
-        catch (NotImplementedException ex)
-        {
-            Log.Warning("功能尚未實作: {Message}", ex.Message);
-            return 0; // 本階段視為正常,返回 0
+            // 註冊 Application 服務
+            services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
+            services.AddScoped<IResultExporter, JsonFileExporter>();
+
+            // 註冊 Command Handler
+            services.AddScoped<SyncCommandHandler>();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            // 建立 RootCommand
+            var rootCommand = new RootCommand("ReleaseSync - PR/MR 變更資訊聚合工具");
+
+            // 加入 sync 命令
+            var syncCommand = SyncCommand.Create();
+            rootCommand.AddCommand(syncCommand);
+
+            // 設定 handler
+            syncCommand.SetHandler(async (DateTime startDate, DateTime endDate, bool enableGitLab,
+                bool enableBitBucket, bool enableAzureDevOps, string? outputFile, bool force, bool verboseParam) =>
+            {
+                using var scope = serviceProvider.CreateScope();
+                var handler = scope.ServiceProvider.GetRequiredService<SyncCommandHandler>();
+                await handler.HandleAsync(startDate, endDate, enableGitLab, enableBitBucket,
+                    enableAzureDevOps, outputFile, force, verboseParam, CancellationToken.None);
+            },
+            syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-s")),
+            syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-e")),
+            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--gitlab")),
+            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--bitbucket")),
+            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--azdo")),
+            syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("-o")),
+            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-f")),
+            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v"))
+            );
+
+            // 執行命令
+            return await rootCommand.InvokeAsync(args);
         }
         catch (Exception ex)
         {
@@ -45,19 +93,4 @@ class Program
             Log.CloseAndFlush();
         }
     }
-
-    static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureAppConfiguration((context, config) =>
-            {
-                // 載入設定檔案
-                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                config.AddJsonFile("secure.json", optional: true, reloadOnChange: true);
-            })
-            .ConfigureServices((context, services) =>
-            {
-                // 註冊應用程式服務
-                services.AddApplicationServices();
-            })
-            .UseSerilog(); // 使用 Serilog 作為日誌提供者
 }

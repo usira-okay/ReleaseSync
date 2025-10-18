@@ -42,33 +42,33 @@
 - [ ] T009 [P] 建立 DateRange 值物件與單元測試 in src/ReleaseSync.Domain/Models/DateRange.cs + tests/ReleaseSync.Domain.UnitTests/Models/DateRangeTests.cs
 - [ ] T010 [P] 建立 BranchName 值物件與單元測試 in src/ReleaseSync.Domain/Models/BranchName.cs + tests/ReleaseSync.Domain.UnitTests/Models/BranchNameTests.cs
 - [ ] T011 [P] 建立 WorkItemId 值物件與單元測試 in src/ReleaseSync.Domain/Models/WorkItemId.cs + tests/ReleaseSync.Domain.UnitTests/Models/WorkItemIdTests.cs
-- [ ] T012 [P] 建立 PlatformSyncStatus 值物件 in src/ReleaseSync.Domain/Models/PlatformSyncStatus.cs
+- [X] T012 [P] 建立 PlatformSyncStatus 值物件 in src/ReleaseSync.Domain/Models/PlatformSyncStatus.cs
 
 ### Domain Layer - Entities (依賴 Value Objects)
 
-- [ ] T013 建立 PullRequestInfo 實體與單元測試 in src/ReleaseSync.Domain/Models/PullRequestInfo.cs + tests/ReleaseSync.Domain.UnitTests/Models/PullRequestInfoTests.cs
-- [ ] T014 建立 WorkItemInfo 實體與單元測試 in src/ReleaseSync.Domain/Models/WorkItemInfo.cs + tests/ReleaseSync.Domain.UnitTests/Models/WorkItemInfoTests.cs
+- [X] T013 建立 PullRequestInfo 實體與單元測試 in src/ReleaseSync.Domain/Models/PullRequestInfo.cs + tests/ReleaseSync.Domain.UnitTests/Models/PullRequestInfoTests.cs
+- [X] T014 建立 WorkItemInfo 實體與單元測試 in src/ReleaseSync.Domain/Models/WorkItemInfo.cs + tests/ReleaseSync.Domain.UnitTests/Models/WorkItemInfoTests.cs
 
 ### Domain Layer - Aggregate Root & Interfaces
 
-- [ ] T015 建立 SyncResult 聚合根與單元測試 in src/ReleaseSync.Domain/Models/SyncResult.cs + tests/ReleaseSync.Domain.UnitTests/Models/SyncResultTests.cs
-- [ ] T016 [P] 定義 IWorkItemIdParser 介面 in src/ReleaseSync.Domain/Services/IWorkItemIdParser.cs
-- [ ] T017 [P] 定義 IPullRequestRepository 介面 in src/ReleaseSync.Domain/Repositories/IPullRequestRepository.cs
-- [ ] T018 [P] 定義 IWorkItemRepository 介面 in src/ReleaseSync.Domain/Repositories/IWorkItemRepository.cs
+- [X] T015 建立 SyncResult 聚合根與單元測試 in src/ReleaseSync.Domain/Models/SyncResult.cs + tests/ReleaseSync.Domain.UnitTests/Models/SyncResultTests.cs
+- [X] T016 [P] 定義 IWorkItemIdParser 介面 in src/ReleaseSync.Domain/Services/IWorkItemIdParser.cs
+- [X] T017 [P] 定義 IPullRequestRepository 介面 in src/ReleaseSync.Domain/Repositories/IPullRequestRepository.cs
+- [X] T018 [P] 定義 IWorkItemRepository 介面 in src/ReleaseSync.Domain/Repositories/IWorkItemRepository.cs
 
 ### Infrastructure Layer - Configuration Models (可平行實作)
 
-- [ ] T019 [P] 建立 GitLabSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/GitLabSettings.cs
-- [ ] T020 [P] 建立 BitBucketSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/BitBucketSettings.cs
-- [ ] T021 [P] 建立 AzureDevOpsSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/AzureDevOpsSettings.cs
-- [ ] T022 [P] 建立 UserMappingSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/UserMappingSettings.cs
+- [X] T019 [P] 建立 GitLabSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/GitLabSettings.cs
+- [X] T020 [P] 建立 BitBucketSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/BitBucketSettings.cs
+- [X] T021 [P] 建立 AzureDevOpsSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/AzureDevOpsSettings.cs
+- [X] T022 [P] 建立 UserMappingSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/UserMappingSettings.cs
 
 ### Application Layer - DTOs & Interfaces
 
-- [ ] T023 [P] 建立 SyncRequest DTO in src/ReleaseSync.Application/DTOs/SyncRequest.cs
-- [ ] T024 [P] 建立 SyncResult DTO in src/ReleaseSync.Application/DTOs/SyncResult.cs
-- [ ] T025 [P] 定義 ISyncOrchestrator 介面 in src/ReleaseSync.Application/Services/ISyncOrchestrator.cs
-- [ ] T026 [P] 定義 IResultExporter 介面 in src/ReleaseSync.Application/Exporters/IResultExporter.cs
+- [X] T023 [P] 建立 SyncRequest DTO in src/ReleaseSync.Application/DTOs/SyncRequest.cs
+- [X] T024 [P] 建立 SyncResult DTO in src/ReleaseSync.Application/DTOs/SyncResultDto.cs
+- [X] T025 [P] 定義 ISyncOrchestrator 介面 in src/ReleaseSync.Application/Services/ISyncOrchestrator.cs
+- [X] T026 [P] 定義 IResultExporter 介面 in src/ReleaseSync.Application/Exporters/IResultExporter.cs
 
 **Checkpoint**: 所有基礎 Domain 模型、Repository 介面、Application 介面已完成,User Stories 可開始平行實作
 
@@ -110,9 +110,9 @@
 
 #### Console - Command Line Interface
 
-- [ ] T041 [US1] 實作 SyncCommand 定義命令列參數 in src/ReleaseSync.Console/Commands/SyncCommand.cs
-- [ ] T042 [US1] 實作 SyncCommandHandler 處理命令執行 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
-- [ ] T043 [US1] 設定 Program.cs DI 容器與命令列解析 in src/ReleaseSync.Console/Program.cs
+- [X] T041 [US1] 實作 SyncCommand 定義命令列參數 in src/ReleaseSync.Console/Commands/SyncCommand.cs
+- [X] T042 [US1] 實作 SyncCommandHandler 處理命令執行 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
+- [X] T043 [US1] 設定 Program.cs DI 容器與命令列解析 in src/ReleaseSync.Console/Program.cs
 
 #### Integration Tests
 
@@ -137,10 +137,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T049 [P] [US2] 實作 JsonFileExporter 使用 System.Text.Json in src/ReleaseSync.Application/Exporters/JsonFileExporter.cs
-- [ ] T050 [US2] 更新 SyncCommandHandler 加入 --output-file 與 --force 參數處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
-- [ ] T051 [US2] 更新 SyncCommand 加入匯出相關參數定義 in src/ReleaseSync.Console/Commands/SyncCommand.cs
-- [ ] T052 [US2] 實作檔案已存在確認邏輯與錯誤處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
+- [X] T049 [P] [US2] 實作 JsonFileExporter 使用 System.Text.Json in src/ReleaseSync.Application/Exporters/JsonFileExporter.cs
+- [X] T050 [US2] 更新 SyncCommandHandler 加入 --output-file 與 --force 參數處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
+- [X] T051 [US2] 更新 SyncCommand 加入匯出相關參數定義 in src/ReleaseSync.Console/Commands/SyncCommand.cs
+- [X] T052 [US2] 實作檔案已存在確認邏輯與錯誤處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
 
 #### Integration Tests
 
@@ -166,20 +166,20 @@
 
 #### Infrastructure - Work Item Parser
 
-- [ ] T057 [P] [US3] 實作 RegexWorkItemIdParser 解析 Branch 名稱 in src/ReleaseSync.Infrastructure/Parsers/RegexWorkItemIdParser.cs
+- [X] T057 [P] [US3] 實作 RegexWorkItemIdParser 解析 Branch 名稱 in src/ReleaseSync.Infrastructure/Parsers/RegexWorkItemIdParser.cs
 
 #### Infrastructure - Azure DevOps Platform
 
-- [ ] T058 [P] [US3] 實作 AzureDevOpsApiClient 封裝 Microsoft.TeamFoundationServer.Client in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsApiClient.cs
-- [ ] T059 [US3] 實作 AzureDevOpsWorkItemRepository (依賴 T058) in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsWorkItemRepository.cs
-- [ ] T060 [US3] 實作 AzureDevOpsService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsService.cs
-- [ ] T061 [US3] 建立 AzureDevOpsServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/AzureDevOpsServiceExtensions.cs
+- [X] T058 [P] [US3] 實作 AzureDevOpsApiClient 封裝 Microsoft.TeamFoundationServer.Client in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsApiClient.cs
+- [X] T059 [US3] 實作 AzureDevOpsWorkItemRepository (依賴 T058) in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsWorkItemRepository.cs
+- [X] T060 [US3] 實作 AzureDevOpsService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/AzureDevOps/AzureDevOpsService.cs
+- [X] T061 [US3] 建立 AzureDevOpsServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/AzureDevOpsServiceExtensions.cs
 
 #### Application - Integration Logic
 
-- [ ] T062 [US3] 更新 SyncOrchestrator 加入 Work Item 解析與關聯邏輯 in src/ReleaseSync.Application/Services/SyncOrchestrator.cs
-- [ ] T063 [US3] 更新 SyncCommandHandler 加入 --enable-azure-devops 參數處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
-- [ ] T064 [US3] 更新 SyncCommand 加入 Azure DevOps 參數定義 in src/ReleaseSync.Console/Commands/SyncCommand.cs
+- [X] T062 [US3] 更新 SyncOrchestrator 加入 Work Item 解析與關聯邏輯 in src/ReleaseSync.Application/Services/SyncOrchestrator.cs
+- [X] T063 [US3] 更新 SyncCommandHandler 加入 --enable-azure-devops 參數處理 in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs
+- [X] T064 [US3] 更新 SyncCommand 加入 Azure DevOps 參數定義 in src/ReleaseSync.Console/Commands/SyncCommand.cs
 
 #### Integration Tests
 
@@ -194,15 +194,15 @@
 
 **Purpose**: 改善程式碼品質、效能與可維護性
 
-- [ ] T067 [P] 實作 ILogger 結構化日誌記錄於所有服務層 (GitLabService, BitBucketService, AzureDevOpsService)
-- [ ] T068 [P] 實作錯誤處理與使用者友善錯誤訊息於 SyncCommandHandler
-- [ ] T069 [P] 加入 --verbose 參數支援 Debug 等級日誌輸出 in src/ReleaseSync.Console/Commands/SyncCommand.cs
-- [ ] T070 驗證所有 public 類別與方法皆包含 XML 文件註解 (繁體中文)
-- [ ] T071 執行 quickstart.md 驗證流程,確保文件與實作一致
-- [ ] T072 [P] 效能測試: 驗證單一平台 100 筆 PR/MR 抓取於 30 秒內完成 (不含網路 I/O)
-- [ ] T073 程式碼審查: 確認所有類別遵循 SOLID 原則與 KISS 原則
-- [ ] T074 [P] 安全性審查: 確認不記錄敏感資訊 (Access Token, PAT)
-- [ ] T075 建立 README.md 提供專案概述與快速開始連結
+- [X] T067 [P] 實作 ILogger 結構化日誌記錄於所有服務層 (GitLabService, BitBucketService, AzureDevOpsService)
+- [X] T068 [P] 實作錯誤處理與使用者友善錯誤訊息於 SyncCommandHandler
+- [X] T069 [P] 加入 --verbose 參數支援 Debug 等級日誌輸出 in src/ReleaseSync.Console/Commands/SyncCommand.cs
+- [X] T070 驗證所有 public 類別與方法皆包含 XML 文件註解 (繁體中文)
+- [X] T071 執行 quickstart.md 驗證流程,確保文件與實作一致
+- [X] T072 [P] 效能測試: 驗證單一平台 100 筆 PR/MR 抓取於 30 秒內完成 (不含網路 I/O)
+- [X] T073 程式碼審查: 確認所有類別遵循 SOLID 原則與 KISS 原則
+- [X] T074 [P] 安全性審查: 確認不記錄敏感資訊 (Access Token, PAT)
+- [X] T075 建立 README.md 提供專案概述與快速開始連結
 
 ---
 
