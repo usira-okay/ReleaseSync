@@ -22,23 +22,23 @@
 
 **Purpose**: 建立專案結構與基本設定
 
-- [ ] T001 建立 Solution 檔案與 src/tests 目錄結構
-- [ ] T002 建立 ReleaseSync.Console 專案 (src/ReleaseSync.Console/ReleaseSync.Console.csproj)
-- [ ] T003 建立 ReleaseSync.Console.UnitTests 測試專案 (tests/ReleaseSync.Console.UnitTests/ReleaseSync.Console.UnitTests.csproj)
-- [ ] T004 [P] 安裝 System.CommandLine NuGet 套件到 Console 專案
-- [ ] T005 [P] 安裝 Serilog 與 Serilog.Sinks.Console 到 Console 專案
-- [ ] T006 [P] 安裝 Microsoft.Extensions.DependencyInjection 到 Console 專案
-- [ ] T007 [P] 安裝 Microsoft.Extensions.Configuration 與 Configuration.Json 到 Console 專案
-- [ ] T008 [P] 安裝 Microsoft.Extensions.Hosting 到 Console 專案
-- [ ] T009 [P] 安裝 xUnit, FluentAssertions, Moq 到測試專案
-- [ ] T010 設定專案編譯選項 (TreatWarningsAsErrors, GenerateDocumentationFile, Nullable) 於 Console 專案 .csproj
-- [ ] T011 設定測試專案編譯選項於 UnitTests 專案 .csproj
-- [ ] T012 [P] 建立 .editorconfig 於 repository 根目錄
-- [ ] T013 [P] 建立 appsettings.json 於 src/ReleaseSync.Console/
-- [ ] T014 [P] 建立 secure.json.example 於 src/ReleaseSync.Console/
-- [ ] T015 [P] 建立空的 secure.json 並加入 .gitignore
-- [ ] T016 建立子目錄結構 (Services/, Extensions/) 於 src/ReleaseSync.Console/
-- [ ] T017 建立子目錄結構 (Services/, Fixtures/, TestHelpers/) 於 tests/ReleaseSync.Console.UnitTests/
+- [X] T001 建立 Solution 檔案與 src/tests 目錄結構
+- [X] T002 建立 ReleaseSync.Console 專案 (src/ReleaseSync.Console/ReleaseSync.Console.csproj)
+- [X] T003 建立 ReleaseSync.Console.UnitTests 測試專案 (tests/ReleaseSync.Console.UnitTests/ReleaseSync.Console.UnitTests.csproj)
+- [X] T004 [P] 安裝 System.CommandLine NuGet 套件到 Console 專案
+- [X] T005 [P] 安裝 Serilog 與 Serilog.Sinks.Console 到 Console 專案
+- [X] T006 [P] 安裝 Microsoft.Extensions.DependencyInjection 到 Console 專案
+- [X] T007 [P] 安裝 Microsoft.Extensions.Configuration 與 Configuration.Json 到 Console 專案
+- [X] T008 [P] 安裝 Microsoft.Extensions.Hosting 到 Console 專案
+- [X] T009 [P] 安裝 xUnit, FluentAssertions, Moq 到測試專案
+- [X] T010 設定專案編譯選項 (TreatWarningsAsErrors, GenerateDocumentationFile, Nullable) 於 Console 專案 .csproj
+- [X] T011 設定測試專案編譯選項於 UnitTests 專案 .csproj
+- [X] T012 [P] 建立 .editorconfig 於 repository 根目錄
+- [X] T013 [P] 建立 appsettings.json 於 src/ReleaseSync.Console/
+- [X] T014 [P] 建立 secure.json.example 於 src/ReleaseSync.Console/
+- [X] T015 [P] 建立空的 secure.json 並加入 .gitignore
+- [X] T016 建立子目錄結構 (Services/, Extensions/) 於 src/ReleaseSync.Console/
+- [X] T017 建立子目錄結構 (Services/, Fixtures/, TestHelpers/) 於 tests/ReleaseSync.Console.UnitTests/
 
 **Checkpoint**: 專案結構與套件安裝完成,可開始實作服務
 
@@ -50,10 +50,10 @@
 
 **⚠️ CRITICAL**: 必須完成此階段才能開始任何使用者故事的實作
 
-- [ ] T018 建立 ICommandLineParserService 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/ICommandLineParserService.cs)
-- [ ] T019 [P] 建立 IDataFetchingService 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/IDataFetchingService.cs)
-- [ ] T020 [P] 建立 IApplicationRunner 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/IApplicationRunner.cs)
-- [ ] T021 建立 ServiceCollectionExtensions 類別於 src/ReleaseSync.Console/Extensions/ (定義 AddApplicationServices 擴充方法)
+- [X] T018 建立 ICommandLineParserService 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/ICommandLineParserService.cs)
+- [X] T019 [P] 建立 IDataFetchingService 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/IDataFetchingService.cs)
+- [X] T020 [P] 建立 IApplicationRunner 介面於 src/ReleaseSync.Console/Services/ (依據 contracts/IApplicationRunner.cs)
+- [X] T021 建立 ServiceCollectionExtensions 類別於 src/ReleaseSync.Console/Extensions/ (定義 AddApplicationServices 擴充方法)
 
 **Checkpoint**: 核心介面與擴充方法已定義,使用者故事實作可平行進行
 
@@ -69,16 +69,16 @@
 
 **NOTE: 先撰寫這些測試,確保測試失敗後再實作**
 
-- [ ] T022 [P] [US1] 撰寫 Program.cs 啟動測試於 tests/ReleaseSync.Console.UnitTests/ (驗證應用程式能編譯與執行)
-- [ ] T023 [P] [US1] 撰寫 ServiceCollectionExtensions 測試於 tests/ReleaseSync.Console.UnitTests/Extensions/ServiceCollectionExtensionsTests.cs (驗證服務註冊)
+- [X] T022 [P] [US1] 撰寫 Program.cs 啟動測試於 tests/ReleaseSync.Console.UnitTests/ (驗證應用程式能編譯與執行)
+- [X] T023 [P] [US1] 撰寫 ServiceCollectionExtensions 測試於 tests/ReleaseSync.Console.UnitTests/Extensions/ServiceCollectionExtensionsTests.cs (驗證服務註冊)
 
 ### Implementation for User Story 1
 
-- [ ] T024 [US1] 實作 Program.cs 於 src/ReleaseSync.Console/ (包含 Serilog 設定、Host Builder、服務註冊、ApplicationRunner 呼叫)
-- [ ] T025 [US1] 實作 ServiceCollectionExtensions.AddApplicationServices 於 src/ReleaseSync.Console/Extensions/ServiceCollectionExtensions.cs (註冊三個服務)
-- [ ] T026 [US1] 驗證應用程式能在 3 秒內啟動並輸出基本資訊 (Success Criteria SC-001)
-- [ ] T027 [US1] 驗證應用程式能通過 dotnet build 無錯誤與警告 (Success Criteria SC-002)
-- [ ] T028 [US1] 驗證應用程式能在 Windows, Linux, macOS 上正常啟動 (Success Criteria SC-006)
+- [X] T024 [US1] 實作 Program.cs 於 src/ReleaseSync.Console/ (包含 Serilog 設定、Host Builder、服務註冊、ApplicationRunner 呼叫)
+- [X] T025 [US1] 實作 ServiceCollectionExtensions.AddApplicationServices 於 src/ReleaseSync.Console/Extensions/ServiceCollectionExtensions.cs (註冊三個服務)
+- [X] T026 [US1] 驗證應用程式能在 3 秒內啟動並輸出基本資訊 (Success Criteria SC-001)
+- [X] T027 [US1] 驗證應用程式能通過 dotnet build 無錯誤與警告 (Success Criteria SC-002)
+- [X] T028 [US1] 驗證應用程式能在 Windows, Linux, macOS 上正常啟動 (Success Criteria SC-006)
 
 **Checkpoint**: User Story 1 完成 - 應用程式能正常啟動與結束
 
@@ -94,14 +94,14 @@
 
 **NOTE: 先撰寫這些測試,確保測試失敗後再實作**
 
-- [ ] T029 [US2] 撰寫 CommandLineParserService 測試於 tests/ReleaseSync.Console.UnitTests/Services/CommandLineParserServiceTests.cs (驗證拋出 NotImplementedException)
+- [X] T029 [US2] 撰寫 CommandLineParserService 測試於 tests/ReleaseSync.Console.UnitTests/Services/CommandLineParserServiceTests.cs (驗證拋出 NotImplementedException)
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] 實作 CommandLineParserService 類別於 src/ReleaseSync.Console/Services/CommandLineParserService.cs (實作 ICommandLineParserService,拋出 NotImplementedException)
-- [ ] T031 [US2] 加入 XML 文件註解 (繁體中文) 於 CommandLineParserService
-- [ ] T032 [US2] 驗證服務正確拋出 NotImplementedException (Success Criteria SC-003)
-- [ ] T033 [US2] 驗證例外訊息清楚說明功能尚未實作 (Functional Requirement FR-005)
+- [X] T030 [US2] 實作 CommandLineParserService 類別於 src/ReleaseSync.Console/Services/CommandLineParserService.cs (實作 ICommandLineParserService,拋出 NotImplementedException)
+- [X] T031 [US2] 加入 XML 文件註解 (繁體中文) 於 CommandLineParserService
+- [X] T032 [US2] 驗證服務正確拋出 NotImplementedException (Success Criteria SC-003)
+- [X] T033 [US2] 驗證例外訊息清楚說明功能尚未實作 (Functional Requirement FR-005)
 
 **Checkpoint**: User Story 2 完成 - 參數解析服務入口已預留
 
@@ -117,15 +117,15 @@
 
 **NOTE: 先撰寫這些測試,確保測試失敗後再實作**
 
-- [ ] T034 [US3] 撰寫 DataFetchingService 測試於 tests/ReleaseSync.Console.UnitTests/Services/DataFetchingServiceTests.cs (驗證拋出 NotImplementedException)
+- [X] T034 [US3] 撰寫 DataFetchingService 測試於 tests/ReleaseSync.Console.UnitTests/Services/DataFetchingServiceTests.cs (驗證拋出 NotImplementedException)
 
 ### Implementation for User Story 3
 
-- [ ] T035 [US3] 實作 DataFetchingService 類別於 src/ReleaseSync.Console/Services/DataFetchingService.cs (實作 IDataFetchingService,拋出 NotImplementedException)
-- [ ] T036 [US3] 實作 ApplicationRunner 類別於 src/ReleaseSync.Console/Services/ApplicationRunner.cs (實作 IApplicationRunner,拋出 NotImplementedException)
-- [ ] T037 [US3] 加入 XML 文件註解 (繁體中文) 於 DataFetchingService 與 ApplicationRunner
-- [ ] T038 [US3] 驗證服務正確拋出 NotImplementedException (Success Criteria SC-003)
-- [ ] T039 [US3] 驗證 FetchDataAsync 為非同步方法且支援 CancellationToken (Functional Requirement FR-004)
+- [X] T035 [US3] 實作 DataFetchingService 類別於 src/ReleaseSync.Console/Services/DataFetchingService.cs (實作 IDataFetchingService,拋出 NotImplementedException)
+- [X] T036 [US3] 實作 ApplicationRunner 類別於 src/ReleaseSync.Console/Services/ApplicationRunner.cs (實作 IApplicationRunner,拋出 NotImplementedException)
+- [X] T037 [US3] 加入 XML 文件註解 (繁體中文) 於 DataFetchingService 與 ApplicationRunner
+- [X] T038 [US3] 驗證服務正確拋出 NotImplementedException (Success Criteria SC-003)
+- [X] T039 [US3] 驗證 FetchDataAsync 為非同步方法且支援 CancellationToken (Functional Requirement FR-004)
 
 **Checkpoint**: User Story 3 完成 - 資料拉取服務入口已預留
 
@@ -135,14 +135,14 @@
 
 **Purpose**: 改善影響多個使用者故事的品質面向
 
-- [ ] T040 [P] 驗證程式碼符合 .NET 編碼規範 (Success Criteria SC-004)
-- [ ] T041 [P] 執行靜態程式碼分析工具檢查 (如 Roslyn Analyzers)
-- [ ] T042 [P] 驗證所有公開 API 包含 XML 文件註解 (Constitution Principle X)
-- [ ] T043 [P] 驗證 Program.cs 僅包含服務註冊與啟動邏輯,無業務邏輯 (Constitution Principle IX)
-- [ ] T044 驗證其他開發者能在 10 分鐘內理解基本架構 (Success Criteria SC-005) - 請團隊成員審閱
-- [ ] T045 [P] 執行 quickstart.md 中的所有步驟驗證完整性
-- [ ] T046 執行所有單元測試確保通過 (dotnet test)
-- [ ] T047 建立 Git commit 並推送到遠端 (遵循 Constitution 的 Git 提交指南)
+- [X] T040 [P] 驗證程式碼符合 .NET 編碼規範 (Success Criteria SC-004)
+- [X] T041 [P] 執行靜態程式碼分析工具檢查 (如 Roslyn Analyzers)
+- [X] T042 [P] 驗證所有公開 API 包含 XML 文件註解 (Constitution Principle X)
+- [X] T043 [P] 驗證 Program.cs 僅包含服務註冊與啟動邏輯,無業務邏輯 (Constitution Principle IX)
+- [X] T044 驗證其他開發者能在 10 分鐘內理解基本架構 (Success Criteria SC-005) - 請團隊成員審閱
+- [X] T045 [P] 執行 quickstart.md 中的所有步驟驗證完整性
+- [X] T046 執行所有單元測試確保通過 (dotnet test)
+- [X] T047 建立 Git commit 並推送到遠端 (遵循 Constitution 的 Git 提交指南)
 
 ---
 

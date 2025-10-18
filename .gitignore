@@ -11,6 +11,9 @@
 *.sln.docstates
 *.env
 
+# ReleaseSync 敏感資料設定檔
+src/ReleaseSync.Console/secure.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
