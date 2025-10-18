@@ -37,17 +37,17 @@ public class GitLabApiContractTests
         var mergeRequestType = typeof(MergeRequest);
 
         // Assert - 驗證所有關鍵屬性存在
-        mergeRequestType.Should().HaveProperty("Id");
-        mergeRequestType.Should().HaveProperty("Iid"); // Internal ID (Number)
-        mergeRequestType.Should().HaveProperty("Title");
-        mergeRequestType.Should().HaveProperty("Description");
-        mergeRequestType.Should().HaveProperty("SourceBranch");
-        mergeRequestType.Should().HaveProperty("TargetBranch");
-        mergeRequestType.Should().HaveProperty("CreatedAt");
-        mergeRequestType.Should().HaveProperty("MergedAt");
-        mergeRequestType.Should().HaveProperty("State");
-        mergeRequestType.Should().HaveProperty("Author");
-        mergeRequestType.Should().HaveProperty("WebUrl");
+        mergeRequestType.GetProperty("Id").Should().NotBeNull();
+        mergeRequestType.GetProperty("Iid").Should().NotBeNull(); // Internal ID (Number)
+        mergeRequestType.GetProperty("Title").Should().NotBeNull();
+        mergeRequestType.GetProperty("Description").Should().NotBeNull();
+        mergeRequestType.GetProperty("SourceBranch").Should().NotBeNull();
+        mergeRequestType.GetProperty("TargetBranch").Should().NotBeNull();
+        mergeRequestType.GetProperty("CreatedAt").Should().NotBeNull();
+        mergeRequestType.GetProperty("MergedAt").Should().NotBeNull();
+        mergeRequestType.GetProperty("State").Should().NotBeNull();
+        mergeRequestType.GetProperty("Author").Should().NotBeNull();
+        mergeRequestType.GetProperty("WebUrl").Should().NotBeNull();
     }
 
     /// <summary>
@@ -60,8 +60,8 @@ public class GitLabApiContractTests
         var authorType = typeof(Author);
 
         // Assert
-        authorType.Should().HaveProperty("Username");
-        authorType.Should().HaveProperty("Name"); // Display Name
+        authorType.GetProperty("Username").Should().NotBeNull();
+        authorType.GetProperty("Name").Should().NotBeNull(); // Display Name
     }
 
     /// <summary>
@@ -75,9 +75,9 @@ public class GitLabApiContractTests
 
         // Assert - 驗證查詢物件可以設定日期篩選
         // NGitLab 使用 CreatedAfter 和 CreatedBefore 進行日期篩選
-        queryType.Should().HaveProperty("CreatedAfter");
-        queryType.Should().HaveProperty("CreatedBefore");
-        queryType.Should().HaveProperty("State"); // 用於篩選 merged/opened 等狀態
+        queryType.GetProperty("CreatedAfter").Should().NotBeNull();
+        queryType.GetProperty("CreatedBefore").Should().NotBeNull();
+        queryType.GetProperty("State").Should().NotBeNull(); // 用於篩選 merged/opened 等狀態
     }
 
     /// <summary>
@@ -90,7 +90,7 @@ public class GitLabApiContractTests
         var stateType = typeof(MergeRequestState);
 
         // Assert - NGitLab.Models.MergeRequestState 是列舉
-        stateType.Should().BeEnum();
+        stateType.IsEnum.Should().BeTrue();
 
         // 驗證關鍵狀態值存在
         var stateNames = Enum.GetNames(stateType);

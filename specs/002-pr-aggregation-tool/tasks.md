@@ -82,10 +82,10 @@
 
 ### Tests for User Story 1 (TDD - 先寫測試)
 
-- [ ] T027 [P] [US1] Contract Test: 驗證 GitLab API 回應結構 in tests/ReleaseSync.Integration.Tests/Platforms/GitLabApiContractTests.cs
-- [ ] T028 [P] [US1] Contract Test: 驗證 BitBucket API 回應結構 in tests/ReleaseSync.Integration.Tests/Platforms/BitBucketApiContractTests.cs
-- [ ] T029 [P] [US1] Unit Test: GitLabService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLabServiceTests.cs
-- [ ] T030 [P] [US1] Unit Test: BitBucketService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucketServiceTests.cs
+- [X] T027 [P] [US1] Contract Test: 驗證 GitLab API 回應結構 in tests/ReleaseSync.Integration.Tests/Platforms/GitLabApiContractTests.cs
+- [X] T028 [P] [US1] Contract Test: 驗證 BitBucket API 回應結構 in tests/ReleaseSync.Integration.Tests/Platforms/BitBucketApiContractTests.cs
+- [X] T029 [P] [US1] Unit Test: GitLabService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLabServiceTests.cs
+- [X] T030 [P] [US1] Unit Test: BitBucketService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucketServiceTests.cs
 
 ### Implementation for User Story 1
 

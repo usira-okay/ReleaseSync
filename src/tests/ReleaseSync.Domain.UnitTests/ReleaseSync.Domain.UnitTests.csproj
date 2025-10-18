@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ReleaseSync.Domain\ReleaseSync.Domain.csproj" />
+    <ProjectReference Include="..\..\ReleaseSync.Domain\ReleaseSync.Domain.csproj" />
   </ItemGroup>
 
 </Project>

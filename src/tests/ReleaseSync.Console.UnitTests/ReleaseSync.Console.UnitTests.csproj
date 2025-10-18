@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ReleaseSync.Console\ReleaseSync.Console.csproj" />
+    <ProjectReference Include="..\..\ReleaseSync.Console\ReleaseSync.Console.csproj" />
   </ItemGroup>
 
 </Project>
