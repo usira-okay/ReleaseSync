@@ -15,6 +15,10 @@
 src/ReleaseSync.Console/appsettings.secure.json
 src/ReleaseSync.Console/secure.json
 
+# ReleaseSync 執行時產生的檔案
+output.json
+**/output.json
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

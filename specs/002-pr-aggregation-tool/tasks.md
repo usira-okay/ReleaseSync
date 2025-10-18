@@ -18,14 +18,14 @@
 
 **Purpose**: 建立專案基礎結構與設定檔
 
-- [ ] T001 建立 .NET Solution 與專案結構 (ReleaseSync.sln, Domain/Application/Infrastructure/Console 專案)
-- [ ] T002 [P] 設定 .editorconfig 與 StyleCop Analyzers 於 src/ 根目錄
-- [ ] T003 [P] 建立 .gitignore,排除 appsettings.secure.json 與 bin/obj 目錄
-- [ ] T004 [P] 複製 appsettings.example.json 與 appsettings.secure.example.json 至 src/ReleaseSync.Console/
-- [ ] T005 建立測試專案結構 (Domain.UnitTests, Application.UnitTests, Infrastructure.UnitTests, Integration.Tests)
-- [ ] T006 [P] 安裝 NuGet 套件至 Infrastructure 專案: NGitLab 9.3.0, Microsoft.TeamFoundationServer.Client 19.225.1
-- [ ] T007 [P] 安裝 NuGet 套件至 Console 專案: System.CommandLine, Microsoft.Extensions.Configuration.Json, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.Logging
-- [ ] T008 [P] 安裝測試相關 NuGet 套件至測試專案: xUnit, FluentAssertions, NSubstitute
+- [X] T001 建立 .NET Solution 與專案結構 (ReleaseSync.sln, Domain/Application/Infrastructure/Console 專案)
+- [X] T002 [P] 設定 .editorconfig 與 StyleCop Analyzers 於 src/ 根目錄
+- [X] T003 [P] 建立 .gitignore,排除 appsettings.secure.json 與 bin/obj 目錄
+- [X] T004 [P] 複製 appsettings.example.json 與 appsettings.secure.example.json 至 src/ReleaseSync.Console/
+- [X] T005 建立測試專案結構 (Domain.UnitTests, Application.UnitTests, Infrastructure.UnitTests, Integration.Tests)
+- [X] T006 [P] 安裝 NuGet 套件至 Infrastructure 專案: NGitLab 9.3.0, Microsoft.TeamFoundationServer.Client 19.225.1
+- [X] T007 [P] 安裝 NuGet 套件至 Console 專案: System.CommandLine, Microsoft.Extensions.Configuration.Json, Microsoft.Extensions.DependencyInjection, Microsoft.Extensions.Logging
+- [X] T008 [P] 安裝測試相關 NuGet 套件至測試專案: xUnit, FluentAssertions, NSubstitute
 
 **Checkpoint**: 專案結構已建立,可開始實作
 
@@ -39,9 +39,9 @@
 
 ### Domain Layer - Value Objects (可平行實作)
 
-- [ ] T009 [P] 建立 DateRange 值物件與單元測試 in src/ReleaseSync.Domain/Models/DateRange.cs + tests/ReleaseSync.Domain.UnitTests/Models/DateRangeTests.cs
-- [ ] T010 [P] 建立 BranchName 值物件與單元測試 in src/ReleaseSync.Domain/Models/BranchName.cs + tests/ReleaseSync.Domain.UnitTests/Models/BranchNameTests.cs
-- [ ] T011 [P] 建立 WorkItemId 值物件與單元測試 in src/ReleaseSync.Domain/Models/WorkItemId.cs + tests/ReleaseSync.Domain.UnitTests/Models/WorkItemIdTests.cs
+- [X] T009 [P] 建立 DateRange 值物件與單元測試 in src/ReleaseSync.Domain/Models/DateRange.cs + tests/ReleaseSync.Domain.UnitTests/Models/DateRangeTests.cs
+- [X] T010 [P] 建立 BranchName 值物件與單元測試 in src/ReleaseSync.Domain/Models/BranchName.cs + tests/ReleaseSync.Domain.UnitTests/Models/BranchNameTests.cs
+- [X] T011 [P] 建立 WorkItemId 值物件與單元測試 in src/ReleaseSync.Domain/Models/WorkItemId.cs + tests/ReleaseSync.Domain.UnitTests/Models/WorkItemIdTests.cs
 - [X] T012 [P] 建立 PlatformSyncStatus 值物件 in src/ReleaseSync.Domain/Models/PlatformSyncStatus.cs
 
 ### Domain Layer - Entities (依賴 Value Objects)
