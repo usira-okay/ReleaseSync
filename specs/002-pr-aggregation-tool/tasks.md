@@ -91,21 +91,21 @@
 
 #### Infrastructure - GitLab Platform
 
-- [ ] T031 [P] [US1] 實作 GitLabApiClient 封裝 NGitLab in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs
-- [ ] T032 [US1] 實作 GitLabPullRequestRepository (依賴 T031) in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs
-- [ ] T033 [US1] 實作 GitLabService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs
-- [ ] T034 [US1] 建立 GitLabServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/GitLabServiceExtensions.cs
+- [X] T031 [P] [US1] 實作 GitLabApiClient 封裝 NGitLab in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs
+- [X] T032 [US1] 實作 GitLabPullRequestRepository (依賴 T031) in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs
+- [X] T033 [US1] 實作 GitLabService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs
+- [X] T034 [US1] 建立 GitLabServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/GitLabServiceExtensions.cs
 
 #### Infrastructure - BitBucket Platform
 
-- [ ] T035 [P] [US1] 實作 BitBucketApiClient 使用 HttpClient in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs
-- [ ] T036 [US1] 實作 BitBucketPullRequestRepository (依賴 T035) in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs
-- [ ] T037 [US1] 實作 BitBucketService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs
-- [ ] T038 [US1] 建立 BitBucketServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/BitBucketServiceExtensions.cs
+- [X] T035 [P] [US1] 實作 BitBucketApiClient 使用 HttpClient in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs
+- [X] T036 [US1] 實作 BitBucketPullRequestRepository (依賴 T035) in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs
+- [X] T037 [US1] 實作 BitBucketService 協調 Repository in src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs
+- [X] T038 [US1] 建立 BitBucketServiceExtensions DI 註冊 in src/ReleaseSync.Infrastructure/DependencyInjection/BitBucketServiceExtensions.cs
 
 #### Application - Orchestration
 
-- [ ] T039 [US1] 實作 SyncOrchestrator 協調多平台抓取 in src/ReleaseSync.Application/Services/SyncOrchestrator.cs
+- [X] T039 [US1] 實作 SyncOrchestrator 協調多平台抓取 in src/ReleaseSync.Application/Services/SyncOrchestrator.cs
 - [ ] T040 [P] [US1] Unit Test: SyncOrchestrator 單元測試 in tests/ReleaseSync.Application.UnitTests/Services/SyncOrchestratorTests.cs
 
 #### Console - Command Line Interface

@@ -25,4 +25,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ReleaseSync.Domain\ReleaseSync.Domain.csproj" />
+    <ProjectReference Include="..\..\src\ReleaseSync.Application\ReleaseSync.Application.csproj" />
+  </ItemGroup>
+
 </Project>

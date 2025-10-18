@@ -6,11 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
 using ReleaseSync.Infrastructure.Configuration;
 using ReleaseSync.Infrastructure.Platforms.BitBucket;
+using Xunit;
 
 /// <summary>
 /// BitBucketService 單元測試
@@ -19,21 +21,25 @@ public class BitBucketServiceTests
 {
     private readonly IPullRequestRepository _mockRepository;
     private readonly ILogger<BitBucketService> _mockLogger;
-    private readonly BitBucketSettings _settings;
+    private readonly IOptions<BitBucketSettings> _options;
 
     public BitBucketServiceTests()
     {
         _mockRepository = Substitute.For<IPullRequestRepository>();
         _mockLogger = Substitute.For<ILogger<BitBucketService>>();
 
-        _settings = new BitBucketSettings
+        var settings = new BitBucketSettings
         {
-            WorkspaceId = "test-workspace",
-            AccessToken = "test-token",
-            Email = "test@example.com",
-            Repositories = new List<string> { "repo1", "repo2" },
-            TargetBranches = new List<string> { "main", "master" }
+            ApiUrl = "https://api.bitbucket.org/2.0",
+            AppPassword = "test-password",
+            Projects = new List<BitBucketProjectSettings>
+            {
+                new() { WorkspaceAndRepo = "workspace/repo1", TargetBranches = new List<string> { "main", "master" } },
+                new() { WorkspaceAndRepo = "workspace/repo2", TargetBranches = new List<string> { "main", "master" } }
+            }
         };
+
+        _options = Options.Create(settings);
     }
 
     /// <summary>
@@ -73,7 +79,7 @@ public class BitBucketServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(expectedPullRequests);
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
         var result = await service.GetPullRequestsAsync(dateRange);
@@ -92,56 +98,40 @@ public class BitBucketServiceTests
     }
 
     /// <summary>
-    /// 測試當沒有 Repository 設定時拋出例外
+    /// 測試當沒有 Repository 設定時回傳空清單
     /// </summary>
     [Fact]
-    public void Constructor_ShouldThrowException_WhenNoRepositoriesConfigured()
+    public async Task GetPullRequestsAsync_ShouldReturnEmptyList_WhenNoProjectsConfigured()
     {
         // Arrange
         var emptySettings = new BitBucketSettings
         {
-            WorkspaceId = "test-workspace",
-            AccessToken = "test-token",
-            Email = "test@example.com",
-            Repositories = new List<string>() // 空清單
+            ApiUrl = "https://api.bitbucket.org/2.0",
+            AppPassword = "test-password",
+            Projects = new List<BitBucketProjectSettings>() // 空清單
         };
 
-        // Act
-        Action act = () => new BitBucketService(_mockRepository, emptySettings, _mockLogger);
+        var emptyOptions = Options.Create(emptySettings);
+        var service = new BitBucketService(_mockRepository, emptyOptions, _mockLogger);
 
-        // Assert
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*至少須設定一個 BitBucket Repository*");
-    }
-
-    /// <summary>
-    /// 測試當 WorkspaceId 為空時拋出例外
-    /// </summary>
-    [Fact]
-    public void Constructor_ShouldThrowException_WhenWorkspaceIdIsEmpty()
-    {
-        // Arrange
-        var invalidSettings = new BitBucketSettings
-        {
-            WorkspaceId = "", // 空字串
-            AccessToken = "test-token",
-            Email = "test@example.com",
-            Repositories = new List<string> { "repo1" }
-        };
+        var dateRange = new DateRange(
+            new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            new DateTime(2025, 1, 31, 23, 59, 59, DateTimeKind.Utc)
+        );
 
         // Act
-        Action act = () => new BitBucketService(_mockRepository, invalidSettings, _mockLogger);
+        var result = await service.GetPullRequestsAsync(dateRange);
 
         // Assert
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*WorkspaceId 不能為空*");
+        result.Should().BeEmpty();
     }
 
+
     /// <summary>
-    /// 測試當 Repository 拋出例外時正確處理
+    /// 測試當 Repository 拋出例外時返回空列表（容錯處理）
     /// </summary>
     [Fact]
-    public async Task GetPullRequestsAsync_ShouldThrowException_WhenRepositoryFails()
+    public async Task GetPullRequestsAsync_ShouldReturnEmptyList_WhenRepositoryFails()
     {
         // Arrange
         var dateRange = new DateRange(
@@ -155,16 +145,16 @@ public class BitBucketServiceTests
                 Arg.Any<DateRange>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<CancellationToken>())
-            .ThrowsAsync(new Exception("BitBucket API 回應 401 Unauthorized"));
+            .Returns<IEnumerable<PullRequestInfo>>(x => throw new Exception("BitBucket API 回應 401 Unauthorized"));
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
-        Func<Task> act = async () => await service.GetPullRequestsAsync(dateRange);
+        var result = await service.GetPullRequestsAsync(dateRange);
 
         // Assert
-        await act.Should().ThrowAsync<Exception>()
-            .WithMessage("*BitBucket API 回應 401 Unauthorized*");
+        result.Should().NotBeNull();
+        result.Should().BeEmpty(); // 容錯處理：單一專案失敗不影響其他專案
     }
 
     /// <summary>
@@ -187,7 +177,7 @@ public class BitBucketServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(new List<PullRequestInfo>());
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
         var result = await service.GetPullRequestsAsync(dateRange);
@@ -257,7 +247,7 @@ public class BitBucketServiceTests
                 }
             });
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
         var result = await service.GetPullRequestsAsync(dateRange);
@@ -291,7 +281,7 @@ public class BitBucketServiceTests
                 Arg.Any<CancellationToken>())
             .Returns(new List<PullRequestInfo>());
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
         await service.GetPullRequestsAsync(dateRange, cancellationToken);
@@ -319,16 +309,16 @@ public class BitBucketServiceTests
         // 第一個 repo 失敗
         _mockRepository
             .GetPullRequestsAsync(
-                "test-workspace/repo1",
+                "workspace/repo1",
                 Arg.Any<DateRange>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<CancellationToken>())
-            .ThrowsAsync(new Exception("Repository not found"));
+            .Returns<IEnumerable<PullRequestInfo>>(x => throw new Exception("Repository not found"));
 
         // 第二個 repo 成功
         _mockRepository
             .GetPullRequestsAsync(
-                "test-workspace/repo2",
+                "workspace/repo2",
                 Arg.Any<DateRange>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<CancellationToken>())
@@ -345,11 +335,11 @@ public class BitBucketServiceTests
                     CreatedAt = DateTime.UtcNow,
                     State = "OPEN",
                     AuthorUsername = "user2",
-                    RepositoryName = "test-workspace/repo2"
+                    RepositoryName = "workspace/repo2"
                 }
             });
 
-        var service = new BitBucketService(_mockRepository, _settings, _mockLogger);
+        var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
         Func<Task> act = async () => await service.GetPullRequestsAsync(dateRange);
