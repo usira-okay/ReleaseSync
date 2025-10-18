@@ -106,7 +106,7 @@
 #### Application - Orchestration
 
 - [X] T039 [US1] 實作 SyncOrchestrator 協調多平台抓取 in src/ReleaseSync.Application/Services/SyncOrchestrator.cs
-- [ ] T040 [P] [US1] Unit Test: SyncOrchestrator 單元測試 in tests/ReleaseSync.Application.UnitTests/Services/SyncOrchestratorTests.cs
+- [X] T040 [P] [US1] Unit Test: SyncOrchestrator 單元測試 in tests/ReleaseSync.Application.UnitTests/Services/SyncOrchestratorTests.cs
 
 #### Console - Command Line Interface
 
@@ -132,7 +132,7 @@
 
 ### Tests for User Story 2 (TDD - 先寫測試)
 
-- [ ] T047 [P] [US2] Unit Test: JsonFileExporter 單元測試 in tests/ReleaseSync.Application.UnitTests/Exporters/JsonFileExporterTests.cs
+- [X] T047 [P] [US2] Unit Test: JsonFileExporter 單元測試 in tests/ReleaseSync.Application.UnitTests/Exporters/JsonFileExporterTests.cs
 - [ ] T048 [P] [US2] Integration Test: JSON 輸出格式驗證測試 in tests/ReleaseSync.Integration.Tests/Exporters/JsonExportValidationTests.cs
 
 ### Implementation for User Story 2
