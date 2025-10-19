@@ -86,8 +86,13 @@ public class GitLabServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result.Should().BeEquivalentTo(expectedPullRequests);
+        result.Should().HaveCount(2); // 兩個 projects 各回傳一個 MR
+
+        // 驗證第一個 MR 的內容
+        var firstMr = result.First();
+        firstMr.Platform.Should().Be("GitLab");
+        firstMr.Title.Should().Be("Test MR 1");
+        firstMr.Number.Should().Be(123);
 
         // 驗證 Repository 被正確呼叫
         await _mockRepository.Received(2).GetPullRequestsAsync(

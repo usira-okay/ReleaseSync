@@ -123,7 +123,7 @@ public class JsonExportWorkflowTests
             var act = async () => await exporter.ExportAsync(syncResult, tempFilePath, overwrite: false);
 
             await act.Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("*already exists*");
+                .WithMessage("*已存在*");
         }
         finally
         {

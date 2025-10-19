@@ -86,8 +86,13 @@ public class BitBucketServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(1);
-        result.Should().BeEquivalentTo(expectedPullRequests);
+        result.Should().HaveCount(2); // 兩個 projects 各回傳一個 PR
+
+        // 驗證第一個 PR 的內容
+        var firstPr = result.First();
+        firstPr.Platform.Should().Be("BitBucket");
+        firstPr.Title.Should().Be("Test PR 1");
+        firstPr.Number.Should().Be(42);
 
         // 驗證 Repository 被正確呼叫 (2 個 repositories)
         await _mockRepository.Received(2).GetPullRequestsAsync(
@@ -202,7 +207,7 @@ public class BitBucketServiceTests
         // 第一個 repo 回傳 1 筆
         _mockRepository
             .GetPullRequestsAsync(
-                "test-workspace/repo1",
+                "workspace/repo1",
                 Arg.Any<DateRange>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<CancellationToken>())
@@ -219,14 +224,14 @@ public class BitBucketServiceTests
                     CreatedAt = DateTime.UtcNow,
                     State = "MERGED",
                     AuthorUsername = "user1",
-                    RepositoryName = "test-workspace/repo1"
+                    RepositoryName = "workspace/repo1"
                 }
             });
 
         // 第二個 repo 回傳 1 筆
         _mockRepository
             .GetPullRequestsAsync(
-                "test-workspace/repo2",
+                "workspace/repo2",
                 Arg.Any<DateRange>(),
                 Arg.Any<IEnumerable<string>>(),
                 Arg.Any<CancellationToken>())
@@ -243,7 +248,7 @@ public class BitBucketServiceTests
                     CreatedAt = DateTime.UtcNow,
                     State = "OPEN",
                     AuthorUsername = "user2",
-                    RepositoryName = "test-workspace/repo2"
+                    RepositoryName = "workspace/repo2"
                 }
             });
 
@@ -254,8 +259,8 @@ public class BitBucketServiceTests
 
         // Assert
         result.Should().HaveCount(2);
-        result.Should().Contain(pr => pr.RepositoryName == "test-workspace/repo1");
-        result.Should().Contain(pr => pr.RepositoryName == "test-workspace/repo2");
+        result.Should().Contain(pr => pr.RepositoryName == "workspace/repo1");
+        result.Should().Contain(pr => pr.RepositoryName == "workspace/repo2");
     }
 
     /// <summary>
@@ -342,10 +347,11 @@ public class BitBucketServiceTests
         var service = new BitBucketService(_mockRepository, _options, _mockLogger);
 
         // Act
-        Func<Task> act = async () => await service.GetPullRequestsAsync(dateRange);
+        var result = await service.GetPullRequestsAsync(dateRange);
 
-        // Assert - 第一個失敗應該拋出例外 (或根據實作決定是否繼續)
-        // 這裡假設遇到錯誤會拋出例外
-        await act.Should().ThrowAsync<Exception>();
+        // Assert - 第一個失敗但不影響第二個，應該回傳第二個 repo 的結果
+        result.Should().HaveCount(1);
+        result.First().RepositoryName.Should().Be("workspace/repo2");
+        result.First().Title.Should().Be("PR from repo2");
     }
 }

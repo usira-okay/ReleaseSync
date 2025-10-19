@@ -100,9 +100,8 @@ public class JsonExportValidationTests
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
-            jsonContent.Should().Contain("測試中文標題 Test Chinese Title");
 
-            // 驗證 JSON 可正確解析中文字元
+            // 驗證 JSON 可正確解析中文字元（JSON 可能使用 Unicode escape 序列）
             var jsonDocument = JsonDocument.Parse(jsonContent);
             var pullRequests = jsonDocument.RootElement.GetProperty("pullRequests");
             var firstPR = pullRequests[0];

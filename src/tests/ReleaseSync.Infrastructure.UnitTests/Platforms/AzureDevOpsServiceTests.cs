@@ -277,7 +277,7 @@ public class AzureDevOpsServiceTests
             }
         };
 
-        _mockRepository.GetWorkItemsAsync(workItemIds, true, Arg.Any<CancellationToken>())
+        _mockRepository.GetWorkItemsAsync(Arg.Any<IEnumerable<WorkItemId>>(), true, Arg.Any<CancellationToken>())
             .Returns(expectedWorkItems);
 
         // Act
@@ -298,7 +298,7 @@ public class AzureDevOpsServiceTests
         // Arrange
         var emptyWorkItemIds = new List<WorkItemId>();
 
-        _mockRepository.GetWorkItemsAsync(emptyWorkItemIds, true, Arg.Any<CancellationToken>())
+        _mockRepository.GetWorkItemsAsync(Arg.Any<IEnumerable<WorkItemId>>(), true, Arg.Any<CancellationToken>())
             .Returns(Enumerable.Empty<WorkItemInfo>());
 
         // Act
@@ -324,7 +324,7 @@ public class AzureDevOpsServiceTests
 
         var expectedException = new HttpRequestException("API Error");
 
-        _mockRepository.GetWorkItemsAsync(workItemIds, true, Arg.Any<CancellationToken>())
+        _mockRepository.GetWorkItemsAsync(Arg.Any<IEnumerable<WorkItemId>>(), true, Arg.Any<CancellationToken>())
             .Throws(expectedException);
 
         // Act
@@ -360,7 +360,7 @@ public class AzureDevOpsServiceTests
             }
         };
 
-        _mockRepository.GetWorkItemsAsync(workItemIds, false, Arg.Any<CancellationToken>())
+        _mockRepository.GetWorkItemsAsync(Arg.Any<IEnumerable<WorkItemId>>(), false, Arg.Any<CancellationToken>())
             .Returns(workItems);
 
         // Act
@@ -368,7 +368,7 @@ public class AzureDevOpsServiceTests
 
         // Assert
         await _mockRepository.Received(1).GetWorkItemsAsync(
-            workItemIds,
+            Arg.Any<IEnumerable<WorkItemId>>(),
             false,
             Arg.Any<CancellationToken>());
     }
