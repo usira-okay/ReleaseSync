@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "name": ".NET Core Launch (console)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "dotnet: build",
+      "program": "${workspaceFolder}/src/ReleaseSync.Console/bin/Debug/net9.0/ReleaseSync.Console.dll",
+      "args": [
+        "sync",
+        "-s",
+        "2025-10-01T00:00:00+08:00",
+        "-e",
+        "2025-10-20T00:00:00+08:00",
+        "--enable-gitlab",
+        "--enable-bitbucket",
+        "--enable-azure-devops",
+        "-o",
+        "C:\\Users\\ari\\Downloads\\New folder",
+        "-f",
+        "-v"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    }
+  ]
+
+}

@@ -19,7 +19,6 @@ class Program
 
         // 建立設定
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddJsonFile("appsettings.secure.json", optional: true, reloadOnChange: true)
             .Build();
