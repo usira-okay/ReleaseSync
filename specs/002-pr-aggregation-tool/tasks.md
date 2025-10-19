@@ -116,9 +116,9 @@
 
 #### Integration Tests
 
-- [ ] T044 [US1] Integration Test: 完整 GitLab 工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/GitLabSyncWorkflowTests.cs
-- [ ] T045 [US1] Integration Test: 完整 BitBucket 工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/BitBucketSyncWorkflowTests.cs
-- [ ] T046 [US1] Integration Test: 組態檔載入測試 in tests/ReleaseSync.Integration.Tests/Configuration/ConfigurationLoadingTests.cs
+- [X] T044 [US1] Integration Test: 完整 GitLab 工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/GitLabSyncWorkflowTests.cs
+- [X] T045 [US1] Integration Test: 完整 BitBucket 工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/BitBucketSyncWorkflowTests.cs
+- [X] T046 [US1] Integration Test: 組態檔載入測試 in tests/ReleaseSync.Integration.Tests/Configuration/ConfigurationLoadingTests.cs
 
 **Checkpoint**: User Story 1 完成 - 可從 GitLab/BitBucket 抓取 PR/MR 並在 Console 顯示
 
@@ -133,7 +133,7 @@
 ### Tests for User Story 2 (TDD - 先寫測試)
 
 - [X] T047 [P] [US2] Unit Test: JsonFileExporter 單元測試 in tests/ReleaseSync.Application.UnitTests/Exporters/JsonFileExporterTests.cs
-- [ ] T048 [P] [US2] Integration Test: JSON 輸出格式驗證測試 in tests/ReleaseSync.Integration.Tests/Exporters/JsonExportValidationTests.cs
+- [X] T048 [P] [US2] Integration Test: JSON 輸出格式驗證測試 in tests/ReleaseSync.Integration.Tests/Exporters/JsonExportValidationTests.cs
 
 ### Implementation for User Story 2
 
@@ -144,7 +144,7 @@
 
 #### Integration Tests
 
-- [ ] T053 [US2] Integration Test: 端到端 JSON 匯出工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/JsonExportWorkflowTests.cs
+- [X] T053 [US2] Integration Test: 端到端 JSON 匯出工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/JsonExportWorkflowTests.cs
 
 **Checkpoint**: User Story 2 完成 - 可將 PR/MR 資訊匯出為 JSON 檔案
 

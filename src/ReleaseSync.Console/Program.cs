@@ -6,6 +6,7 @@ using ReleaseSync.Application.Exporters;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Console.Commands;
 using ReleaseSync.Console.Handlers;
+using ReleaseSync.Infrastructure.DependencyInjection;
 using Serilog;
 
 namespace ReleaseSync.Console;
@@ -43,6 +44,11 @@ class Program
 
             // 註冊 Configuration
             services.AddSingleton<IConfiguration>(configuration);
+
+            // 註冊 Infrastructure 平台服務 (使用 Extension Methods)
+            services.AddGitLabServices(configuration);
+            services.AddBitBucketServices(configuration);
+            services.AddAzureDevOpsServices(configuration);
 
             // 註冊 Application 服務
             services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
