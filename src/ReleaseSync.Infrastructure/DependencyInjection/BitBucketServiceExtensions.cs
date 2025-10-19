@@ -34,9 +34,8 @@ public static class BitBucketServiceExtensions
             var httpClient = httpClientFactory.CreateClient("BitBucket");
             var logger = sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<BitBucketApiClient>>();
 
-            // 注意: BitBucket 需要 username,這裡假設從環境變數或另一個設定取得
-            // 或者可以在 BitBucketSettings 加入 Username 欄位
-            return new BitBucketApiClient(httpClient, settings.AppPassword, null, logger);
+            // 使用 Email 作為 username 進行 Basic Authentication
+            return new BitBucketApiClient(httpClient, settings.AccessToken, settings.Email, logger);
         });
 
         // 註冊 Repository

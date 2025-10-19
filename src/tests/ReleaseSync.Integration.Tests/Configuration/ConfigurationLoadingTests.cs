@@ -53,7 +53,8 @@ public class ConfigurationLoadingTests
         // Assert
         bitBucketSettings.Should().NotBeNull();
         bitBucketSettings.ApiUrl.Should().NotBeNullOrEmpty();
-        bitBucketSettings.AppPassword.Should().NotBeNullOrEmpty();
+        bitBucketSettings.Email.Should().NotBeNullOrEmpty();
+        bitBucketSettings.AccessToken.Should().NotBeNullOrEmpty();
         bitBucketSettings.Projects.Should().NotBeNullOrEmpty();
     }
 

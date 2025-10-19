@@ -31,7 +31,8 @@ public class BitBucketServiceTests
         var settings = new BitBucketSettings
         {
             ApiUrl = "https://api.bitbucket.org/2.0",
-            AppPassword = "test-password",
+            Email = "test@example.com",
+            AccessToken = "test-password",
             Projects = new List<BitBucketProjectSettings>
             {
                 new() { WorkspaceAndRepo = "workspace/repo1", TargetBranches = new List<string> { "main", "master" } },
@@ -112,7 +113,8 @@ public class BitBucketServiceTests
         var emptySettings = new BitBucketSettings
         {
             ApiUrl = "https://api.bitbucket.org/2.0",
-            AppPassword = "test-password",
+            Email = "test@example.com",
+            AccessToken = "test-password",
             Projects = new List<BitBucketProjectSettings>() // 空清單
         };
 

@@ -31,7 +31,8 @@ public class JsonExportWorkflowTests
                 ["GitLab:Projects:0:ProjectPath"] = "test-group/test-project",
                 ["GitLab:Projects:0:TargetBranches:0"] = "main",
                 ["BitBucket:ApiUrl"] = "https://api.bitbucket.org/2.0",
-                ["BitBucket:AppPassword"] = "test-bitbucket-token",
+                ["BitBucket:Email"] = "test@example.com",
+                ["BitBucket:AccessToken"] = "test-bitbucket-token",
                 ["BitBucket:Projects:0:WorkspaceAndRepo"] = "test-workspace/test-repo",
                 ["BitBucket:Projects:0:TargetBranches:0"] = "main"
             }!)

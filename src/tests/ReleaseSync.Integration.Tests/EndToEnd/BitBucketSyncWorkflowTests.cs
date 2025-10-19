@@ -47,8 +47,8 @@ public class BitBucketSyncWorkflowTests
 
         // 檢查是否有有效的 BitBucket Token
         var bitBucketSettings = _serviceProvider.GetRequiredService<IOptions<BitBucketSettings>>().Value;
-        _isBitBucketConfigured = !string.IsNullOrEmpty(bitBucketSettings.AppPassword) &&
-                                 !bitBucketSettings.AppPassword.StartsWith("test-") &&
+        _isBitBucketConfigured = !string.IsNullOrEmpty(bitBucketSettings.AccessToken) &&
+                                 !bitBucketSettings.AccessToken.StartsWith("test-") &&
                                  bitBucketSettings.Projects?.Any() == true;
     }
 
@@ -105,7 +105,8 @@ public class BitBucketSyncWorkflowTests
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["BitBucket:ApiUrl"] = "https://api.bitbucket.org/2.0",
-                ["BitBucket:AppPassword"] = "invalid-token",
+                ["BitBucket:Email"] = "test@example.com",
+                ["BitBucket:AccessToken"] = "invalid-token",
                 ["BitBucket:Projects:0:WorkspaceAndRepo"] = "non-existent-workspace/non-existent-repo",
                 ["BitBucket:Projects:0:TargetBranches:0"] = "main"
             }!)
@@ -157,7 +158,8 @@ public class BitBucketSyncWorkflowTests
             .AddInMemoryCollection(new Dictionary<string, string>
             {
                 ["BitBucket:ApiUrl"] = "https://api.bitbucket.org/2.0",
-                ["BitBucket:AppPassword"] = "test-token",
+                ["BitBucket:Email"] = "test@example.com",
+                ["BitBucket:AccessToken"] = "test-token",
                 ["BitBucket:Projects:0:WorkspaceAndRepo"] = "non-existent-workspace/non-existent-repo-12345",
                 ["BitBucket:Projects:0:TargetBranches:0"] = "main"
             }!)
@@ -212,7 +214,8 @@ public class BitBucketSyncWorkflowTests
                 ["GitLab:Projects:0:ProjectPath"] = "test-group/test-project",
                 ["GitLab:Projects:0:TargetBranches:0"] = "main",
                 ["BitBucket:ApiUrl"] = "https://api.bitbucket.org/2.0",
-                ["BitBucket:AppPassword"] = "test-bitbucket-token",
+                ["BitBucket:Email"] = "test@example.com",
+                ["BitBucket:AccessToken"] = "test-bitbucket-token",
                 ["BitBucket:Projects:0:WorkspaceAndRepo"] = "test-workspace/test-repo",
                 ["BitBucket:Projects:0:TargetBranches:0"] = "main"
             }!)
