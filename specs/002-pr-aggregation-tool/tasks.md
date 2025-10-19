@@ -158,9 +158,9 @@
 
 ### Tests for User Story 3 (TDD - 先寫測試)
 
-- [ ] T054 [P] [US3] Unit Test: RegexWorkItemIdParser 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Parsers/RegexWorkItemIdParserTests.cs
-- [ ] T055 [P] [US3] Unit Test: AzureDevOpsService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/AzureDevOpsServiceTests.cs
-- [ ] T056 [P] [US3] Contract Test: Azure DevOps Work Item API 回應結構驗證 in tests/ReleaseSync.Integration.Tests/Platforms/AzureDevOpsApiContractTests.cs
+- [X] T054 [P] [US3] Unit Test: RegexWorkItemIdParser 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Parsers/RegexWorkItemIdParserTests.cs
+- [X] T055 [P] [US3] Unit Test: AzureDevOpsService 單元測試 in tests/ReleaseSync.Infrastructure.UnitTests/Platforms/AzureDevOpsServiceTests.cs
+- [X] T056 [P] [US3] Contract Test: Azure DevOps Work Item API 回應結構驗證 in tests/ReleaseSync.Integration.Tests/Platforms/AzureDevOpsApiContractTests.cs
 
 ### Implementation for User Story 3
 
@@ -183,8 +183,8 @@
 
 #### Integration Tests
 
-- [ ] T065 [US3] Integration Test: 完整 Work Item 解析工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/WorkItemIntegrationWorkflowTests.cs
-- [ ] T066 [US3] Integration Test: Branch 名稱無法解析時的錯誤處理測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/WorkItemParsingFailureTests.cs
+- [X] T065 [US3] Integration Test: 完整 Work Item 解析工作流程測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/WorkItemIntegrationWorkflowTests.cs
+- [X] T066 [US3] Integration Test: Branch 名稱無法解析時的錯誤處理測試 in tests/ReleaseSync.Integration.Tests/EndToEnd/WorkItemParsingFailureTests.cs
 
 **Checkpoint**: User Story 3 完成 - 可從 Branch 名稱解析 Work Item ID 並抓取 Azure DevOps 資訊
 
