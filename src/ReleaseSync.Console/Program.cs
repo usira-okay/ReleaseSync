@@ -21,7 +21,7 @@ class Program
         // 建立設定
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .AddJsonFile("appsettings.secure.json", optional: true, reloadOnChange: true)
+            .AddUserSecrets<Program>(optional: true)
             .Build();
 
         // 設定 Serilog (根據 verbose 參數設定日誌等級)

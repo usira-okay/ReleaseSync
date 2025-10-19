@@ -4,6 +4,7 @@ using ReleaseSync.Domain.Services;
 using ReleaseSync.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ReleaseSync.Infrastructure.Platforms.BitBucket;
 
@@ -26,7 +27,7 @@ public class BitBucketService : IPlatformService
     /// 建立 BitBucketService
     /// </summary>
     public BitBucketService(
-        IPullRequestRepository repository,
+        [FromKeyedServices("BitBucket")] IPullRequestRepository repository,
         IOptions<BitBucketSettings> settings,
         ILogger<BitBucketService> logger)
     {

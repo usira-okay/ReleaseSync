@@ -4,6 +4,7 @@ using ReleaseSync.Domain.Services;
 using ReleaseSync.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ReleaseSync.Infrastructure.Platforms.GitLab;
 
@@ -26,7 +27,7 @@ public class GitLabService : IPlatformService
     /// 建立 GitLabService
     /// </summary>
     public GitLabService(
-        IPullRequestRepository repository,
+        [FromKeyedServices("GitLab")] IPullRequestRepository repository,
         IOptions<GitLabSettings> settings,
         ILogger<GitLabService> logger)
     {

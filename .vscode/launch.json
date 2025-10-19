@@ -13,7 +13,7 @@
         "-e",
         "2025-10-20T00:00:00+08:00",
         "--enable-gitlab",
-        "--enable-bitbucket",
+        // "--enable-bitbucket",
         "--enable-azure-devops",
         "-o",
         "C:\\Users\\ari\\Downloads\\New folder",

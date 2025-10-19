@@ -38,8 +38,8 @@ public static class BitBucketServiceExtensions
             return new BitBucketApiClient(httpClient, settings.AccessToken, settings.Email, logger);
         });
 
-        // 註冊 Repository
-        services.AddScoped<IPullRequestRepository, BitBucketPullRequestRepository>();
+        // 註冊 Repository (使用 Keyed Service)
+        services.AddKeyedScoped<IPullRequestRepository, BitBucketPullRequestRepository>("BitBucket");
 
         // 註冊 Service 並註冊到 IPlatformService
         services.AddScoped<BitBucketService>();

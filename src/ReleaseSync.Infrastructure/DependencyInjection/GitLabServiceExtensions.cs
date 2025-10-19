@@ -31,8 +31,8 @@ public static class GitLabServiceExtensions
             return new GitLabApiClient(settings.ApiUrl, settings.PersonalAccessToken, logger);
         });
 
-        // 註冊 Repository
-        services.AddScoped<IPullRequestRepository, GitLabPullRequestRepository>();
+        // 註冊 Repository (使用 Keyed Service)
+        services.AddKeyedScoped<IPullRequestRepository, GitLabPullRequestRepository>("GitLab");
 
         // 註冊 Service 並註冊到 IPlatformService
         services.AddScoped<GitLabService>();

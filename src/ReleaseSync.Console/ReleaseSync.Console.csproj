@@ -5,16 +5,11 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
-    <!-- 產生 XML 文件檔案 -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
-    <!-- 將警告視為錯誤 -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-
-    <!-- 應用程式版本 -->
     <Version>0.1.0</Version>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <UserSecretsId>1b985d8b-8619-4ade-87b8-1f41a1b54a7e</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 設定檔案複製到輸出目錄 -->
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
