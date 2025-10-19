@@ -39,6 +39,8 @@ public class BitBucketSyncWorkflowTests
 
         // 註冊 BitBucket 服務
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
+        services.AddUserMappingServices(configuration);
 
         // 註冊 Application 服務
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
@@ -116,6 +118,8 @@ public class BitBucketSyncWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
         var serviceProvider = services.BuildServiceProvider();
@@ -169,6 +173,7 @@ public class BitBucketSyncWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
         var serviceProvider = services.BuildServiceProvider();
@@ -225,7 +230,9 @@ public class BitBucketSyncWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
         var serviceProvider = services.BuildServiceProvider();

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using NGitLab.Models;
+using ReleaseSync.Application.Services;
 using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
 
@@ -12,16 +13,19 @@ public class GitLabPullRequestRepository : IPullRequestRepository
 {
     private readonly GitLabApiClient _apiClient;
     private readonly ILogger<GitLabPullRequestRepository> _logger;
+    private readonly IUserMappingService _userMappingService;
 
     /// <summary>
     /// 建立 GitLabPullRequestRepository
     /// </summary>
     public GitLabPullRequestRepository(
         GitLabApiClient apiClient,
-        ILogger<GitLabPullRequestRepository> logger)
+        ILogger<GitLabPullRequestRepository> logger,
+        IUserMappingService userMappingService)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userMappingService = userMappingService ?? throw new ArgumentNullException(nameof(userMappingService));
     }
 
     /// <summary>
@@ -70,6 +74,15 @@ public class GitLabPullRequestRepository : IPullRequestRepository
     {
         try
         {
+            var authorUsername = mr.Author?.Username ?? "unknown";
+            var originalDisplayName = mr.Author?.Name;
+
+            // 使用 UserMapping 服務取得映射後的 DisplayName
+            var mappedDisplayName = _userMappingService.GetDisplayName(
+                "GitLab",
+                authorUsername,
+                originalDisplayName);
+
             return new PullRequestInfo
             {
                 Platform = "GitLab",
@@ -82,8 +95,8 @@ public class GitLabPullRequestRepository : IPullRequestRepository
                 CreatedAt = mr.CreatedAt,
                 MergedAt = mr.MergedAt,
                 State = mr.State.ToString(),
-                AuthorUsername = mr.Author?.Username ?? "unknown",
-                AuthorDisplayName = mr.Author?.Name,
+                AuthorUsername = authorUsername,
+                AuthorDisplayName = mappedDisplayName,
                 RepositoryName = projectName,
                 Url = mr.WebUrl
             };

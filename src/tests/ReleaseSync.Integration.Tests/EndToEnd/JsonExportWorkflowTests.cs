@@ -42,7 +42,9 @@ public class JsonExportWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
         services.AddScoped<IResultExporter, JsonFileExporter>();
 

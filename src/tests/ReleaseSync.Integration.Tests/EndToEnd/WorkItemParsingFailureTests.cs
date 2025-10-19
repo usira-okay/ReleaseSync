@@ -47,7 +47,9 @@ public class WorkItemParsingFailureTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
@@ -115,7 +117,9 @@ public class WorkItemParsingFailureTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
@@ -175,7 +179,9 @@ public class WorkItemParsingFailureTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
@@ -233,7 +239,9 @@ public class WorkItemParsingFailureTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
@@ -298,7 +306,9 @@ public class WorkItemParsingFailureTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 

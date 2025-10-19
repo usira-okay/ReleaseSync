@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ReleaseSync.Application.Services;
 using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
 using ReleaseSync.Infrastructure.Platforms.BitBucket.Models;
@@ -12,16 +13,19 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
 {
     private readonly BitBucketApiClient _apiClient;
     private readonly ILogger<BitBucketPullRequestRepository> _logger;
+    private readonly IUserMappingService _userMappingService;
 
     /// <summary>
     /// 建立 BitBucketPullRequestRepository
     /// </summary>
     public BitBucketPullRequestRepository(
         BitBucketApiClient apiClient,
-        ILogger<BitBucketPullRequestRepository> logger)
+        ILogger<BitBucketPullRequestRepository> logger,
+        IUserMappingService userMappingService)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userMappingService = userMappingService ?? throw new ArgumentNullException(nameof(userMappingService));
     }
 
     /// <summary>
@@ -101,6 +105,15 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
                 mergedAt = pr.UpdatedOn;
             }
 
+            var authorUsername = pr.Author?.Username ?? "unknown";
+            var originalDisplayName = pr.Author?.DisplayName;
+
+            // 使用 UserMapping 服務取得映射後的 DisplayName
+            var mappedDisplayName = _userMappingService.GetDisplayName(
+                "BitBucket",
+                authorUsername,
+                originalDisplayName);
+
             return new PullRequestInfo
             {
                 Platform = "BitBucket",
@@ -113,8 +126,8 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
                 CreatedAt = pr.CreatedOn,
                 MergedAt = mergedAt,
                 State = ConvertState(pr.State),
-                AuthorUsername = pr.Author?.Username ?? "unknown",
-                AuthorDisplayName = pr.Author?.DisplayName,
+                AuthorUsername = authorUsername,
+                AuthorDisplayName = mappedDisplayName,
                 RepositoryName = projectName,
                 Url = pr.Links?.Html?.Href
             };

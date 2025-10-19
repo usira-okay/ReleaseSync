@@ -49,6 +49,7 @@ class Program
             services.AddGitLabServices(configuration);
             services.AddBitBucketServices(configuration);
             services.AddAzureDevOpsServices(configuration);
+            services.AddUserMappingServices(configuration);
 
             // 註冊 Application 服務
             services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();

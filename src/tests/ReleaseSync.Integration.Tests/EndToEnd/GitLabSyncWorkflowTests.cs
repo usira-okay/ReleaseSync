@@ -39,6 +39,7 @@ public class GitLabSyncWorkflowTests
 
         // 註冊 GitLab 服務
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
 
         // 註冊 Application 服務
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
@@ -115,6 +116,7 @@ public class GitLabSyncWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
         var serviceProvider = services.BuildServiceProvider();
@@ -167,6 +169,7 @@ public class GitLabSyncWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
         var serviceProvider = services.BuildServiceProvider();

@@ -60,9 +60,10 @@ public class GitLabApiClient
                 return Enumerable.Empty<MergeRequest>();
             }
 
-            // 查詢 Merge Requests (不指定 State 則查詢所有狀態)
+            // 查詢 Merge Requests (只查詢已合併的 MR)
             var query = new MergeRequestQuery
             {
+                State = MergeRequestState.merged,
                 CreatedAfter = startDate,
                 CreatedBefore = endDate.AddDays(1), // 確保包含結束日期當天
                 PerPage = 100 // 每頁 100 筆

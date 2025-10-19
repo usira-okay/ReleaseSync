@@ -103,7 +103,7 @@ public class BitBucketApiClient
 
                 // 過濾時間範圍內的 PR
                 var filteredPullRequests = result.Values
-                    .Where(pr => pr.CreatedOn >= startDate && pr.CreatedOn <= endDate)
+                    .Where(pr => pr.UpdatedOn >= startDate && pr.UpdatedOn <= endDate)
                     .ToList();
 
                 allPullRequests.AddRange(filteredPullRequests);
@@ -112,7 +112,7 @@ public class BitBucketApiClient
                 nextPageUrl = result.Next;
 
                 // 如果所有 PR 的建立時間都早於 startDate,停止查詢
-                if (result.Values.All(pr => pr.CreatedOn < startDate))
+                if (result.Values.All(pr => pr.UpdatedOn < startDate))
                 {
                     break;
                 }
@@ -152,11 +152,11 @@ public class BitBucketApiClient
         // BitBucket API 2.0 端點
         var baseUrl = $"https://api.bitbucket.org/2.0/repositories/{workspace}/{repository}/pullrequests";
 
-        // 使用 q 參數進行日期篩選 (created_on >= startDate)
-        var query = $"created_on>={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}";
+        // 使用 q 參數進行日期篩選 (updated_on >= startDate)
+        var query = $"updated_on>={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
-        // 設定排序與分頁
-        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-created_on&pagelen=50&state=MERGED&state=OPEN&state=DECLINED&state=SUPERSEDED";
+        // 設定排序與分頁,只抓取已合併的 PR
+        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-updated_on&pagelen=50&state=MERGED";
     }
 
     /// <summary>

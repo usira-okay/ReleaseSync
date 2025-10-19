@@ -117,10 +117,10 @@ public class BitBucketUser
     public string DisplayName { get; set; }
 
     /// <summary>
-    /// Account ID
+    /// uuid
     /// </summary>
-    [JsonPropertyName("account_id")]
-    public string AccountId { get; set; }
+    [JsonPropertyName("uuid")]
+    public string UuId { get; set; }
 }
 
 /// <summary>

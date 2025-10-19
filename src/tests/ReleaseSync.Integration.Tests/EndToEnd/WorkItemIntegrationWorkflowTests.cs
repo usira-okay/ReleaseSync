@@ -39,7 +39,9 @@ public class WorkItemIntegrationWorkflowTests
 
         // 註冊所有平台服務
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
 
         // 註冊 Application 服務
@@ -133,7 +135,9 @@ public class WorkItemIntegrationWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
@@ -196,7 +200,9 @@ public class WorkItemIntegrationWorkflowTests
         services.AddLogging(builder => builder.AddConsole());
         services.AddSingleton<IConfiguration>(configuration);
         services.AddGitLabServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddBitBucketServices(configuration);
+        services.AddUserMappingServices(configuration);
         services.AddAzureDevOpsServices(configuration);
         services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
 
