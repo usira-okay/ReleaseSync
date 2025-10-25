@@ -10,10 +10,27 @@ namespace ReleaseSync.Infrastructure.Services;
 public class UserMappingService : IUserMappingService
 {
     private readonly UserMappingSettings _settings;
+    private readonly HashSet<string> _gitLabUsers;
+    private readonly HashSet<string> _bitBucketUsers;
 
     public UserMappingService(IOptions<UserMappingSettings> options)
     {
         _settings = options.Value;
+
+        // 使用 HashSet 快速查找 (O(1))
+        _gitLabUsers = new HashSet<string>(
+            _settings.Mappings
+                .Where(m => !string.IsNullOrWhiteSpace(m.GitLabUserId))
+                .Select(m => m.GitLabUserId!),
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        _bitBucketUsers = new HashSet<string>(
+            _settings.Mappings
+                .Where(m => !string.IsNullOrWhiteSpace(m.BitBucketUserId))
+                .Select(m => m.BitBucketUserId!),
+            StringComparer.OrdinalIgnoreCase
+        );
     }
 
     /// <inheritdoc/>
@@ -40,5 +57,34 @@ public class UserMappingService : IUserMappingService
 
         // 若找到映射則使用映射的 DisplayName，否則使用預設值
         return mapping?.DisplayName ?? defaultDisplayName ?? username;
+    }
+
+    /// <inheritdoc/>
+    public bool HasMapping(string platform, string? username)
+    {
+        // 向後相容: 空 UserMapping 時返回 true (不過濾)
+        if (_settings.Mappings.Count == 0)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            return false;
+        }
+
+        // 使用 HashSet 快速查找 (O(1))
+        return platform.ToLowerInvariant() switch
+        {
+            "gitlab" => _gitLabUsers.Contains(username),
+            "bitbucket" => _bitBucketUsers.Contains(username),
+            _ => false
+        };
+    }
+
+    /// <inheritdoc/>
+    public bool IsFilteringEnabled()
+    {
+        return _settings.Mappings.Count > 0;
     }
 }

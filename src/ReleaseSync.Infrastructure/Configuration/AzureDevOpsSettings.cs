@@ -29,6 +29,11 @@ public class AzureDevOpsSettings
     /// 解析行為設定
     /// </summary>
     public ParsingBehaviorSettings ParsingBehavior { get; init; } = new();
+
+    /// <summary>
+    /// 團隊對應設定 (用於過濾 Work Item)
+    /// </summary>
+    public List<TeamMapping> TeamMapping { get; init; } = new();
 }
 
 /// <summary>

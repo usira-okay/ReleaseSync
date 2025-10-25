@@ -51,6 +51,15 @@ public class WorkItemInfo
     public DateTime UpdatedAt { get; init; }
 
     /// <summary>
+    /// 團隊名稱 (來自 Azure DevOps Area Path 或自訂欄位)
+    /// </summary>
+    /// <remarks>
+    /// 用於團隊過濾和報告顯示。
+    /// 如果 Work Item 未包含團隊資訊或被過濾掉,此屬性可能為 null。
+    /// </remarks>
+    public string? Team { get; init; }
+
+    /// <summary>
     /// 驗證實體是否有效
     /// </summary>
     public void Validate()

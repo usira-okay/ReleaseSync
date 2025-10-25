@@ -51,14 +51,40 @@ public class GitLabPullRequestRepository : IPullRequestRepository
                 cancellationToken);
 
             // 轉換為 Domain Model
-            var pullRequests = mergeRequests
+            var allPullRequests = mergeRequests
                 .Select(mr => ConvertToPullRequestInfo(mr, projectName))
                 .ToList();
 
-            _logger.LogInformation("成功轉換 {Count} 筆 GitLab MR 為 Domain Model - 專案: {ProjectName}",
-                pullRequests.Count, projectName);
+            // 根據 UserMapping 過濾 PR (如果啟用)
+            var filteredPullRequests = allPullRequests
+                .Where(pr => _userMappingService.HasMapping("GitLab", pr.AuthorUsername))
+                .ToList();
 
-            return pullRequests;
+            // 記錄過濾統計
+            var filteredCount = allPullRequests.Count - filteredPullRequests.Count;
+            if (_userMappingService.IsFilteringEnabled())
+            {
+                if (filteredCount > 0)
+                {
+                    _logger.LogInformation(
+                        "根據 UserMapping 過濾 {FilteredCount} 筆 MR (總共 {TotalCount} 筆,保留 {RetainedCount} 筆) - 專案: {ProjectName}",
+                        filteredCount, allPullRequests.Count, filteredPullRequests.Count, projectName);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "所有 {Count} 筆 MR 都在 UserMapping 中,無需過濾 - 專案: {ProjectName}",
+                        allPullRequests.Count, projectName);
+                }
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "UserMapping 為空,保留所有 {Count} 筆 MR (向後相容模式) - 專案: {ProjectName}",
+                    allPullRequests.Count, projectName);
+            }
+
+            return filteredPullRequests;
         }
         catch (Exception ex)
         {
