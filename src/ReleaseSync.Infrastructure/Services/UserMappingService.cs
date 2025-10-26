@@ -34,9 +34,9 @@ public class UserMappingService : IUserMappingService
     }
 
     /// <inheritdoc/>
-    public string GetDisplayName(string platform, string username, string? defaultDisplayName = null)
+    public string GetDisplayName(string platform, string userId, string? defaultDisplayName = null)
     {
-        if (string.IsNullOrWhiteSpace(username))
+        if (string.IsNullOrWhiteSpace(userId))
         {
             return defaultDisplayName ?? "Unknown";
         }
@@ -46,21 +46,21 @@ public class UserMappingService : IUserMappingService
         {
             "gitlab" => _settings.Mappings.FirstOrDefault(m =>
                 m.GitLabUserId != null &&
-                m.GitLabUserId.Equals(username, StringComparison.OrdinalIgnoreCase)),
+                m.GitLabUserId.Equals(userId, StringComparison.OrdinalIgnoreCase)),
 
             "bitbucket" => _settings.Mappings.FirstOrDefault(m =>
                 m.BitBucketUserId != null &&
-                m.BitBucketUserId.Equals(username, StringComparison.OrdinalIgnoreCase)),
+                m.BitBucketUserId.Equals(userId, StringComparison.OrdinalIgnoreCase)),
 
             _ => null
         };
 
         // 若找到映射則使用映射的 DisplayName，否則使用預設值
-        return mapping?.DisplayName ?? defaultDisplayName ?? username;
+        return mapping?.DisplayName ?? defaultDisplayName ?? userId;
     }
 
     /// <inheritdoc/>
-    public bool HasMapping(string platform, string? username)
+    public bool HasMapping(string platform, string? userId)
     {
         // 向後相容: 空 UserMapping 時返回 true (不過濾)
         if (_settings.Mappings.Count == 0)
@@ -68,7 +68,7 @@ public class UserMappingService : IUserMappingService
             return true;
         }
 
-        if (string.IsNullOrWhiteSpace(username))
+        if (string.IsNullOrWhiteSpace(userId))
         {
             return false;
         }
@@ -76,8 +76,8 @@ public class UserMappingService : IUserMappingService
         // 使用 HashSet 快速查找 (O(1))
         return platform.ToLowerInvariant() switch
         {
-            "gitlab" => _gitLabUsers.Contains(username),
-            "bitbucket" => _bitBucketUsers.Contains(username),
+            "gitlab" => _gitLabUsers.Contains(userId),
+            "bitbucket" => _bitBucketUsers.Contains(userId),
             _ => false
         };
     }

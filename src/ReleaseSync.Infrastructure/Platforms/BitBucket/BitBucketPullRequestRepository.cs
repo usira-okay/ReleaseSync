@@ -84,7 +84,7 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
             // 根據 UserMapping 過濾 PR (如果啟用)
             var beforeUserFilterCount = filteredPullRequests.Count;
             filteredPullRequests = filteredPullRequests
-                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping("BitBucket", pr.AuthorDisplayName))
+                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping("BitBucket", pr.AuthorUserId))
                 .ToList();
 
             // 記錄過濾統計
@@ -140,7 +140,7 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
             // 使用 UserMapping 服務取得映射後的 DisplayName
             // 注意: 現在使用 originalDisplayName 作為 key,因為 authorUsername 已被移除
             var mappedDisplayName = originalDisplayName != null
-                ? _userMappingService.GetDisplayName("BitBucket", originalDisplayName, originalDisplayName)
+                ? _userMappingService.GetDisplayName("BitBucket", authorUserId, originalDisplayName)
                 : null;
 
             return new PullRequestInfo

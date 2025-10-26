@@ -228,19 +228,72 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         // 使用 TeamMappingService 取得顯示名稱
         var teamDisplayName = _teamMappingService.GetDisplayName(originalTeamName);
 
+        // 將 API URL 轉換為網頁 URL
+        var webUrl = ConvertApiUrlToWebUrl(workItem.Url, (int)workItem.Id!);
+
         return new WorkItemInfo
         {
             Id = new WorkItemId((int)workItem.Id!),
             Title = GetFieldValue(workItem, "System.Title") ?? "Untitled",
             Type = GetFieldValue(workItem, "System.WorkItemType") ?? "Unknown",
             State = GetFieldValue(workItem, "System.State") ?? "Unknown",
-            Url = workItem.Url,
+            Url = webUrl,
             AssignedTo = GetAssignedToValue(workItem),
             CreatedAt = GetDateTimeField(workItem, "System.CreatedDate"),
             UpdatedAt = GetDateTimeField(workItem, "System.ChangedDate"),
             OriginalTeamName = originalTeamName,  // 保存原始團隊名稱 (用於過濾)
             Team = teamDisplayName                 // 保存顯示名稱 (用於輸出)
         };
+    }
+
+    /// <summary>
+    /// 將 Azure DevOps API URL 轉換為網頁 URL
+    /// </summary>
+    /// <param name="apiUrl">API URL,例如: https://dev.azure.com/{organization}/_apis/wit/workItems/{id}</param>
+    /// <param name="workItemId">Work Item ID</param>
+    /// <returns>網頁 URL,例如: https://dev.azure.com/{organization}/{project}/_workitems/edit/{id}</returns>
+    private string? ConvertApiUrlToWebUrl(string? apiUrl, int workItemId)
+    {
+        if (string.IsNullOrWhiteSpace(apiUrl))
+        {
+            return null;
+        }
+
+        try
+        {
+            // API URL 格式: https://dev.azure.com/{organization}/_apis/wit/workItems/{id}
+            // 網頁 URL 格式: https://dev.azure.com/{organization}/{project}/_workitems/edit/{id}
+
+            var uri = new Uri(apiUrl);
+            var organization = uri.Segments.Length > 1 ? uri.Segments[1].TrimEnd('/') : null;
+
+            if (string.IsNullOrWhiteSpace(organization))
+            {
+                _logger.LogWarning(
+                    "無法從 API URL 提取 organization: {ApiUrl}",
+                    apiUrl);
+                return apiUrl; // 回傳原始 URL
+            }
+
+            // 從 API URL 中提取 project (如果存在於 URL 參數中)
+            // 注意: Work Item 的 API URL 通常不包含 project,需要從 TeamProject 欄位取得
+            // 但為了簡化,我們使用 organization 層級的 URL
+            // 格式: https://dev.azure.com/{organization}/_workitems/edit/{id}
+            var webUrl = $"{uri.Scheme}://{uri.Host}/{organization}/_workitems/edit/{workItemId}";
+
+            _logger.LogDebug(
+                "轉換 Work Item URL: API={ApiUrl} -> Web={WebUrl}",
+                apiUrl, webUrl);
+
+            return webUrl;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "轉換 Work Item URL 失敗,使用原始 URL: {ApiUrl}",
+                apiUrl);
+            return apiUrl;
+        }
     }
 
     /// <summary>
