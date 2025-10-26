@@ -16,7 +16,7 @@
         "--enable-bitbucket",
         "--enable-azure-devops",
         "-o",
-        "C:\\Users\\ari\\Downloads\\New folder\\asd.json",
+        ".\\output.json",
         "-f",
         "-v"
       ],
