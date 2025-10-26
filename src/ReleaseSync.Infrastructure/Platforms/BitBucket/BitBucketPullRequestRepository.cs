@@ -84,7 +84,7 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
             // 根據 UserMapping 過濾 PR (如果啟用)
             var beforeUserFilterCount = filteredPullRequests.Count;
             filteredPullRequests = filteredPullRequests
-                .Where(pr => _userMappingService.HasMapping("BitBucket", pr.AuthorUsername))
+                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping("BitBucket", pr.AuthorDisplayName))
                 .ToList();
 
             // 記錄過濾統計
@@ -134,14 +134,14 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
                 mergedAt = pr.UpdatedOn;
             }
 
-            var authorUsername = pr.Author?.Username ?? "unknown";
+            var authorUserId = pr.Author?.UuId;
             var originalDisplayName = pr.Author?.DisplayName;
 
             // 使用 UserMapping 服務取得映射後的 DisplayName
-            var mappedDisplayName = _userMappingService.GetDisplayName(
-                "BitBucket",
-                authorUsername,
-                originalDisplayName);
+            // 注意: 現在使用 originalDisplayName 作為 key,因為 authorUsername 已被移除
+            var mappedDisplayName = originalDisplayName != null
+                ? _userMappingService.GetDisplayName("BitBucket", originalDisplayName, originalDisplayName)
+                : null;
 
             return new PullRequestInfo
             {
@@ -155,7 +155,7 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
                 CreatedAt = pr.CreatedOn,
                 MergedAt = mergedAt,
                 State = ConvertState(pr.State),
-                AuthorUsername = authorUsername,
+                AuthorUserId = authorUserId,
                 AuthorDisplayName = mappedDisplayName,
                 RepositoryName = projectName,
                 Url = pr.Links?.Html?.Href

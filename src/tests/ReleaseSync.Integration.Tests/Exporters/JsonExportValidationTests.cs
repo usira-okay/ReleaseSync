@@ -23,7 +23,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             File.Exists(tempFilePath).Should().BeTrue();
@@ -69,7 +69,6 @@ public class JsonExportValidationTests
             firstPR.TryGetProperty("targetBranch", out _).Should().BeTrue();
             firstPR.TryGetProperty("createdAt", out _).Should().BeTrue();
             firstPR.TryGetProperty("state", out _).Should().BeTrue();
-            firstPR.TryGetProperty("authorUsername", out _).Should().BeTrue();
             firstPR.TryGetProperty("repositoryName", out _).Should().BeTrue();
         }
         finally
@@ -96,7 +95,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
@@ -131,7 +130,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
@@ -167,7 +166,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
@@ -182,7 +181,6 @@ public class JsonExportValidationTests
             firstPR.GetProperty("sourceBranch").GetString().Should().Be("feature/test");
             firstPR.GetProperty("targetBranch").GetString().Should().Be("main");
             firstPR.GetProperty("state").GetString().Should().Be("Merged");
-            firstPR.GetProperty("authorUsername").GetString().Should().Be("test-user");
             firstPR.GetProperty("authorDisplayName").GetString().Should().Be("Test User");
             firstPR.GetProperty("repositoryName").GetString().Should().Be("test/repo");
             firstPR.GetProperty("url").GetString().Should().Be("https://gitlab.com/test/repo/-/merge_requests/42");
@@ -210,7 +208,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
@@ -248,7 +246,7 @@ public class JsonExportValidationTests
         try
         {
             // Act
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);

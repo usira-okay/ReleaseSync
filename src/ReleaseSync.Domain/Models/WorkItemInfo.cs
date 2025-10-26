@@ -51,11 +51,20 @@ public class WorkItemInfo
     public DateTime UpdatedAt { get; init; }
 
     /// <summary>
-    /// 團隊名稱 (來自 Azure DevOps Area Path 或自訂欄位)
+    /// 原始團隊名稱 (來自 Azure DevOps Area Path,未經過 TeamMapping 轉換)
     /// </summary>
     /// <remarks>
-    /// 用於團隊過濾和報告顯示。
-    /// 如果 Work Item 未包含團隊資訊或被過濾掉,此屬性可能為 null。
+    /// 用於 TeamMapping 過濾判斷。
+    /// 此為 Azure DevOps 中的原始團隊名稱。
+    /// </remarks>
+    public string? OriginalTeamName { get; init; }
+
+    /// <summary>
+    /// 團隊顯示名稱 (已經過 TeamMapping 轉換)
+    /// </summary>
+    /// <remarks>
+    /// 用於報告顯示和 JSON 輸出。
+    /// 如果有 TeamMapping 設定,此為轉換後的顯示名稱;否則為原始名稱。
     /// </remarks>
     public string? Team { get; init; }
 

@@ -13,12 +13,14 @@ public interface IResultExporter
     /// <param name="result">同步結果</param>
     /// <param name="outputPath">輸出檔案路徑</param>
     /// <param name="overwrite">是否覆寫現有檔案</param>
+    /// <param name="useWorkItemCentricFormat">是否使用 Work Item 為中心的格式 (預設 true)</param>
     /// <param name="cancellationToken">取消權杖</param>
     /// <returns>Task</returns>
     Task ExportAsync(
         SyncResultDto result,
         string outputPath,
         bool overwrite = false,
+        bool useWorkItemCentricFormat = true,
         CancellationToken cancellationToken = default
     );
 

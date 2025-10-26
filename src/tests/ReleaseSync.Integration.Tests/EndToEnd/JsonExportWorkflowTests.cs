@@ -72,7 +72,7 @@ public class JsonExportWorkflowTests
             var syncResultDto = await orchestrator.SyncAsync(syncRequest);
 
             // Act - Step 2: 匯出 JSON
-            await exporter.ExportAsync(syncResultDto, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResultDto, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert - 驗證檔案存在
             File.Exists(tempFilePath).Should().BeTrue();
@@ -155,7 +155,7 @@ public class JsonExportWorkflowTests
             await File.WriteAllTextAsync(tempFilePath, "existing content");
 
             // Act - 使用 overwrite: true 應成功覆寫
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true);
+            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
 
             // Assert
             var content = await File.ReadAllTextAsync(tempFilePath);

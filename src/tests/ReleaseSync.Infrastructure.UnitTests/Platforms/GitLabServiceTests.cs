@@ -66,7 +66,6 @@ public class GitLabServiceTests
                 TargetBranch = new BranchName("main"),
                 CreatedAt = new DateTime(2025, 1, 15, 10, 0, 0, DateTimeKind.Utc),
                 State = "merged",
-                AuthorUsername = "testuser",
                 RepositoryName = "group/project1"
             }
         };
@@ -222,7 +221,6 @@ public class GitLabServiceTests
                     TargetBranch = new BranchName("main"),
                     CreatedAt = DateTime.UtcNow,
                     State = "merged",
-                    AuthorUsername = "user1",
                     RepositoryName = "group/project1"
                 }
             });
@@ -246,7 +244,6 @@ public class GitLabServiceTests
                     TargetBranch = new BranchName("main"),
                     CreatedAt = DateTime.UtcNow,
                     State = "opened",
-                    AuthorUsername = "user2",
                     RepositoryName = "group/project2"
                 }
             });

@@ -57,7 +57,7 @@ public class GitLabPullRequestRepository : IPullRequestRepository
 
             // 根據 UserMapping 過濾 PR (如果啟用)
             var filteredPullRequests = allPullRequests
-                .Where(pr => _userMappingService.HasMapping("GitLab", pr.AuthorUsername))
+                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping("GitLab", pr.AuthorDisplayName))
                 .ToList();
 
             // 記錄過濾統計
@@ -100,14 +100,14 @@ public class GitLabPullRequestRepository : IPullRequestRepository
     {
         try
         {
-            var authorUsername = mr.Author?.Username ?? "unknown";
+            var authorUserId = mr.Author?.Id.ToString();
             var originalDisplayName = mr.Author?.Name;
 
             // 使用 UserMapping 服務取得映射後的 DisplayName
-            var mappedDisplayName = _userMappingService.GetDisplayName(
-                "GitLab",
-                authorUsername,
-                originalDisplayName);
+            // 注意: 現在使用 originalDisplayName 作為 key,因為 authorUsername 已被移除
+            var mappedDisplayName = originalDisplayName != null
+                ? _userMappingService.GetDisplayName("GitLab", originalDisplayName, originalDisplayName)
+                : null;
 
             return new PullRequestInfo
             {
@@ -121,7 +121,7 @@ public class GitLabPullRequestRepository : IPullRequestRepository
                 CreatedAt = mr.CreatedAt,
                 MergedAt = mr.MergedAt,
                 State = mr.State.ToString(),
-                AuthorUsername = authorUsername,
+                AuthorUserId = authorUserId,
                 AuthorDisplayName = mappedDisplayName,
                 RepositoryName = projectName,
                 Url = mr.WebUrl

@@ -67,7 +67,6 @@ public class BitBucketServiceTests
                 TargetBranch = new BranchName("main"),
                 CreatedAt = new DateTime(2025, 1, 15, 10, 0, 0, DateTimeKind.Utc),
                 State = "MERGED",
-                AuthorUsername = "testuser",
                 RepositoryName = "test-workspace/repo1"
             }
         };
@@ -225,7 +224,6 @@ public class BitBucketServiceTests
                     TargetBranch = new BranchName("main"),
                     CreatedAt = DateTime.UtcNow,
                     State = "MERGED",
-                    AuthorUsername = "user1",
                     RepositoryName = "workspace/repo1"
                 }
             });
@@ -249,7 +247,6 @@ public class BitBucketServiceTests
                     TargetBranch = new BranchName("main"),
                     CreatedAt = DateTime.UtcNow,
                     State = "OPEN",
-                    AuthorUsername = "user2",
                     RepositoryName = "workspace/repo2"
                 }
             });
@@ -341,7 +338,6 @@ public class BitBucketServiceTests
                     TargetBranch = new BranchName("main"),
                     CreatedAt = DateTime.UtcNow,
                     State = "OPEN",
-                    AuthorUsername = "user2",
                     RepositoryName = "workspace/repo2"
                 }
             });

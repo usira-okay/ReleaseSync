@@ -129,9 +129,9 @@ public class PullRequestDto
     public required string State { get; init; }
 
     /// <summary>
-    /// 作者使用者名稱
+    /// 作者在版控平台的使用者 ID (GitLab: 數字 ID, BitBucket: UUID)
     /// </summary>
-    public required string AuthorUsername { get; init; }
+    public string? AuthorUserId { get; init; }
 
     /// <summary>
     /// 作者顯示名稱
@@ -169,7 +169,7 @@ public class PullRequestDto
             CreatedAt = pr.CreatedAt,
             MergedAt = pr.MergedAt,
             State = pr.State,
-            AuthorUsername = pr.AuthorUsername,
+            AuthorUserId = pr.AuthorUserId,
             AuthorDisplayName = pr.AuthorDisplayName,
             RepositoryName = pr.RepositoryName,
             Url = pr.Url,
@@ -216,6 +216,11 @@ public class WorkItemDto
     public string? AssignedTo { get; init; }
 
     /// <summary>
+    /// 所屬團隊 (已經過 TeamMapping 轉換)
+    /// </summary>
+    public string? Team { get; init; }
+
+    /// <summary>
     /// Parent Work Item
     /// </summary>
     public WorkItemDto? ParentWorkItem { get; init; }
@@ -233,6 +238,7 @@ public class WorkItemDto
             State = workItem.State,
             Url = workItem.Url,
             AssignedTo = workItem.AssignedTo,
+            Team = workItem.Team,
             ParentWorkItem = workItem.ParentWorkItem != null
                 ? FromDomain(workItem.ParentWorkItem)
                 : null

@@ -28,9 +28,11 @@ public class JsonFileExporter : IResultExporter
         SyncResultDto syncResult,
         string outputPath,
         bool overwrite = false,
+        bool useWorkItemCentricFormat = true,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("開始匯出 JSON 檔案: {OutputPath}, Overwrite={Overwrite}", outputPath, overwrite);
+        _logger.LogDebug("開始匯出 JSON 檔案: {OutputPath}, Overwrite={Overwrite}, UseWorkItemCentricFormat={UseWorkItemCentricFormat}",
+            outputPath, overwrite, useWorkItemCentricFormat);
 
         // 檢查檔案是否存在
         if (File.Exists(outputPath) && !overwrite)
@@ -42,9 +44,17 @@ public class JsonFileExporter : IResultExporter
 
         try
         {
+            // 根據格式選擇序列化的物件
+            object dataToExport = useWorkItemCentricFormat
+                ? WorkItemCentricOutputDto.FromSyncResult(syncResult)
+                : syncResult;
+
+            var formatType = useWorkItemCentricFormat ? "Work Item 為中心" : "PR 為中心(舊格式)";
+            _logger.LogDebug("序列化 SyncResult 為 JSON - 格式: {Format}, PR/MR 數量: {Count}",
+                formatType, syncResult.TotalPullRequestCount);
+
             // 序列化為 JSON
-            _logger.LogDebug("序列化 SyncResult 為 JSON - PR/MR 數量: {Count}", syncResult.TotalPullRequestCount);
-            var json = JsonSerializer.Serialize(syncResult, _jsonOptions);
+            var json = JsonSerializer.Serialize(dataToExport, _jsonOptions);
 
             // 確保目錄存在
             var directory = Path.GetDirectoryName(outputPath);

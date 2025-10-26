@@ -16,9 +16,9 @@ public class AzureDevOpsSettings
     public required string OrganizationUrl { get; init; }
 
     /// <summary>
-    /// Azure DevOps 專案名稱
+    /// Azure DevOps 專案名稱 (選填,目前未使用)
     /// </summary>
-    public required string ProjectName { get; init; }
+    public string? ProjectName { get; init; }
 
     /// <summary>
     /// Work Item ID 解析 Regex 模式清單

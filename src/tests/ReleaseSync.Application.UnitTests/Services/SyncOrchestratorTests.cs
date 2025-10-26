@@ -416,7 +416,6 @@ public class SyncOrchestratorTests
                 TargetBranch = new BranchName("main"),
                 CreatedAt = DateTime.UtcNow.AddDays(-i),
                 State = "Merged",
-                AuthorUsername = "testuser",
                 RepositoryName = "test/repo"
             })
             .ToList();

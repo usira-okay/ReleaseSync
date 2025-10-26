@@ -56,9 +56,9 @@ public class PullRequestInfo
     public required string State { get; init; }
 
     /// <summary>
-    /// 作者使用者名稱
+    /// 作者在版控平台的使用者 ID (GitLab: 數字 ID, BitBucket: UUID)
     /// </summary>
-    public required string AuthorUsername { get; init; }
+    public string? AuthorUserId { get; init; }
 
     /// <summary>
     /// 作者顯示名稱

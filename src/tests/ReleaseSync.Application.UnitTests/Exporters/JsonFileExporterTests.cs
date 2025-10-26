@@ -64,8 +64,8 @@ public class JsonFileExporterTests : IDisposable
         var syncResult = CreateTestSyncResult();
         var outputPath = Path.Combine(_testOutputDirectory, "output.json");
 
-        // Act
-        await _exporter.ExportAsync(syncResult, outputPath);
+        // Act - 使用舊格式以便測試可以反序列化為 SyncResultDto
+        await _exporter.ExportAsync(syncResult, outputPath, useWorkItemCentricFormat: false);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
@@ -91,8 +91,8 @@ public class JsonFileExporterTests : IDisposable
         var syncResult = CreateTestSyncResult();
         var outputPath = Path.Combine(_testOutputDirectory, "output_camelcase.json");
 
-        // Act
-        await _exporter.ExportAsync(syncResult, outputPath);
+        // Act - 使用舊格式測試 camelCase
+        await _exporter.ExportAsync(syncResult, outputPath, useWorkItemCentricFormat: false);
 
         // Assert
         var jsonContent = await File.ReadAllTextAsync(outputPath);
@@ -151,8 +151,8 @@ public class JsonFileExporterTests : IDisposable
         // 先建立檔案
         await File.WriteAllTextAsync(outputPath, "old content");
 
-        // Act
-        await _exporter.ExportAsync(syncResult, outputPath, overwrite: true);
+        // Act - 使用舊格式
+        await _exporter.ExportAsync(syncResult, outputPath, overwrite: true, useWorkItemCentricFormat: false);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
@@ -203,8 +203,8 @@ public class JsonFileExporterTests : IDisposable
         var syncResultDto = SyncResultDto.FromDomain(syncResult);
         var outputPath = Path.Combine(_testOutputDirectory, "empty.json");
 
-        // Act
-        await _exporter.ExportAsync(syncResultDto, outputPath);
+        // Act - 使用舊格式
+        await _exporter.ExportAsync(syncResultDto, outputPath, useWorkItemCentricFormat: false);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
@@ -266,7 +266,6 @@ public class JsonFileExporterTests : IDisposable
             TargetBranch = new BranchName("main"),
             CreatedAt = DateTime.UtcNow.AddDays(-3),
             State = "Merged",
-            AuthorUsername = "testuser",
             RepositoryName = "test/repo"
         };
 

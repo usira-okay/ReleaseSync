@@ -22,11 +22,23 @@ public class WorkItemIdTests
         workItemId.Value.Should().Be(value);
     }
 
+    [Fact]
+    public void Validate_WithZero_ShouldNotThrow()
+    {
+        // Arrange - 0 作為佔位符是允許的
+        var workItemId = new WorkItemId(0);
+
+        // Act
+        var act = () => workItemId.Validate();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
     [Theory]
-    [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-100)]
-    public void Validate_WithZeroOrNegative_ShouldThrowException(int value)
+    public void Validate_WithNegative_ShouldThrowException(int value)
     {
         // Arrange
         var workItemId = new WorkItemId(value);
@@ -36,7 +48,7 @@ public class WorkItemIdTests
 
         // Assert
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*Work Item ID 必須為正整數*");
+            .WithMessage("*Work Item ID 不可為負數*");
     }
 
     [Theory]
@@ -103,7 +115,6 @@ public class WorkItemIdTests
     [InlineData("")]
     [InlineData("abc")]
     [InlineData("12.34")]
-    [InlineData("0")]
     [InlineData("-1")]
     public void TryParse_WithInvalidString_ShouldReturnFalseAndNull(string value)
     {
@@ -156,13 +167,44 @@ public class WorkItemIdTests
     }
 
     [Fact]
-    public void TryParse_WithZeroValue_ShouldReturnFalse()
+    public void TryParse_WithZeroValue_ShouldReturnTrueAndCreatePlaceholder()
     {
         // Act
         var result = WorkItemId.TryParse("0", out var workItemId);
 
         // Assert
-        result.Should().BeFalse();
-        workItemId.Should().BeNull();
+        result.Should().BeTrue();
+        workItemId.Should().NotBeNull();
+        workItemId!.Value.Should().Be(0);
+        workItemId.IsPlaceholder.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsPlaceholder_WithZeroValue_ShouldReturnTrue()
+    {
+        // Arrange
+        var workItemId = new WorkItemId(0);
+
+        // Act
+        var isPlaceholder = workItemId.IsPlaceholder;
+
+        // Assert
+        isPlaceholder.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(100)]
+    [InlineData(12345)]
+    public void IsPlaceholder_WithNonZeroValue_ShouldReturnFalse(int value)
+    {
+        // Arrange
+        var workItemId = new WorkItemId(value);
+
+        // Act
+        var isPlaceholder = workItemId.IsPlaceholder;
+
+        // Assert
+        isPlaceholder.Should().BeFalse();
     }
 }

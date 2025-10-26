@@ -76,8 +76,13 @@ public class SyncCommandHandler
             // 匯出 JSON
             if (!string.IsNullOrWhiteSpace(outputFile))
             {
-                _logger.LogInformation("匯出結果至: {OutputFile}", outputFile);
-                await _resultExporter.ExportAsync(result, outputFile, force, cancellationToken);
+                _logger.LogInformation("匯出結果至: {OutputFile} (Work Item 為中心格式)", outputFile);
+                await _resultExporter.ExportAsync(
+                    result,
+                    outputFile,
+                    overwrite: force,
+                    useWorkItemCentricFormat: true,
+                    cancellationToken);
                 _logger.LogInformation("匯出完成!");
             }
 

@@ -40,7 +40,6 @@ public static class TestHelper
             TargetBranch = new BranchName("main"),
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             State = "Merged",
-            AuthorUsername = "test-user",
             RepositoryName = "test/repo"
         });
 
@@ -70,7 +69,6 @@ public static class TestHelper
             TargetBranch = new BranchName("main"),
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             State = "Merged",
-            AuthorUsername = "test-user",
             RepositoryName = "test/repo"
         };
 
@@ -127,7 +125,6 @@ public static class TestHelper
                 TargetBranch = new BranchName("main"),
                 CreatedAt = DateTime.UtcNow.AddDays(-i),
                 State = i % 3 == 0 ? "Merged" : "Open",
-                AuthorUsername = $"user-{i % 10}",
                 RepositoryName = "test/repo"
             });
         }
@@ -176,7 +173,6 @@ public static class TestHelper
             TargetBranch = new BranchName("main"),
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             State = "Merged",
-            AuthorUsername = "test-user",
             RepositoryName = "test/repo"
         });
 
@@ -208,7 +204,6 @@ public static class TestHelper
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             MergedAt = DateTime.UtcNow.AddDays(-1),
             State = "Merged",
-            AuthorUsername = "test-user",
             AuthorDisplayName = "Test User",
             RepositoryName = "test/repo",
             Url = "https://gitlab.com/test/repo/-/merge_requests/42"
@@ -242,7 +237,6 @@ public static class TestHelper
             CreatedAt = DateTime.UtcNow.AddDays(-2),
             MergedAt = null,
             State = "Open",
-            AuthorUsername = "test-user",
             AuthorDisplayName = null,
             RepositoryName = "test/repo",
             Url = null
