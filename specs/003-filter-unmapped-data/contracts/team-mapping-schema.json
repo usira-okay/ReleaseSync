@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TeamMapping Configuration Schema",
+  "description": "定義 Azure DevOps Work Item 團隊對應的 JSON Schema",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["OriginalTeamName", "DisplayName"],
+    "properties": {
+      "OriginalTeamName": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Azure DevOps Work Item 的原始團隊名稱 (來自 System.AreaPath)",
+        "examples": ["MoneyLogistic", "DailyResource", "Commerce"]
+      },
+      "DisplayName": {
+        "type": "string",
+        "minLength": 1,
+        "description": "顯示名稱 (用於報表)",
+        "examples": ["金流團隊", "日常資源團隊", "商務團隊"]
+      }
+    },
+    "additionalProperties": false
+  },
+  "minItems": 0,
+  "uniqueItems": true,
+  "examples": [
+    [
+      {
+        "OriginalTeamName": "MoneyLogistic",
+        "DisplayName": "金流團隊"
+      },
+      {
+        "OriginalTeamName": "DailyResource",
+        "DisplayName": "日常資源團隊"
+      },
+      {
+        "OriginalTeamName": "Commerce",
+        "DisplayName": "商務團隊"
+      }
+    ]
+  ]
+}

@@ -429,4 +429,248 @@ public class UserMappingServiceTests
         // Assert
         result.Should().Be("張三");
     }
+
+    // ========== T009: HasMapping 方法測試 ==========
+
+    /// <summary>
+    /// 測試已對應使用者返回 true
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Return_True_For_Mapped_User()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var gitlabResult = service.HasMapping("GitLab", "john.doe");
+        var bitbucketResult = service.HasMapping("BitBucket", "jdoe");
+
+        // Assert
+        gitlabResult.Should().BeTrue();
+        bitbucketResult.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// 測試未對應使用者返回 false
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Return_False_For_Unmapped_User()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var gitlabResult = service.HasMapping("GitLab", "jane.smith");
+        var bitbucketResult = service.HasMapping("BitBucket", "jsmith");
+
+        // Assert
+        gitlabResult.Should().BeFalse();
+        bitbucketResult.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// 測試空 UserMapping 返回 true (向後相容)
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Return_True_When_Mappings_Are_Empty()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>()
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var gitlabResult = service.HasMapping("GitLab", "anyone");
+        var bitbucketResult = service.HasMapping("BitBucket", "anyone");
+
+        // Assert
+        gitlabResult.Should().BeTrue("空 Mapping 時應不過濾任何使用者 (向後相容)");
+        bitbucketResult.Should().BeTrue("空 Mapping 時應不過濾任何使用者 (向後相容)");
+    }
+
+    /// <summary>
+    /// 測試大小寫不敏感比對
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Be_Case_Insensitive()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var result1 = service.HasMapping("GitLab", "JOHN.DOE");
+        var result2 = service.HasMapping("GitLab", "John.Doe");
+        var result3 = service.HasMapping("BitBucket", "JDOE");
+        var result4 = service.HasMapping("bitbucket", "JDoe");
+
+        // Assert
+        result1.Should().BeTrue();
+        result2.Should().BeTrue();
+        result3.Should().BeTrue();
+        result4.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// 測試 null 或空字串使用者名稱返回 false
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Return_False_For_Null_Or_Empty_Username()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var nullResult = service.HasMapping("GitLab", null);
+        var emptyResult = service.HasMapping("GitLab", "");
+        var whitespaceResult = service.HasMapping("GitLab", "   ");
+
+        // Assert
+        nullResult.Should().BeFalse();
+        emptyResult.Should().BeFalse();
+        whitespaceResult.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// 測試未知平台返回 false
+    /// </summary>
+    [Fact]
+    public void HasMapping_Should_Return_False_For_Unknown_Platform()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var result = service.HasMapping("GitHub", "john.doe");
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    // ========== IsFilteringEnabled 方法測試 ==========
+
+    /// <summary>
+    /// 測試有 Mapping 時 IsFilteringEnabled 返回 true
+    /// </summary>
+    [Fact]
+    public void IsFilteringEnabled_Should_Return_True_When_Mappings_Exist()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>
+            {
+                new UserMapping
+                {
+                    GitLabUserId = "john.doe",
+                    BitBucketUserId = "jdoe",
+                    DisplayName = "John Doe"
+                }
+            }
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var result = service.IsFilteringEnabled();
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// 測試無 Mapping 時 IsFilteringEnabled 返回 false
+    /// </summary>
+    [Fact]
+    public void IsFilteringEnabled_Should_Return_False_When_Mappings_Are_Empty()
+    {
+        // Arrange
+        var settings = new UserMappingSettings
+        {
+            Mappings = new List<UserMapping>()
+        };
+
+        var options = Options.Create(settings);
+        var service = new UserMappingService(options);
+
+        // Act
+        var result = service.IsFilteringEnabled();
+
+        // Assert
+        result.Should().BeFalse();
+    }
 }

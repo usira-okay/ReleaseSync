@@ -50,6 +50,7 @@ class Program
             services.AddBitBucketServices(configuration);
             services.AddAzureDevOpsServices(configuration);
             services.AddUserMappingServices(configuration);
+            services.AddTeamMappingServices();
 
             // 註冊 Application 服務
             services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();

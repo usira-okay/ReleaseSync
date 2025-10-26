@@ -63,26 +63,55 @@ public class BitBucketPullRequestRepository : IPullRequestRepository
                 cancellationToken);
 
             // 轉換為 Domain Model
-            var domainPullRequests = pullRequests
+            var allPullRequests = pullRequests
                 .Select(pr => ConvertToPullRequestInfo(pr, projectName))
                 .ToList();
+
+            var filteredPullRequests = allPullRequests;
 
             // 如果有指定目標分支,進行過濾
             if (targetBranches != null && targetBranches.Any())
             {
                 var targetBranchList = targetBranches.ToList();
-                domainPullRequests = domainPullRequests
+                filteredPullRequests = filteredPullRequests
                     .Where(pr => targetBranchList.Contains(pr.TargetBranch.Value))
                     .ToList();
 
                 _logger.LogDebug("已過濾目標分支: {TargetBranches}, 剩餘 {Count} 筆 PR",
-                    string.Join(", ", targetBranchList), domainPullRequests.Count);
+                    string.Join(", ", targetBranchList), filteredPullRequests.Count);
             }
 
-            _logger.LogInformation("成功轉換 {Count} 筆 BitBucket PR 為 Domain Model - 專案: {ProjectName}",
-                domainPullRequests.Count, projectName);
+            // 根據 UserMapping 過濾 PR (如果啟用)
+            var beforeUserFilterCount = filteredPullRequests.Count;
+            filteredPullRequests = filteredPullRequests
+                .Where(pr => _userMappingService.HasMapping("BitBucket", pr.AuthorUsername))
+                .ToList();
 
-            return domainPullRequests;
+            // 記錄過濾統計
+            var userFilteredCount = beforeUserFilterCount - filteredPullRequests.Count;
+            if (_userMappingService.IsFilteringEnabled())
+            {
+                if (userFilteredCount > 0)
+                {
+                    _logger.LogInformation(
+                        "根據 UserMapping 過濾 {FilteredCount} 筆 PR (總共 {TotalCount} 筆,保留 {RetainedCount} 筆) - 專案: {ProjectName}",
+                        userFilteredCount, beforeUserFilterCount, filteredPullRequests.Count, projectName);
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "所有 {Count} 筆 PR 都在 UserMapping 中,無需過濾 - 專案: {ProjectName}",
+                        beforeUserFilterCount, projectName);
+                }
+            }
+            else
+            {
+                _logger.LogDebug(
+                    "UserMapping 為空,保留所有 {Count} 筆 PR (向後相容模式) - 專案: {ProjectName}",
+                    filteredPullRequests.Count, projectName);
+            }
+
+            return filteredPullRequests;
         }
         catch (Exception ex)
         {
