@@ -77,7 +77,7 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
             .Where(pr => targetBranchList.Contains(pr.TargetBranch.Value))
             .ToList();
 
-        _logger.LogDebug("已過濾目標分支: {TargetBranches}, 剩餘 {Count} 筆 PR",
+        _logger.LogInformation("已過濾目標分支: {TargetBranches}, 剩餘 {Count} 筆 PR",
             string.Join(", ", targetBranchList), filtered.Count);
 
         return filtered;

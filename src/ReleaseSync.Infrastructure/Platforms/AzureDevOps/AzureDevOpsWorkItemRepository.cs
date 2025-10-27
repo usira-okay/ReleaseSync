@@ -30,7 +30,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         bool includeParent = true,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
+        _logger.LogInformation(
             "開始查詢 Work Item: {WorkItemId}, IncludeParent={IncludeParent}",
             workItemId.Value, includeParent);
 
@@ -60,7 +60,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
             workItemInfo.ParentWorkItem = await GetParentWorkItemAsync(workItem, workItemId, cancellationToken);
         }
 
-        _logger.LogDebug(
+        _logger.LogInformation(
             "成功查詢 Work Item: {WorkItemId}, Type={Type}, State={State}, Team={Team}",
             workItemId.Value, workItemInfo.Type, workItemInfo.State, workItemInfo.Team);
 
@@ -111,7 +111,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         if (!ShouldIncludeParentWorkItem(parentInfo, workItemId, parent.Id))
         {
             // Parent 不在 TeamMapping 中,嘗試向上查找
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Work Item {WorkItemId} 的 Parent 不在 TeamMapping 中,嘗試向上查找更高層級的 Parent",
                 workItemId.Value);
             return await FindParentUserStoryAsync(parent, cancellationToken);
@@ -120,13 +120,13 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         // 只保留 User Story 等級的 Parent
         if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Work Item {WorkItemId} 的 Parent User Story: {ParentId} - {ParentTitle}, Team={Team}",
                 workItemId.Value, parent.Id, parentInfo.Title, parentInfo.Team);
             return parentInfo;
         }
 
-        _logger.LogDebug(
+        _logger.LogInformation(
             "Work Item {WorkItemId} 的 Parent 類型為 '{ParentType}',不是 User Story,嘗試向上查找",
             workItemId.Value, parentInfo.Type);
 
@@ -143,7 +143,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         if (parentInfo.Id.IsPlaceholder)
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - WorkItemId={WorkItemId}, ParentId={ParentId}",
                 workItemId.Value, parentId);
             return true;
@@ -168,7 +168,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
     {
         var ids = workItemIds.Select(x => x.Value).ToList();
 
-        _logger.LogDebug(
+        _logger.LogInformation(
             "開始批次查詢 Work Items: Count={Count}, IncludeParent={IncludeParent}",
             ids.Count, includeParent);
 
@@ -335,7 +335,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
             // 格式: https://dev.azure.com/{organization}/_workitems/edit/{id}
             var webUrl = $"{uri.Scheme}://{uri.Host}/{organization}/_workitems/edit/{workItemId}";
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "轉換 Work Item URL: API={ApiUrl} -> Web={WebUrl}",
                 apiUrl, webUrl);
 
@@ -372,7 +372,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         }
 
         // 如果只有一層,無法判斷團隊
-        _logger.LogDebug(
+        _logger.LogInformation(
             "無法從 Area Path 提取團隊名稱: {AreaPath}",
             areaPath);
 
@@ -448,7 +448,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         var parent = await _apiClient.GetParentWorkItemAsync(workItem, cancellationToken);
         if (parent == null)
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Work Item {WorkItemId} 沒有 Parent,停止查找",
                 workItem.Id);
             return null;
@@ -456,7 +456,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         var parentInfo = ConvertToWorkItemInfo(parent);
 
-        _logger.LogDebug(
+        _logger.LogInformation(
             "查找 Parent: {ParentId} - Type={ParentType}, Title={ParentTitle}, Team={Team} (剩餘深度: {RemainingDepth})",
             parent.Id, parentInfo.Type, parentInfo.Title, parentInfo.Team, maxDepth);
 
@@ -489,7 +489,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         if (parentInfo.Id.IsPlaceholder)
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - ParentId={ParentId}",
                 parentId);
             return true;

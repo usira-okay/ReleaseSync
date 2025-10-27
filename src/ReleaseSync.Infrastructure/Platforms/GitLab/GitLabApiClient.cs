@@ -28,7 +28,7 @@ public class GitLabApiClient
         // NGitLab 建立連線 (支援 Personal Access Token)
         _client = new GitLabClient(apiUrl, personalAccessToken);
 
-        _logger.LogDebug("GitLabApiClient 已初始化: {ApiUrl}", apiUrl);
+        _logger.LogInformation("GitLabApiClient 已初始化: {ApiUrl}", apiUrl);
     }
 
     /// <summary>
@@ -83,7 +83,7 @@ public class GitLabApiClient
                     .Where(mr => targetBranchList.Contains(mr.TargetBranch))
                     .ToList();
 
-                _logger.LogDebug("已過濾目標分支: {TargetBranches}, 剩餘 {Count} 筆 MR",
+                _logger.LogInformation("已過濾目標分支: {TargetBranches}, 剩餘 {Count} 筆 MR",
                     string.Join(", ", targetBranchList), mergeRequests.Count);
             }
 

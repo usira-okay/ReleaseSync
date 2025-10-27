@@ -31,7 +31,7 @@ public class JsonFileExporter : IResultExporter
         bool useWorkItemCentricFormat = true,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("開始匯出 JSON 檔案: {OutputPath}, Overwrite={Overwrite}, UseWorkItemCentricFormat={UseWorkItemCentricFormat}",
+        _logger.LogInformation("開始匯出 JSON 檔案: {OutputPath}, Overwrite={Overwrite}, UseWorkItemCentricFormat={UseWorkItemCentricFormat}",
             outputPath, overwrite, useWorkItemCentricFormat);
 
         // 檢查檔案是否存在
@@ -50,7 +50,7 @@ public class JsonFileExporter : IResultExporter
                 : syncResult;
 
             var formatType = useWorkItemCentricFormat ? "Work Item 為中心" : "PR 為中心(舊格式)";
-            _logger.LogDebug("序列化 SyncResult 為 JSON - 格式: {Format}, PR/MR 數量: {Count}",
+            _logger.LogInformation("序列化 SyncResult 為 JSON - 格式: {Format}, PR/MR 數量: {Count}",
                 formatType, syncResult.TotalPullRequestCount);
 
             // 序列化為 JSON
@@ -60,7 +60,7 @@ public class JsonFileExporter : IResultExporter
             var directory = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(directory))
             {
-                _logger.LogDebug("建立輸出目錄: {Directory}", directory);
+                _logger.LogInformation("建立輸出目錄: {Directory}", directory);
                 Directory.CreateDirectory(directory);
             }
 

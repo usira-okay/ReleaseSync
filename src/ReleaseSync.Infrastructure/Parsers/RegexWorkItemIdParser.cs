@@ -83,7 +83,7 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
 
             workItemId = new WorkItemId(id);
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName} using pattern: {PatternName}",
                 id, branchName.Value, pattern.Name);
 

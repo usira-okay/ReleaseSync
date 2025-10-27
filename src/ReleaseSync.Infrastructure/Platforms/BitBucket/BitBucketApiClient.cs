@@ -56,7 +56,7 @@ public class BitBucketApiClient
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
 
-        _logger.LogDebug("BitBucketApiClient 已初始化");
+        _logger.LogInformation("BitBucketApiClient 已初始化");
     }
 
     /// <summary>
@@ -117,7 +117,7 @@ public class BitBucketApiClient
                     break;
                 }
 
-                _logger.LogDebug("已抓取 {Count} 筆 PR,繼續查詢下一頁", allPullRequests.Count);
+                _logger.LogInformation("已抓取 {Count} 筆 PR,繼續查詢下一頁", allPullRequests.Count);
             }
 
             _logger.LogInformation(

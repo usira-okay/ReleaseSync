@@ -79,7 +79,7 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
             try
             {
                 var projectId = GetProjectIdentifier(project);
-                _logger.LogDebug("開始查詢 {Platform} 專案: {ProjectId}", PlatformName, projectId);
+                _logger.LogInformation("開始查詢 {Platform} 專案: {ProjectId}", PlatformName, projectId);
 
                 var pullRequests = await _repository.GetPullRequestsAsync(
                     GetRepositoryPath(project),

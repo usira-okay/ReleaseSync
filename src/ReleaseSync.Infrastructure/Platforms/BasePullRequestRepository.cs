@@ -128,7 +128,7 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
         }
         else
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "UserMapping 為空,保留所有 {Count} 筆 PR/MR (向後相容模式) - 專案: {ProjectName}",
                 afterCount, projectName);
         }

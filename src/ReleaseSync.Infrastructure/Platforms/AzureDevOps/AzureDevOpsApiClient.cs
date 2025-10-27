@@ -48,14 +48,14 @@ public class AzureDevOpsApiClient : IDisposable
     {
         try
         {
-            _logger.LogDebug("開始抓取 Work Item: {WorkItemId}", workItemId);
+            _logger.LogInformation("開始抓取 Work Item: {WorkItemId}", workItemId);
 
             var workItem = await _witClient.GetWorkItemAsync(
                 id: workItemId,
                 expand: includeRelations ? WorkItemExpand.Relations : WorkItemExpand.None,
                 cancellationToken: cancellationToken);
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "成功抓取 Work Item: {WorkItemId}, Type={Type}, Title={Title}",
                 workItemId,
                 workItem.Fields.GetValueOrDefault("System.WorkItemType"),
@@ -96,7 +96,7 @@ public class AzureDevOpsApiClient : IDisposable
 
         if (parentRelation == null)
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Work Item {WorkItemId} 沒有 Parent Work Item",
                 workItem.Id);
             return null;
@@ -115,7 +115,7 @@ public class AzureDevOpsApiClient : IDisposable
                 return null;
             }
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "Work Item {WorkItemId} 的 Parent Work Item ID: {ParentId}",
                 workItem.Id, parentId);
 
@@ -150,7 +150,7 @@ public class AzureDevOpsApiClient : IDisposable
 
         try
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "開始批次抓取 Work Items: Count={Count}",
                 ids.Count);
 
@@ -182,6 +182,6 @@ public class AzureDevOpsApiClient : IDisposable
         _connection?.Dispose();
         _disposed = true;
 
-        _logger.LogDebug("已釋放 Azure DevOps API 連線");
+        _logger.LogInformation("已釋放 Azure DevOps API 連線");
     }
 }

@@ -203,14 +203,14 @@ public class SyncOrchestrator : ISyncOrchestrator
             {
                 pr.AssociatedWorkItem = workItem;
 
-                _logger.LogDebug(
+                _logger.LogInformation(
                     "成功關聯 Work Item: PR={PrTitle}, WorkItem={WorkItemId} - {WorkItemTitle}",
                     pr.Title, workItem.Id.Value, workItem.Title);
 
                 return true;
             }
 
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "PR {PrTitle} 無對應的 Work Item (Branch: {BranchName})",
                 pr.Title, pr.SourceBranch.Value);
 

@@ -75,7 +75,7 @@ public class AzureDevOpsService : IWorkItemService
         bool includeParent = true,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug(
+        _logger.LogInformation(
             "開始從 Branch 名稱解析 Work Item: {BranchName}",
             branchName.Value);
 
@@ -88,7 +88,7 @@ public class AzureDevOpsService : IWorkItemService
             return null;
         }
 
-        _logger.LogDebug(
+        _logger.LogInformation(
             "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName}",
             workItemId.Value, branchName.Value);
 

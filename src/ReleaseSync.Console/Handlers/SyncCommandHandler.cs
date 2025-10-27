@@ -45,8 +45,7 @@ public class SyncCommandHandler
         {
             if (verbose)
             {
-                System.Console.WriteLine("🔍 啟用詳細日誌輸出 (Debug 等級)");
-                System.Console.WriteLine();
+                _logger.LogInformation("啟用詳細日誌輸出 (Debug 等級)");
             }
 
             _logger.LogInformation("=== ReleaseSync 同步工具 ===");
@@ -91,64 +90,47 @@ public class SyncCommandHandler
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogError(ex, "認證失敗");
-            System.Console.WriteLine();
-            System.Console.WriteLine("❌ 認證失敗!");
-            System.Console.WriteLine("請檢查以下項目:");
-            System.Console.WriteLine("  1. 確認 appsettings.secure.json 中的 Token 正確");
-            System.Console.WriteLine("  2. 確認 Token 未過期");
-            System.Console.WriteLine("  3. 確認 Token 權限足夠 (GitLab: api, read_repository)");
-            System.Console.WriteLine();
-            System.Console.WriteLine($"錯誤訊息: {ex.Message}");
+            _logger.LogError("請檢查以下項目:");
+            _logger.LogError("  1. 確認 appsettings.secure.json 中的 Token 正確");
+            _logger.LogError("  2. 確認 Token 未過期");
+            _logger.LogError("  3. 確認 Token 權限足夠 (GitLab: api, read_repository)");
             return 1;
         }
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "網路連線失敗");
-            System.Console.WriteLine();
-            System.Console.WriteLine("❌ 網路連線失敗!");
-            System.Console.WriteLine("請檢查:");
-            System.Console.WriteLine("  1. 網路連線是否正常");
-            System.Console.WriteLine("  2. API URL 是否正確 (appsettings.json)");
-            System.Console.WriteLine($"  3. 錯誤訊息: {ex.Message}");
+            _logger.LogError("請檢查:");
+            _logger.LogError("  1. 網路連線是否正常");
+            _logger.LogError("  2. API URL 是否正確 (appsettings.json)");
             return 1;
         }
         catch (FileNotFoundException ex) when (ex.Message.Contains("appsettings"))
         {
-            System.Console.WriteLine("❌ 找不到組態檔!");
-            System.Console.WriteLine("請確認以下檔案存在:");
-            System.Console.WriteLine("  - appsettings.json");
-            System.Console.WriteLine("  - appsettings.secure.json (可從 appsettings.secure.example.json 複製)");
+            _logger.LogError("找不到組態檔!");
+            _logger.LogError("請確認以下檔案存在:");
+            _logger.LogError("  - appsettings.json");
+            _logger.LogError("  - appsettings.secure.json (可從 appsettings.secure.example.json 複製)");
             return 1;
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("輸出檔案已存在"))
         {
-            _logger.LogWarning("輸出檔案已存在");
-            System.Console.WriteLine();
-            System.Console.WriteLine("⚠️ 輸出檔案已存在!");
-            System.Console.WriteLine($"檔案: {outputFile}");
-            System.Console.WriteLine("請使用 --force 或 -f 參數強制覆蓋,或指定不同的輸出檔案。");
+            _logger.LogWarning("輸出檔案已存在: {OutputFile}", outputFile);
+            _logger.LogWarning("請使用 --force 或 -f 參數強制覆蓋,或指定不同的輸出檔案");
             return 1;
         }
         catch (ArgumentException ex) when (ex.Message.Contains("至少須啟用一個平台"))
         {
             _logger.LogError("未啟用任何平台");
-            System.Console.WriteLine();
-            System.Console.WriteLine("❌ 未啟用任何平台!");
-            System.Console.WriteLine("請至少啟用一個平台:");
-            System.Console.WriteLine("  --enable-gitlab   或  --gitlab");
-            System.Console.WriteLine("  --enable-bitbucket 或 --bitbucket");
-            System.Console.WriteLine();
-            System.Console.WriteLine("範例: dotnet run -- sync -s 2025-01-01 -e 2025-01-31 --gitlab");
+            _logger.LogError("請至少啟用一個平台:");
+            _logger.LogError("  --enable-gitlab   或  --gitlab");
+            _logger.LogError("  --enable-bitbucket 或 --bitbucket");
+            _logger.LogError("範例: dotnet run -- sync -s 2025-01-01 -e 2025-01-31 --gitlab");
             return 1;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "執行失敗: {Message}", ex.Message);
-            System.Console.WriteLine();
-            System.Console.WriteLine("❌ 執行失敗!");
-            System.Console.WriteLine($"錯誤訊息: {ex.Message}");
-            System.Console.WriteLine();
-            System.Console.WriteLine("使用 --verbose 或 -v 參數可查看詳細錯誤資訊");
+            _logger.LogError("使用 --verbose 或 -v 參數可查看詳細錯誤資訊");
             return 1;
         }
     }
