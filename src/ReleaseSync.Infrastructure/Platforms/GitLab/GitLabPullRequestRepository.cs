@@ -2,18 +2,20 @@ using Microsoft.Extensions.Logging;
 using NGitLab.Models;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Domain.Models;
-using ReleaseSync.Domain.Repositories;
 
 namespace ReleaseSync.Infrastructure.Platforms.GitLab;
 
 /// <summary>
 /// GitLab Pull Request (Merge Request) Repository 實作
 /// </summary>
-public class GitLabPullRequestRepository : IPullRequestRepository
+public class GitLabPullRequestRepository : BasePullRequestRepository<MergeRequest>
 {
     private readonly GitLabApiClient _apiClient;
-    private readonly ILogger<GitLabPullRequestRepository> _logger;
-    private readonly IUserMappingService _userMappingService;
+
+    /// <summary>
+    /// 平台名稱
+    /// </summary>
+    protected override string PlatformName => "GitLab";
 
     /// <summary>
     /// 建立 GitLabPullRequestRepository
@@ -22,81 +24,32 @@ public class GitLabPullRequestRepository : IPullRequestRepository
         GitLabApiClient apiClient,
         ILogger<GitLabPullRequestRepository> logger,
         IUserMappingService userMappingService)
+        : base(logger, userMappingService)
     {
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _userMappingService = userMappingService ?? throw new ArgumentNullException(nameof(userMappingService));
     }
 
     /// <summary>
-    /// 查詢指定時間範圍內的 Merge Requests
+    /// 從 API 取得 Merge Requests
     /// </summary>
-    public async Task<IEnumerable<PullRequestInfo>> GetPullRequestsAsync(
+    protected override async Task<IEnumerable<MergeRequest>> FetchPullRequestsFromApiAsync(
         string projectName,
         DateRange dateRange,
-        IEnumerable<string>? targetBranches = null,
-        CancellationToken cancellationToken = default)
+        IEnumerable<string>? targetBranches,
+        CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(projectName, nameof(projectName));
-        ArgumentNullException.ThrowIfNull(dateRange, nameof(dateRange));
-
-        try
-        {
-            // 呼叫 API Client 取得 Merge Requests
-            var mergeRequests = await _apiClient.GetMergeRequestsAsync(
-                projectName,
-                dateRange.StartDate,
-                dateRange.EndDate,
-                targetBranches,
-                cancellationToken);
-
-            // 轉換為 Domain Model
-            var allPullRequests = mergeRequests
-                .Select(mr => ConvertToPullRequestInfo(mr, projectName))
-                .ToList();
-
-            // 根據 UserMapping 過濾 PR (如果啟用)
-            var filteredPullRequests = allPullRequests
-                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping("GitLab", pr.AuthorUserId))
-                .ToList();
-
-            // 記錄過濾統計
-            var filteredCount = allPullRequests.Count - filteredPullRequests.Count;
-            if (_userMappingService.IsFilteringEnabled())
-            {
-                if (filteredCount > 0)
-                {
-                    _logger.LogInformation(
-                        "根據 UserMapping 過濾 {FilteredCount} 筆 MR (總共 {TotalCount} 筆,保留 {RetainedCount} 筆) - 專案: {ProjectName}",
-                        filteredCount, allPullRequests.Count, filteredPullRequests.Count, projectName);
-                }
-                else
-                {
-                    _logger.LogInformation(
-                        "所有 {Count} 筆 MR 都在 UserMapping 中,無需過濾 - 專案: {ProjectName}",
-                        allPullRequests.Count, projectName);
-                }
-            }
-            else
-            {
-                _logger.LogDebug(
-                    "UserMapping 為空,保留所有 {Count} 筆 MR (向後相容模式) - 專案: {ProjectName}",
-                    allPullRequests.Count, projectName);
-            }
-
-            return filteredPullRequests;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "查詢 GitLab MR 失敗 - 專案: {ProjectName}", projectName);
-            throw;
-        }
+        return await _apiClient.GetMergeRequestsAsync(
+            projectName,
+            dateRange.StartDate,
+            dateRange.EndDate,
+            targetBranches,
+            cancellationToken);
     }
 
     /// <summary>
     /// 將 NGitLab 的 MergeRequest 模型轉換為 Domain 的 PullRequestInfo
     /// </summary>
-    private PullRequestInfo ConvertToPullRequestInfo(MergeRequest mr, string projectName)
+    protected override PullRequestInfo ConvertToPullRequestInfo(MergeRequest mr, string projectName)
     {
         try
         {
@@ -104,14 +57,13 @@ public class GitLabPullRequestRepository : IPullRequestRepository
             var originalDisplayName = mr.Author?.Name;
 
             // 使用 UserMapping 服務取得映射後的 DisplayName
-            // 注意: 現在使用 originalDisplayName 作為 key,因為 authorUsername 已被移除
             var mappedDisplayName = originalDisplayName != null
-                ? _userMappingService.GetDisplayName("GitLab", authorUserId, originalDisplayName)
+                ? _userMappingService.GetDisplayName(PlatformName, authorUserId, originalDisplayName)
                 : null;
 
             return new PullRequestInfo
             {
-                Platform = "GitLab",
+                Platform = PlatformName,
                 Id = mr.Id.ToString(),
                 Number = (int)mr.Iid,
                 Title = mr.Title ?? string.Empty,
