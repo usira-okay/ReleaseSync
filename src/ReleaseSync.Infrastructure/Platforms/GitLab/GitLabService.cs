@@ -1,6 +1,4 @@
-using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
-using ReleaseSync.Domain.Services;
 using ReleaseSync.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,16 +10,14 @@ namespace ReleaseSync.Infrastructure.Platforms.GitLab;
 /// GitLab 平台服務
 /// 協調多個 GitLab 專案的 Merge Request 查詢
 /// </summary>
-public class GitLabService : IPlatformService
+public class GitLabService : BasePlatformService<GitLabProjectSettings>
 {
-    private readonly IPullRequestRepository _repository;
     private readonly GitLabSettings _settings;
-    private readonly ILogger<GitLabService> _logger;
 
     /// <summary>
     /// 平台名稱
     /// </summary>
-    public string PlatformName => "GitLab";
+    public override string PlatformName => "GitLab";
 
     /// <summary>
     /// 建立 GitLabService
@@ -30,62 +26,28 @@ public class GitLabService : IPlatformService
         [FromKeyedServices("GitLab")] IPullRequestRepository repository,
         IOptions<GitLabSettings> settings,
         ILogger<GitLabService> logger)
+        : base(repository, logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// 取得指定時間範圍內所有專案的 Merge Requests
+    /// 取得所有專案設定
     /// </summary>
-    public async Task<IEnumerable<PullRequestInfo>> GetPullRequestsAsync(
-        DateRange dateRange,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dateRange, nameof(dateRange));
+    protected override IEnumerable<GitLabProjectSettings> GetProjects() => _settings.Projects;
 
-        _logger.LogInformation("開始從 GitLab 抓取 MR - 時間範圍: {StartDate} ~ {EndDate}, 專案數: {ProjectCount}",
-            dateRange.StartDate, dateRange.EndDate, _settings.Projects.Count);
+    /// <summary>
+    /// 取得專案識別字串
+    /// </summary>
+    protected override string GetProjectIdentifier(GitLabProjectSettings project) => project.ProjectPath;
 
-        if (!_settings.Projects.Any())
-        {
-            _logger.LogWarning("未設定任何 GitLab 專案");
-            return Enumerable.Empty<PullRequestInfo>();
-        }
+    /// <summary>
+    /// 取得專案的 Repository 路徑
+    /// </summary>
+    protected override string GetRepositoryPath(GitLabProjectSettings project) => project.ProjectPath;
 
-        var allPullRequests = new List<PullRequestInfo>();
-
-        // 依序查詢所有專案
-        foreach (var project in _settings.Projects)
-        {
-            try
-            {
-                _logger.LogDebug("開始查詢 GitLab 專案: {ProjectPath}", project.ProjectPath);
-
-                var pullRequests = await _repository.GetPullRequestsAsync(
-                    project.ProjectPath,
-                    dateRange,
-                    project.TargetBranches,
-                    cancellationToken);
-
-                var prList = pullRequests.ToList();
-
-                _logger.LogInformation("成功抓取 GitLab 專案 {ProjectPath}: {Count} 筆 MR",
-                    project.ProjectPath, prList.Count);
-
-                allPullRequests.AddRange(prList);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "抓取 GitLab 專案 {ProjectPath} 失敗", project.ProjectPath);
-                // 不要因為單一專案失敗而中斷其他專案
-            }
-        }
-
-        _logger.LogInformation("GitLab 抓取完成 - 總共 {TotalCount} 筆 MR",
-            allPullRequests.Count);
-
-        return allPullRequests;
-    }
+    /// <summary>
+    /// 取得專案的目標分支清單
+    /// </summary>
+    protected override List<string> GetTargetBranches(GitLabProjectSettings project) => project.TargetBranches;
 }

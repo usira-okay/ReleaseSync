@@ -1,6 +1,4 @@
-using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
-using ReleaseSync.Domain.Services;
 using ReleaseSync.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,16 +10,14 @@ namespace ReleaseSync.Infrastructure.Platforms.BitBucket;
 /// BitBucket 平台服務
 /// 協調多個 BitBucket Repository 的 Pull Request 查詢
 /// </summary>
-public class BitBucketService : IPlatformService
+public class BitBucketService : BasePlatformService<BitBucketProjectSettings>
 {
-    private readonly IPullRequestRepository _repository;
     private readonly BitBucketSettings _settings;
-    private readonly ILogger<BitBucketService> _logger;
 
     /// <summary>
     /// 平台名稱
     /// </summary>
-    public string PlatformName => "BitBucket";
+    public override string PlatformName => "BitBucket";
 
     /// <summary>
     /// 建立 BitBucketService
@@ -30,62 +26,28 @@ public class BitBucketService : IPlatformService
         [FromKeyedServices("BitBucket")] IPullRequestRepository repository,
         IOptions<BitBucketSettings> settings,
         ILogger<BitBucketService> logger)
+        : base(repository, logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _settings = settings?.Value ?? throw new ArgumentNullException(nameof(settings));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// 取得指定時間範圍內所有專案的 Pull Requests
+    /// 取得所有專案設定
     /// </summary>
-    public async Task<IEnumerable<PullRequestInfo>> GetPullRequestsAsync(
-        DateRange dateRange,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(dateRange, nameof(dateRange));
+    protected override IEnumerable<BitBucketProjectSettings> GetProjects() => _settings.Projects;
 
-        _logger.LogInformation("開始從 BitBucket 抓取 PR - 時間範圍: {StartDate} ~ {EndDate}, 專案數: {ProjectCount}",
-            dateRange.StartDate, dateRange.EndDate, _settings.Projects.Count);
+    /// <summary>
+    /// 取得專案識別字串
+    /// </summary>
+    protected override string GetProjectIdentifier(BitBucketProjectSettings project) => project.WorkspaceAndRepo;
 
-        if (!_settings.Projects.Any())
-        {
-            _logger.LogWarning("未設定任何 BitBucket 專案");
-            return Enumerable.Empty<PullRequestInfo>();
-        }
+    /// <summary>
+    /// 取得專案的 Repository 路徑
+    /// </summary>
+    protected override string GetRepositoryPath(BitBucketProjectSettings project) => project.WorkspaceAndRepo;
 
-        var allPullRequests = new List<PullRequestInfo>();
-
-        // 依序查詢所有專案
-        foreach (var project in _settings.Projects)
-        {
-            try
-            {
-                _logger.LogDebug("開始查詢 BitBucket 專案: {WorkspaceAndRepo}", project.WorkspaceAndRepo);
-
-                var pullRequests = await _repository.GetPullRequestsAsync(
-                    project.WorkspaceAndRepo,
-                    dateRange,
-                    project.TargetBranches,
-                    cancellationToken);
-
-                var prList = pullRequests.ToList();
-
-                _logger.LogInformation("成功抓取 BitBucket 專案 {WorkspaceAndRepo}: {Count} 筆 PR",
-                    project.WorkspaceAndRepo, prList.Count);
-
-                allPullRequests.AddRange(prList);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "抓取 BitBucket 專案 {WorkspaceAndRepo} 失敗", project.WorkspaceAndRepo);
-                // 不要因為單一專案失敗而中斷其他專案
-            }
-        }
-
-        _logger.LogInformation("BitBucket 抓取完成 - 總共 {TotalCount} 筆 PR",
-            allPullRequests.Count);
-
-        return allPullRequests;
-    }
+    /// <summary>
+    /// 取得專案的目標分支清單
+    /// </summary>
+    protected override List<string> GetTargetBranches(BitBucketProjectSettings project) => project.TargetBranches;
 }
