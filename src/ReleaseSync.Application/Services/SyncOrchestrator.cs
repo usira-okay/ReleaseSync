@@ -74,8 +74,8 @@ public class SyncOrchestrator : ISyncOrchestrator
             return SyncResultDto.FromDomain(syncResult);
         }
 
-        // 並行執行所有啟用的平台
-        var tasks = enabledServices.Select(async service =>
+        // 依序執行所有啟用的平台
+        foreach (var service in enabledServices)
         {
             var stopwatch = Stopwatch.StartNew();
             try
@@ -115,9 +115,7 @@ public class SyncOrchestrator : ISyncOrchestrator
                         ex.Message,
                         stopwatch.ElapsedMilliseconds));
             }
-        });
-
-        await Task.WhenAll(tasks);
+        }
 
         // 整合 Azure DevOps Work Items (如果啟用)
         if (request.EnableAzureDevOps)

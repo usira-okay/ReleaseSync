@@ -56,8 +56,8 @@ public class GitLabService : IPlatformService
 
         var allPullRequests = new List<PullRequestInfo>();
 
-        // 並行查詢所有專案
-        var tasks = _settings.Projects.Select(async project =>
+        // 依序查詢所有專案
+        foreach (var project in _settings.Projects)
         {
             try
             {
@@ -74,22 +74,13 @@ public class GitLabService : IPlatformService
                 _logger.LogInformation("成功抓取 GitLab 專案 {ProjectPath}: {Count} 筆 MR",
                     project.ProjectPath, prList.Count);
 
-                return prList;
+                allPullRequests.AddRange(prList);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "抓取 GitLab 專案 {ProjectPath} 失敗", project.ProjectPath);
                 // 不要因為單一專案失敗而中斷其他專案
-                return Enumerable.Empty<PullRequestInfo>();
             }
-        });
-
-        var results = await Task.WhenAll(tasks);
-
-        // 合併所有專案的結果
-        foreach (var projectPullRequests in results)
-        {
-            allPullRequests.AddRange(projectPullRequests);
         }
 
         _logger.LogInformation("GitLab 抓取完成 - 總共 {TotalCount} 筆 MR",
