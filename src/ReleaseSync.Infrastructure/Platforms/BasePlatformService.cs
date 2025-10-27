@@ -62,9 +62,6 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
 
         var projects = GetProjects().ToList();
 
-        _logger.LogInformation("開始從 {Platform} 抓取 PR/MR - 時間範圍: {StartDate} ~ {EndDate}, 專案數: {ProjectCount}",
-            PlatformName, dateRange.StartDate, dateRange.EndDate, projects.Count);
-
         if (!projects.Any())
         {
             _logger.LogWarning("未設定任何 {Platform} 專案", PlatformName);
@@ -79,7 +76,6 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
             try
             {
                 var projectId = GetProjectIdentifier(project);
-                _logger.LogInformation("開始查詢 {Platform} 專案: {ProjectId}", PlatformName, projectId);
 
                 var pullRequests = await _repository.GetPullRequestsAsync(
                     GetRepositoryPath(project),
@@ -89,7 +85,7 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
 
                 var prList = pullRequests.ToList();
 
-                _logger.LogInformation("成功抓取 {Platform} 專案 {ProjectId}: {Count} 筆 PR/MR",
+                _logger.LogInformation("{Platform} - {ProjectId}: {Count} 筆 PR/MR",
                     PlatformName, projectId, prList.Count);
 
                 allPullRequests.AddRange(prList);
@@ -102,7 +98,7 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
             }
         }
 
-        _logger.LogInformation("{Platform} 抓取完成 - 總共 {TotalCount} 筆 PR/MR",
+        _logger.LogInformation("{Platform} 完成 - 總共 {TotalCount} 筆 PR/MR",
             PlatformName, allPullRequests.Count);
 
         return allPullRequests;

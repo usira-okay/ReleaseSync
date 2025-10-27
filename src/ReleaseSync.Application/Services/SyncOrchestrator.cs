@@ -80,8 +80,6 @@ public class SyncOrchestrator : ISyncOrchestrator
             var stopwatch = Stopwatch.StartNew();
             try
             {
-                _logger.LogInformation("開始同步平台: {Platform}", service.PlatformName);
-
                 var pullRequests = await service.GetPullRequestsAsync(
                     dateRange,
                     cancellationToken);
@@ -89,7 +87,7 @@ public class SyncOrchestrator : ISyncOrchestrator
                 var prList = pullRequests.ToList();
                 stopwatch.Stop();
 
-                _logger.LogInformation("平台 {Platform} 同步成功 - 抓取 {Count} 筆 PR/MR, 耗時 {ElapsedMs} ms",
+                _logger.LogInformation("平台 {Platform} 完成 - {Count} 筆 PR/MR, {ElapsedMs} ms",
                     service.PlatformName, prList.Count, stopwatch.ElapsedMilliseconds);
 
                 // 加入到 SyncResult
@@ -105,7 +103,7 @@ public class SyncOrchestrator : ISyncOrchestrator
             catch (Exception ex)
             {
                 stopwatch.Stop();
-                _logger.LogError(ex, "平台 {Platform} 同步失敗 - 耗時 {ElapsedMs} ms",
+                _logger.LogError(ex, "平台 {Platform} 失敗 - {ElapsedMs} ms",
                     service.PlatformName, stopwatch.ElapsedMilliseconds);
 
                 // 記錄失敗狀態
@@ -130,18 +128,14 @@ public class SyncOrchestrator : ISyncOrchestrator
             .Sum(s => s.ElapsedMilliseconds);
         var totalPRCount = syncResult.PullRequests.Count();
 
-        _logger.LogInformation("同步作業完成 - {Summary}", syncResult.GetSummary());
-        _logger.LogInformation(
-            "效能指標 - 總耗時: {TotalMs} ms, PR/MR 數量: {Count}, 平均每筆: {AvgMs} ms",
-            totalElapsedMs,
-            totalPRCount,
-            totalPRCount > 0 ? totalElapsedMs / totalPRCount : 0);
+        _logger.LogInformation("同步作業完成 - {Summary}, 總耗時: {TotalMs} ms, PR/MR: {Count} 筆",
+            syncResult.GetSummary(), totalElapsedMs, totalPRCount);
 
         // 檢查效能是否符合目標 (100 筆 PR/MR 於 30 秒內)
         if (totalPRCount >= 100 && totalElapsedMs > 30000)
         {
             _logger.LogWarning(
-                "⚠️ 效能低於預期: {Count} 筆資料耗時 {Seconds:F2} 秒 (目標: 30 秒)",
+                "效能低於預期: {Count} 筆資料耗時 {Seconds:F2} 秒 (目標: 30 秒)",
                 totalPRCount,
                 totalElapsedMs / 1000.0);
         }
@@ -163,10 +157,6 @@ public class SyncOrchestrator : ISyncOrchestrator
             return;
         }
 
-        _logger.LogInformation(
-            "開始整合 Work Items - PR/MR 數量: {Count}",
-            syncResult.PullRequests.Count());
-
         var stopwatch = Stopwatch.StartNew();
         int successCount = 0;
         int failureCount = 0;
@@ -183,7 +173,7 @@ public class SyncOrchestrator : ISyncOrchestrator
         stopwatch.Stop();
 
         _logger.LogInformation(
-            "完成 Work Item 整合 - 成功: {SuccessCount}, 失敗: {FailureCount}, 耗時: {ElapsedMs} ms",
+            "Work Item 整合完成 - 成功: {SuccessCount}, 失敗: {FailureCount}, {ElapsedMs} ms",
             successCount, failureCount, stopwatch.ElapsedMilliseconds);
     }
 
@@ -202,17 +192,8 @@ public class SyncOrchestrator : ISyncOrchestrator
             if (workItem != null)
             {
                 pr.AssociatedWorkItem = workItem;
-
-                _logger.LogInformation(
-                    "成功關聯 Work Item: PR={PrTitle}, WorkItem={WorkItemId} - {WorkItemTitle}",
-                    pr.Title, workItem.Id.Value, workItem.Title);
-
                 return true;
             }
-
-            _logger.LogInformation(
-                "PR {PrTitle} 無對應的 Work Item (Branch: {BranchName})",
-                pr.Title, pr.SourceBranch.Value);
 
             return false;
         }
