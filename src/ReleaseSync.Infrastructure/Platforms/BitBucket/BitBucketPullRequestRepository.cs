@@ -114,8 +114,8 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
                 Description = pr.Description,
                 SourceBranch = new BranchName(pr.Source?.Branch?.Name ?? "unknown"),
                 TargetBranch = new BranchName(pr.Destination?.Branch?.Name ?? "unknown"),
-                CreatedAt = pr.CreatedOn,
-                MergedAt = mergedAt,
+                CreatedAt = EnsureUtc(pr.CreatedOn),
+                MergedAt = mergedAt.HasValue ? EnsureUtc(mergedAt.Value) : null,
                 State = ConvertState(pr.State),
                 AuthorUserId = authorUserId,
                 AuthorDisplayName = mappedDisplayName,
@@ -129,6 +129,26 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
                 pr.Id, pr.Title);
             throw new InvalidOperationException($"轉換 BitBucket PR 失敗: {pr.Id}", ex);
         }
+    }
+
+    /// <summary>
+    /// 確保 DateTime 為 UTC 時間
+    /// </summary>
+    private static DateTime EnsureUtc(DateTime dateTime)
+    {
+        if (dateTime.Kind == DateTimeKind.Utc)
+        {
+            return dateTime;
+        }
+        
+        // 如果是 Unspecified，假設為 UTC (BitBucket API 回傳 UTC 時間)
+        if (dateTime.Kind == DateTimeKind.Unspecified)
+        {
+            return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+        }
+        
+        // 如果是 Local，轉換為 UTC
+        return dateTime.ToUniversalTime();
     }
 
     /// <summary>

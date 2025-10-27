@@ -84,8 +84,10 @@ public class WorkItemInfo
         if (string.IsNullOrWhiteSpace(State))
             throw new ArgumentException("State 不能為空");
 
-        if (CreatedAt > DateTime.UtcNow)
-            throw new ArgumentException($"CreatedAt 不能為未來時間: {CreatedAt}");
+        // 允許合理的時間誤差 (5分鐘) 以避免時區或時鐘同步問題
+        var maxAllowedTime = DateTime.UtcNow.AddMinutes(5);
+        if (CreatedAt > maxAllowedTime)
+            throw new ArgumentException($"CreatedAt 不能為未來時間: {CreatedAt} (目前 UTC: {DateTime.UtcNow})");
 
         if (UpdatedAt < CreatedAt)
             throw new ArgumentException("UpdatedAt 不能早於 CreatedAt");

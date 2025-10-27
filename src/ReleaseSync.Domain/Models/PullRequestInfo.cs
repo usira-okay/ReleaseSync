@@ -100,8 +100,10 @@ public class PullRequestInfo
         SourceBranch?.Validate();
         TargetBranch?.Validate();
 
-        if (CreatedAt > DateTime.UtcNow)
-            throw new ArgumentException($"CreatedAt 不能為未來時間: {CreatedAt}");
+        // 允許合理的時間誤差 (5分鐘) 以避免時區或時鐘同步問題
+        var maxAllowedTime = DateTime.UtcNow.AddMinutes(5);
+        if (CreatedAt > maxAllowedTime)
+            throw new ArgumentException($"CreatedAt 不能為未來時間: {CreatedAt} (目前 UTC: {DateTime.UtcNow})");
 
         if (MergedAt.HasValue && MergedAt.Value < CreatedAt)
             throw new ArgumentException("MergedAt 不能早於 CreatedAt");
