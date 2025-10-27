@@ -50,79 +50,14 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         var workItemInfo = ConvertToWorkItemInfo(workItem);
 
         // 根據 TeamMapping 過濾 Work Item
-        // 例外:Work Item ID 為 0 (佔位符) 時,跳過 TeamMapping 檢查
-        if (_teamMappingService.IsFilteringEnabled())
+        if (!ShouldIncludeWorkItem(workItemInfo, workItemId))
         {
-            if (workItemInfo.Id.IsPlaceholder)
-            {
-                _logger.LogInformation(
-                    "Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - Type={Type}, Title={Title}",
-                    workItemInfo.Type, workItemInfo.Title);
-            }
-            else if (!_teamMappingService.HasMapping(workItemInfo.OriginalTeamName))
-            {
-                _logger.LogWarning(
-                    "Work Item {WorkItemId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
-                    workItemId.Value, workItemInfo.OriginalTeamName ?? "(null)", workItemInfo.Type, workItemInfo.Title, workItemInfo.Team);
-                return null!;
-            }
+            return null!;
         }
 
         if (includeParent)
         {
-            var parent = await _apiClient.GetParentWorkItemAsync(workItem, cancellationToken);
-            if (parent != null)
-            {
-                var parentInfo = ConvertToWorkItemInfo(parent);
-
-                // 檢查 Parent 的 TeamMapping (除非是佔位符)
-                bool shouldIncludeParent = true;
-                if (_teamMappingService.IsFilteringEnabled())
-                {
-                    if (parentInfo.Id.IsPlaceholder)
-                    {
-                        _logger.LogDebug(
-                            "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - WorkItemId={WorkItemId}, ParentId={ParentId}",
-                            workItemId.Value, parent.Id);
-                    }
-                    else if (!_teamMappingService.HasMapping(parentInfo.OriginalTeamName))
-                    {
-                        _logger.LogWarning(
-                            "Work Item {WorkItemId} 的 Parent {ParentId} 團隊 '{OriginalTeam}' 不在 TeamMapping 中,嘗試向上查找 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
-                            workItemId.Value, parent.Id, parentInfo.OriginalTeamName ?? "(null)", parentInfo.Type, parentInfo.Title, parentInfo.Team);
-                        shouldIncludeParent = false;
-                    }
-                }
-
-                if (shouldIncludeParent)
-                {
-                    // 只保留 User Story 等級的 Parent
-                    if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
-                    {
-                        workItemInfo.ParentWorkItem = parentInfo;
-                        _logger.LogDebug(
-                            "Work Item {WorkItemId} 的 Parent User Story: {ParentId} - {ParentTitle}, Team={Team}",
-                            workItemId.Value, parent.Id, parentInfo.Title, parentInfo.Team);
-                    }
-                    else
-                    {
-                        _logger.LogDebug(
-                            "Work Item {WorkItemId} 的 Parent 類型為 '{ParentType}',不是 User Story,嘗試向上查找",
-                            workItemId.Value, parentInfo.Type);
-
-                        // 如果 Parent 不是 User Story,繼續向上查找
-                        workItemInfo.ParentWorkItem = await FindParentUserStoryAsync(parent, cancellationToken);
-                    }
-                }
-                else
-                {
-                    // Parent 不在 TeamMapping 中,嘗試向上查找
-                    _logger.LogDebug(
-                        "Work Item {WorkItemId} 的 Parent 不在 TeamMapping 中,嘗試向上查找更高層級的 Parent",
-                        workItemId.Value);
-                    workItemInfo.ParentWorkItem = await FindParentUserStoryAsync(parent, cancellationToken);
-                }
-            }
+            workItemInfo.ParentWorkItem = await GetParentWorkItemAsync(workItem, workItemId, cancellationToken);
         }
 
         _logger.LogDebug(
@@ -130,6 +65,100 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
             workItemId.Value, workItemInfo.Type, workItemInfo.State, workItemInfo.Team);
 
         return workItemInfo;
+    }
+
+    private bool ShouldIncludeWorkItem(WorkItemInfo workItemInfo, WorkItemId workItemId)
+    {
+        if (!_teamMappingService.IsFilteringEnabled())
+        {
+            return true;
+        }
+
+        if (workItemInfo.Id.IsPlaceholder)
+        {
+            _logger.LogInformation(
+                "Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - Type={Type}, Title={Title}",
+                workItemInfo.Type, workItemInfo.Title);
+            return true;
+        }
+
+        if (_teamMappingService.HasMapping(workItemInfo.OriginalTeamName))
+        {
+            return true;
+        }
+
+        _logger.LogWarning(
+            "Work Item {WorkItemId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
+            workItemId.Value, workItemInfo.OriginalTeamName ?? "(null)", workItemInfo.Type, workItemInfo.Title, workItemInfo.Team);
+
+        return false;
+    }
+
+    private async Task<WorkItemInfo?> GetParentWorkItemAsync(
+        WorkItem workItem,
+        WorkItemId workItemId,
+        CancellationToken cancellationToken)
+    {
+        var parent = await _apiClient.GetParentWorkItemAsync(workItem, cancellationToken);
+        if (parent == null)
+        {
+            return null;
+        }
+
+        var parentInfo = ConvertToWorkItemInfo(parent);
+
+        // 檢查 Parent 的 TeamMapping
+        if (!ShouldIncludeParentWorkItem(parentInfo, workItemId, parent.Id))
+        {
+            // Parent 不在 TeamMapping 中,嘗試向上查找
+            _logger.LogDebug(
+                "Work Item {WorkItemId} 的 Parent 不在 TeamMapping 中,嘗試向上查找更高層級的 Parent",
+                workItemId.Value);
+            return await FindParentUserStoryAsync(parent, cancellationToken);
+        }
+
+        // 只保留 User Story 等級的 Parent
+        if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogDebug(
+                "Work Item {WorkItemId} 的 Parent User Story: {ParentId} - {ParentTitle}, Team={Team}",
+                workItemId.Value, parent.Id, parentInfo.Title, parentInfo.Team);
+            return parentInfo;
+        }
+
+        _logger.LogDebug(
+            "Work Item {WorkItemId} 的 Parent 類型為 '{ParentType}',不是 User Story,嘗試向上查找",
+            workItemId.Value, parentInfo.Type);
+
+        // 如果 Parent 不是 User Story,繼續向上查找
+        return await FindParentUserStoryAsync(parent, cancellationToken);
+    }
+
+    private bool ShouldIncludeParentWorkItem(WorkItemInfo parentInfo, WorkItemId workItemId, int? parentId)
+    {
+        if (!_teamMappingService.IsFilteringEnabled())
+        {
+            return true;
+        }
+
+        if (parentInfo.Id.IsPlaceholder)
+        {
+            _logger.LogDebug(
+                "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - WorkItemId={WorkItemId}, ParentId={ParentId}",
+                workItemId.Value, parentId);
+            return true;
+        }
+
+        if (_teamMappingService.HasMapping(parentInfo.OriginalTeamName))
+        {
+            return true;
+        }
+
+        _logger.LogWarning(
+            "Work Item {WorkItemId} 的 Parent {ParentId} 團隊 '{OriginalTeam}' 不在 TeamMapping 中,嘗試向上查找 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
+            workItemId.Value, parentId, parentInfo.OriginalTeamName ?? "(null)", parentInfo.Type, parentInfo.Title, parentInfo.Team);
+
+        return false;
     }
 
     public async Task<IEnumerable<WorkItemInfo>> GetWorkItemsAsync(
@@ -154,66 +183,91 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         foreach (var workItem in workItemList)
         {
-            var workItemInfo = ConvertToWorkItemInfo(workItem);
-
-            // 根據 TeamMapping 過濾 Work Item
-            // 例外:Work Item ID 為 0 (佔位符) 時,跳過 TeamMapping 檢查
-            if (_teamMappingService.IsFilteringEnabled())
+            var workItemInfo = await ProcessWorkItemAsync(workItem, includeParent, cancellationToken);
+            
+            if (workItemInfo == null)
             {
-                if (workItemInfo.Id.IsPlaceholder)
-                {
-                    _logger.LogInformation(
-                        "Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - Type={Type}, Title={Title}",
-                        workItemInfo.Type, workItemInfo.Title);
-                }
-                else if (!_teamMappingService.HasMapping(workItemInfo.OriginalTeamName))
-                {
-                    _logger.LogWarning(
-                        "Work Item {WorkItemId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
-                        workItem.Id, workItemInfo.OriginalTeamName ?? "(null)", workItemInfo.Type, workItemInfo.Title, workItemInfo.Team);
-                    filteredCount++;
-                    continue; // 跳過此 Work Item
-                }
-            }
-
-            if (includeParent)
-            {
-                var parent = await _apiClient.GetParentWorkItemAsync(workItem, cancellationToken);
-                if (parent != null)
-                {
-                    var parentInfo = ConvertToWorkItemInfo(parent);
-
-                    // 只保留 User Story 等級的 Parent
-                    if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
-                    {
-                        workItemInfo.ParentWorkItem = parentInfo;
-                    }
-                    else
-                    {
-                        // 如果 Parent 不是 User Story,繼續向上查找
-                        workItemInfo.ParentWorkItem = await FindParentUserStoryAsync(parent, cancellationToken);
-                    }
-                }
+                filteredCount++;
+                continue;
             }
 
             result.Add(workItemInfo);
         }
 
-        // 記錄過濾統計
+        LogBatchQueryResult(workItemList.Count, result.Count, filteredCount);
+
+        return result;
+    }
+
+    private async Task<WorkItemInfo?> ProcessWorkItemAsync(
+        WorkItem workItem,
+        bool includeParent,
+        CancellationToken cancellationToken)
+    {
+        var workItemInfo = ConvertToWorkItemInfo(workItem);
+
+        // 根據 TeamMapping 過濾 Work Item
+        if (_teamMappingService.IsFilteringEnabled())
+        {
+            if (workItemInfo.Id.IsPlaceholder)
+            {
+                _logger.LogInformation(
+                    "Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - Type={Type}, Title={Title}",
+                    workItemInfo.Type, workItemInfo.Title);
+            }
+            else if (!_teamMappingService.HasMapping(workItemInfo.OriginalTeamName))
+            {
+                _logger.LogWarning(
+                    "Work Item {WorkItemId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
+                    workItem.Id, workItemInfo.OriginalTeamName ?? "(null)", workItemInfo.Type, workItemInfo.Title, workItemInfo.Team);
+                return null;
+            }
+        }
+
+        if (includeParent)
+        {
+            workItemInfo.ParentWorkItem = await GetBatchParentWorkItemAsync(workItem, cancellationToken);
+        }
+
+        return workItemInfo;
+    }
+
+    private async Task<WorkItemInfo?> GetBatchParentWorkItemAsync(
+        WorkItem workItem,
+        CancellationToken cancellationToken)
+    {
+        var parent = await _apiClient.GetParentWorkItemAsync(workItem, cancellationToken);
+        if (parent == null)
+        {
+            return null;
+        }
+
+        var parentInfo = ConvertToWorkItemInfo(parent);
+
+        // 只保留 User Story 等級的 Parent
+        if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
+        {
+            return parentInfo;
+        }
+
+        // 如果 Parent 不是 User Story,繼續向上查找
+        return await FindParentUserStoryAsync(parent, cancellationToken);
+    }
+
+    private void LogBatchQueryResult(int totalCount, int resultCount, int filteredCount)
+    {
         if (_teamMappingService.IsFilteringEnabled())
         {
             _logger.LogInformation(
                 "根據 TeamMapping 過濾 {FilteredCount} 筆 Work Item (總共 {TotalCount} 筆,保留 {RetainedCount} 筆)",
-                filteredCount, workItemList.Count, result.Count);
+                filteredCount, totalCount, resultCount);
         }
         else
         {
             _logger.LogInformation(
                 "成功批次查詢 Work Items: Count={Count} (TeamMapping 為空,向後相容模式)",
-                result.Count);
+                resultCount);
         }
-
-        return result;
     }
 
     /// <summary>
@@ -378,10 +432,6 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
     /// <summary>
     /// 遞迴查找 Parent User Story
     /// </summary>
-    /// <param name="workItem">當前 Work Item</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="maxDepth">最大遞迴深度(預設 5 層)</param>
-    /// <returns>User Story 等級的 Parent,若找不到則返回 null</returns>
     private async Task<WorkItemInfo?> FindParentUserStoryAsync(
         WorkItem workItem,
         CancellationToken cancellationToken,
@@ -410,26 +460,14 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
             "查找 Parent: {ParentId} - Type={ParentType}, Title={ParentTitle}, Team={Team} (剩餘深度: {RemainingDepth})",
             parent.Id, parentInfo.Type, parentInfo.Title, parentInfo.Team, maxDepth);
 
-        // 檢查 TeamMapping (除非是佔位符)
-        if (_teamMappingService.IsFilteringEnabled())
+        // 檢查 TeamMapping 是否允許此 Parent
+        if (!ShouldIncludeParentInSearch(parentInfo, parent.Id))
         {
-            if (parentInfo.Id.IsPlaceholder)
-            {
-                _logger.LogDebug(
-                    "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - ParentId={ParentId}",
-                    parent.Id);
-            }
-            else if (!_teamMappingService.HasMapping(parentInfo.OriginalTeamName))
-            {
-                _logger.LogWarning(
-                    "Parent Work Item {ParentId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
-                    parent.Id, parentInfo.OriginalTeamName ?? "(null)", parentInfo.Type, parentInfo.Title, parentInfo.Team);
-
-                // 繼續向上查找,也許上層的 Parent 在 TeamMapping 中
-                return await FindParentUserStoryAsync(parent, cancellationToken, maxDepth - 1);
-            }
+            // 繼續向上查找,也許上層的 Parent 在 TeamMapping 中
+            return await FindParentUserStoryAsync(parent, cancellationToken, maxDepth - 1);
         }
 
+        // 如果是 User Story,直接返回
         if (parentInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
         {
             _logger.LogInformation(
@@ -440,5 +478,32 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         // 繼續向上查找
         return await FindParentUserStoryAsync(parent, cancellationToken, maxDepth - 1);
+    }
+
+    private bool ShouldIncludeParentInSearch(WorkItemInfo parentInfo, int? parentId)
+    {
+        if (!_teamMappingService.IsFilteringEnabled())
+        {
+            return true;
+        }
+
+        if (parentInfo.Id.IsPlaceholder)
+        {
+            _logger.LogDebug(
+                "Parent Work Item ID 為 0 (佔位符),跳過 TeamMapping 檢查 - ParentId={ParentId}",
+                parentId);
+            return true;
+        }
+
+        if (_teamMappingService.HasMapping(parentInfo.OriginalTeamName))
+        {
+            return true;
+        }
+
+        _logger.LogWarning(
+            "Parent Work Item {ParentId} 的團隊 '{OriginalTeam}' 不在 TeamMapping 中,已過濾 - Type={Type}, Title={Title}, DisplayTeam={DisplayTeam}",
+            parentId, parentInfo.OriginalTeamName ?? "(null)", parentInfo.Type, parentInfo.Title, parentInfo.Team);
+
+        return false;
     }
 }

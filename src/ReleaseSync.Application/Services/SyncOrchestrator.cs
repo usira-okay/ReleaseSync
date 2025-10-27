@@ -173,37 +173,11 @@ public class SyncOrchestrator : ISyncOrchestrator
 
         foreach (var pr in syncResult.PullRequests)
         {
-            try
-            {
-                // 從 Branch 名稱解析並取得 Work Item
-                var workItem = await _workItemService.GetWorkItemFromBranchAsync(
-                    pr.SourceBranch,
-                    includeParent: true,
-                    cancellationToken);
-
-                if (workItem != null)
-                {
-                    pr.AssociatedWorkItem = workItem;
-                    successCount++;
-
-                    _logger.LogDebug(
-                        "成功關聯 Work Item: PR={PrTitle}, WorkItem={WorkItemId} - {WorkItemTitle}",
-                        pr.Title, workItem.Id.Value, workItem.Title);
-                }
-                else
-                {
-                    _logger.LogDebug(
-                        "PR {PrTitle} 無對應的 Work Item (Branch: {BranchName})",
-                        pr.Title, pr.SourceBranch.Value);
-                }
-            }
-            catch (Exception ex)
-            {
+            var result = await TryEnrichPullRequestWithWorkItemAsync(pr, cancellationToken);
+            if (result)
+                successCount++;
+            else
                 failureCount++;
-                _logger.LogWarning(ex,
-                    "整合 Work Item 失敗: PR={PrTitle}, Branch={BranchName}",
-                    pr.Title, pr.SourceBranch.Value);
-            }
         }
 
         stopwatch.Stop();
@@ -211,6 +185,45 @@ public class SyncOrchestrator : ISyncOrchestrator
         _logger.LogInformation(
             "完成 Work Item 整合 - 成功: {SuccessCount}, 失敗: {FailureCount}, 耗時: {ElapsedMs} ms",
             successCount, failureCount, stopwatch.ElapsedMilliseconds);
+    }
+
+    private async Task<bool> TryEnrichPullRequestWithWorkItemAsync(
+        PullRequestInfo pr,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // 從 Branch 名稱解析並取得 Work Item
+            var workItem = await _workItemService!.GetWorkItemFromBranchAsync(
+                pr.SourceBranch,
+                includeParent: true,
+                cancellationToken);
+
+            if (workItem != null)
+            {
+                pr.AssociatedWorkItem = workItem;
+
+                _logger.LogDebug(
+                    "成功關聯 Work Item: PR={PrTitle}, WorkItem={WorkItemId} - {WorkItemTitle}",
+                    pr.Title, workItem.Id.Value, workItem.Title);
+
+                return true;
+            }
+
+            _logger.LogDebug(
+                "PR {PrTitle} 無對應的 Work Item (Branch: {BranchName})",
+                pr.Title, pr.SourceBranch.Value);
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex,
+                "整合 Work Item 失敗: PR={PrTitle}, Branch={BranchName}",
+                pr.Title, pr.SourceBranch.Value);
+
+            return false;
+        }
     }
 
     /// <summary>

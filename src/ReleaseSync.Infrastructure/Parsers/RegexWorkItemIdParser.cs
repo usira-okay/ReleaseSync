@@ -46,45 +46,67 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
 
         foreach (var pattern in _patterns)
         {
-            try
+            if (TryParseWithPattern(branchName, pattern, out workItemId))
             {
-                var regex = new Regex(
-                    pattern.Regex,
-                    pattern.IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
-
-                var match = regex.Match(branchName.Value);
-
-                if (match.Success && match.Groups.Count > pattern.CaptureGroup)
-                {
-                    var value = match.Groups[pattern.CaptureGroup].Value;
-
-                    if (int.TryParse(value, out var id) && id > 0)
-                    {
-                        workItemId = new WorkItemId(id);
-
-                        _logger.LogDebug(
-                            "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName} using pattern: {PatternName}",
-                            id, branchName.Value, pattern.Name);
-
-                        return true;
-                    }
-                }
-            }
-            catch (RegexMatchTimeoutException ex)
-            {
-                _logger.LogWarning(ex,
-                    "Regex 匹配超時: Pattern={PatternName}, Branch={BranchName}",
-                    pattern.Name, branchName.Value);
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogError(ex,
-                    "無效的 Regex 模式: Pattern={PatternName}, Regex={Regex}",
-                    pattern.Name, pattern.Regex);
+                return true;
             }
         }
 
         // 無法解析
+        HandleParseFailure(branchName);
+        return false;
+    }
+
+    private bool TryParseWithPattern(BranchName branchName, WorkItemIdPattern pattern, out WorkItemId workItemId)
+    {
+        workItemId = null!;
+
+        try
+        {
+            var regex = new Regex(
+                pattern.Regex,
+                pattern.IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None);
+
+            var match = regex.Match(branchName.Value);
+
+            if (!match.Success || match.Groups.Count <= pattern.CaptureGroup)
+            {
+                return false;
+            }
+
+            var value = match.Groups[pattern.CaptureGroup].Value;
+
+            if (!int.TryParse(value, out var id) || id <= 0)
+            {
+                return false;
+            }
+
+            workItemId = new WorkItemId(id);
+
+            _logger.LogDebug(
+                "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName} using pattern: {PatternName}",
+                id, branchName.Value, pattern.Name);
+
+            return true;
+        }
+        catch (RegexMatchTimeoutException ex)
+        {
+            _logger.LogWarning(ex,
+                "Regex 匹配超時: Pattern={PatternName}, Branch={BranchName}",
+                pattern.Name, branchName.Value);
+            return false;
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogError(ex,
+                "無效的 Regex 模式: Pattern={PatternName}, Regex={Regex}",
+                pattern.Name, pattern.Regex);
+            return false;
+        }
+    }
+
+    private void HandleParseFailure(BranchName branchName)
+    {
         if (_behavior.OnParseFailure == "LogWarningAndContinue")
         {
             _logger.LogWarning(
@@ -95,7 +117,5 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
         {
             throw new FormatException($"無法從 Branch 名稱解析 Work Item ID: {branchName.Value}");
         }
-
-        return false;
     }
 }
