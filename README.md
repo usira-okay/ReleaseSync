@@ -8,9 +8,12 @@
 - 🔗 Azure DevOps Work Item 整合
 - 📊 JSON 格式匯出
 - 🛡️ 部分失敗容錯處理
-- 📝 詳細的日誌記錄
+- 📝 詳細的日誌記錄（Serilog）
 - ⚡ 並行查詢提升效能
 - 🔍 Verbose 模式支援 Debug 等級日誌
+- 👥 使用者對照功能（User Mapping）
+- 🏢 團隊名稱對照功能（Team Mapping）
+- 🔐 支援 User Secrets 安全管理敏感資訊
 
 ## 快速開始
 
@@ -28,8 +31,17 @@ dotnet build
 
 ```bash
 cd src/ReleaseSync.Console
-cp appsettings.json.example appsettings.json
-cp appsettings.secure.json.example appsettings.secure.json
+cp appsettings.example.json appsettings.json
+# 編輯 appsettings.json,設定專案路徑、Work Item 解析規則等
+
+# 方法 A: 使用 User Secrets (推薦)
+dotnet user-secrets set "GitLab:PersonalAccessToken" "<YOUR_TOKEN>"
+dotnet user-secrets set "BitBucket:Email" "<YOUR_EMAIL>"
+dotnet user-secrets set "BitBucket:AccessToken" "<YOUR_TOKEN>"
+dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "<YOUR_TOKEN>"
+
+# 方法 B: 使用設定檔 (不推薦,但可選)
+# cp appsettings.secure.example.json appsettings.secure.json
 # 編輯 appsettings.secure.json,填入 API Tokens
 ```
 
@@ -132,30 +144,125 @@ dotnet run --project src/ReleaseSync.Console -- sync \
         "Regex": "vsts(\\d+)",
         "IgnoreCase": true,
         "CaptureGroup": 1
+      },
+      {
+        "Name": "Feature Pattern",
+        "Regex": "feature/(\\d+)-",
+        "IgnoreCase": false,
+        "CaptureGroup": 1
+      }
+    ],
+    "ParsingBehavior": {
+      "OnParseFailure": "LogWarningAndContinue",
+      "StopOnFirstMatch": true
+    },
+    "TeamMapping": [
+      {
+        "OriginalTeamName": "MoneyLogistic",
+        "DisplayName": "金流團隊"
+      },
+      {
+        "OriginalTeamName": "DailyResource",
+        "DisplayName": "日常資源團隊"
       }
     ]
-  }
+  },
+  "UserMapping": [
+    {
+      "GitLabUserId": "john.doe",
+      "BitBucketUserId": "jdoe",
+      "DisplayName": "John Doe"
+    }
+  ]
 }
 ```
 
-### appsettings.secure.json
+### appsettings.secure.json 或 User Secrets
 
-設定 API Token (不會被提交至版本控制):
+**方法 A: 使用 User Secrets (推薦)**
+
+User Secrets 將敏感資訊儲存在使用者設定檔中,不會被提交至版本控制:
+
+```bash
+cd src/ReleaseSync.Console
+dotnet user-secrets set "GitLab:PersonalAccessToken" "glpat-xxxxxxxxxxxxxxxxxxxx"
+dotnet user-secrets set "BitBucket:Email" "your.email@example.com"
+dotnet user-secrets set "BitBucket:AccessToken" "ATBB..."
+dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
+```
+
+**方法 B: 使用 appsettings.secure.json (選用)**
+
+如果您偏好使用設定檔,可建立 `appsettings.secure.json` (已在 `.gitignore` 中排除):
 
 ```json
 {
   "GitLab": {
-    "PersonalAccessToken": "glpat-xxxxxxxxxxxxxxxxxxxx"
+    "PersonalAccessToken": "<YOUR_GITLAB_PERSONAL_ACCESS_TOKEN>"
   },
   "BitBucket": {
-    "Email": "your.email@example.com",
-    "AccessToken": "ATBB..."
+    "Email": "<YOUR_BITBUCKET_EMAIL>",
+    "AccessToken": "<YOUR_BITBUCKET_APP_PASSWORD_OR_ACCESS_TOKEN>"
   },
   "AzureDevOps": {
-    "PersonalAccessToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    "PersonalAccessToken": "<YOUR_AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN>"
   }
 }
 ```
+
+## 進階功能
+
+### User Mapping (使用者對照)
+
+當同一位開發者在不同平台使用不同的使用者 ID 時,可透過 User Mapping 進行對照,讓匯出的 JSON 使用統一的顯示名稱:
+
+```json
+"UserMapping": [
+  {
+    "GitLabUserId": "john.doe",
+    "BitBucketUserId": "jdoe",
+    "DisplayName": "John Doe"
+  }
+]
+```
+
+### Team Mapping (團隊名稱對照)
+
+將 Azure DevOps Work Item 中的團隊名稱對照為更易讀的顯示名稱:
+
+```json
+"TeamMapping": [
+  {
+    "OriginalTeamName": "MoneyLogistic",
+    "DisplayName": "金流團隊"
+  }
+]
+```
+
+### Work Item ID 解析規則
+
+支援多種 Branch 命名模式,自動從 Branch 名稱解析 Work Item ID:
+
+```json
+"WorkItemIdPatterns": [
+  {
+    "Name": "VSTS Pattern",
+    "Regex": "vsts(\\d+)",
+    "IgnoreCase": true,
+    "CaptureGroup": 1
+  },
+  {
+    "Name": "Feature Pattern",
+    "Regex": "feature/(\\d+)-",
+    "IgnoreCase": false,
+    "CaptureGroup": 1
+  }
+]
+```
+
+**解析行為設定:**
+- `OnParseFailure`: 當無法解析 Work Item ID 時的處理方式（LogWarningAndContinue 或 ThrowException）
+- `StopOnFirstMatch`: 找到第一個符合的規則後即停止（true 推薦）
 
 ## 錯誤處理
 
@@ -186,8 +293,14 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 ```
 ❌ 找不到組態檔!
 請確認以下檔案存在:
-  - appsettings.json
-  - appsettings.secure.json (可從 appsettings.secure.example.json 複製)
+  - appsettings.json (可從 appsettings.example.json 複製)
+
+敏感資訊設定方式:
+  方法 A: 使用 User Secrets (推薦)
+    dotnet user-secrets set "GitLab:PersonalAccessToken" "<YOUR_TOKEN>"
+  方法 B: 使用 appsettings.secure.json
+    cp appsettings.secure.example.json appsettings.secure.json
+    # 編輯 appsettings.secure.json
 ```
 
 ## 效能
@@ -231,7 +344,7 @@ src/
 
 ### 前置需求
 
-- .NET 8.0 SDK
+- .NET 9.0 SDK
 - 存取 GitLab / BitBucket / Azure DevOps API 的權限
 
 ### 建置
@@ -258,9 +371,11 @@ dotnet test
 
 ## 安全性
 
-- API Token 儲存於 `appsettings.secure.json`,已在 `.gitignore` 中排除
+- **推薦使用 User Secrets**：敏感資訊儲存在使用者設定檔中（`~/.microsoft/usersecrets/`），完全不會出現在專案目錄
+- **選用 appsettings.secure.json**：如使用設定檔方式，已在 `.gitignore` 中排除
 - 日誌輸出不包含任何敏感資訊 (Token, Password)
 - 建議定期輪替 API Token
+- 支援 Azure DevOps、GitLab 和 BitBucket 的 Personal Access Token (PAT) 認證機制
 
 ## 授權
 
@@ -274,5 +389,5 @@ MIT License
 
 ---
 
-**版本**: 1.0.0
-**最後更新**: 2025-10-18
+**版本**: 0.1.0
+**最後更新**: 2025-10-27
