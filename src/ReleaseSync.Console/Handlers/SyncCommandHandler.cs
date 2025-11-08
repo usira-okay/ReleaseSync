@@ -79,7 +79,7 @@ public class SyncCommandHandler
         }
         catch (UnauthorizedAccessException ex)
         {
-            _logger.LogError(ex, "認證失敗 - 請檢查 appsettings.secure.json 中的 Token 設定");
+            _logger.LogError(ex, "認證失敗 - 請檢查 User Secrets 或 appsettings.json 中的 Token 設定");
             return 1;
         }
         catch (HttpRequestException ex)
@@ -89,7 +89,7 @@ public class SyncCommandHandler
         }
         catch (FileNotFoundException ex) when (ex.Message.Contains("appsettings"))
         {
-            _logger.LogError("找不到組態檔 - 請確認 appsettings.json 與 appsettings.secure.json 存在");
+            _logger.LogError("找不到組態檔 - 請確認 appsettings.json 存在,並已設定 User Secrets");
             return 1;
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("輸出檔案已存在"))

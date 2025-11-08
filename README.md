@@ -34,15 +34,11 @@ cd src/ReleaseSync.Console
 cp appsettings.example.json appsettings.json
 # 編輯 appsettings.json,設定專案路徑、Work Item 解析規則等
 
-# 方法 A: 使用 User Secrets (推薦)
+# 使用 User Secrets 儲存敏感資訊 (推薦)
 dotnet user-secrets set "GitLab:PersonalAccessToken" "<YOUR_TOKEN>"
 dotnet user-secrets set "BitBucket:Email" "<YOUR_EMAIL>"
 dotnet user-secrets set "BitBucket:AccessToken" "<YOUR_TOKEN>"
 dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "<YOUR_TOKEN>"
-
-# 方法 B: 使用設定檔 (不推薦,但可選)
-# cp appsettings.secure.example.json appsettings.secure.json
-# 編輯 appsettings.secure.json,填入 API Tokens
 ```
 
 ### 3. 執行
@@ -177,11 +173,11 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 }
 ```
 
-### appsettings.secure.json 或 User Secrets
+### User Secrets 設定 (敏感資訊)
 
-**方法 A: 使用 User Secrets (推薦)**
+**使用 User Secrets 儲存 API Tokens (推薦)**
 
-User Secrets 將敏感資訊儲存在使用者設定檔中,不會被提交至版本控制:
+User Secrets 將敏感資訊儲存在使用者設定檔中 (`~/.microsoft/usersecrets/`),完全不會被提交至版本控制:
 
 ```bash
 cd src/ReleaseSync.Console
@@ -191,24 +187,9 @@ dotnet user-secrets set "BitBucket:AccessToken" "ATBB..."
 dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
 ```
 
-**方法 B: 使用 appsettings.secure.json (選用)**
+**或者直接將敏感資訊加入 appsettings.json (不推薦)**
 
-如果您偏好使用設定檔,可建立 `appsettings.secure.json` (已在 `.gitignore` 中排除):
-
-```json
-{
-  "GitLab": {
-    "PersonalAccessToken": "<YOUR_GITLAB_PERSONAL_ACCESS_TOKEN>"
-  },
-  "BitBucket": {
-    "Email": "<YOUR_BITBUCKET_EMAIL>",
-    "AccessToken": "<YOUR_BITBUCKET_APP_PASSWORD_OR_ACCESS_TOKEN>"
-  },
-  "AzureDevOps": {
-    "PersonalAccessToken": "<YOUR_AZURE_DEVOPS_PERSONAL_ACCESS_TOKEN>"
-  }
-}
-```
+若您不想使用 User Secrets,也可以直接將 Token 寫入 `appsettings.json` 的對應區段,但請務必確保該檔案不會被提交至版本控制。
 
 ## 進階功能
 
@@ -273,7 +254,7 @@ dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
 ```
 ❌ 認證失敗!
 請檢查以下項目:
-  1. 確認 appsettings.secure.json 中的 Token 正確
+  1. 確認 User Secrets 或 appsettings.json 中的 Token 正確
   2. 確認 Token 未過期
   3. 確認 Token 權限足夠 (GitLab: api, read_repository)
 ```
@@ -296,11 +277,10 @@ dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
   - appsettings.json (可從 appsettings.example.json 複製)
 
 敏感資訊設定方式:
-  方法 A: 使用 User Secrets (推薦)
+  使用 User Secrets (推薦)
     dotnet user-secrets set "GitLab:PersonalAccessToken" "<YOUR_TOKEN>"
-  方法 B: 使用 appsettings.secure.json
-    cp appsettings.secure.example.json appsettings.secure.json
-    # 編輯 appsettings.secure.json
+    dotnet user-secrets set "BitBucket:Email" "<YOUR_EMAIL>"
+    dotnet user-secrets set "BitBucket:AccessToken" "<YOUR_TOKEN>"
 ```
 
 ## 效能
@@ -372,7 +352,6 @@ dotnet test
 ## 安全性
 
 - **推薦使用 User Secrets**：敏感資訊儲存在使用者設定檔中（`~/.microsoft/usersecrets/`），完全不會出現在專案目錄
-- **選用 appsettings.secure.json**：如使用設定檔方式，已在 `.gitignore` 中排除
 - 日誌輸出不包含任何敏感資訊 (Token, Password)
 - 建議定期輪替 API Token
 - 支援 Azure DevOps、GitLab 和 BitBucket 的 Personal Access Token (PAT) 認證機制

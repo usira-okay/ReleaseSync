@@ -6,12 +6,12 @@ namespace ReleaseSync.Infrastructure.Configuration;
 public class BitBucketSettings
 {
     /// <summary>
-    /// BitBucket 使用者 Email (用於 Basic Authentication,從 appsettings.secure.json 讀取)
+    /// BitBucket 使用者 Email (用於 Basic Authentication,從 User Secrets 或 appsettings.json 讀取)
     /// </summary>
     public required string Email { get; init; }
 
     /// <summary>
-    /// BitBucket App Password 或 Access Token (從 appsettings.secure.json 讀取)
+    /// BitBucket App Password 或 Access Token (從 User Secrets 或 appsettings.json 讀取)
     /// </summary>
     public required string AccessToken { get; init; }
 

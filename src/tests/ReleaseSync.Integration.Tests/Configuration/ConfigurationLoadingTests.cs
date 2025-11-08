@@ -134,12 +134,12 @@ public class ConfigurationLoadingTests
     }
 
     /// <summary>
-    /// 測試當 appsettings.secure.json 不存在時,應能正常處理 (optional: true)
+    /// 測試當 User Secrets 不存在時,應能正常處理 (optional: true)
     /// </summary>
     [Fact]
     public void Should_Handle_Missing_Secure_Configuration_Gracefully()
     {
-        // Arrange - 僅載入 appsettings.json,不載入 secure.json
+        // Arrange - 僅載入 appsettings.json,不載入 User Secrets
         var configuration = new ConfigurationBuilder()
             .SetBasePath(GetTestConfigurationPath())
             .AddJsonFile("appsettings.test.json", optional: false)

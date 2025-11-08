@@ -6,7 +6,7 @@ namespace ReleaseSync.Infrastructure.Configuration;
 public class GitLabSettings
 {
     /// <summary>
-    /// Personal Access Token (從 appsettings.secure.json 讀取)
+    /// Personal Access Token (從 User Secrets 或 appsettings.json 讀取)
     /// </summary>
     public required string PersonalAccessToken { get; init; }
 
