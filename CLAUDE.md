@@ -78,6 +78,97 @@ ReleaseSync 是一個從多個平台 (GitLab, BitBucket, Azure DevOps) 聚合 Pu
 - **Task 階段** (`/speckit.tasks`, `/speckit.implement`):
   - 每個階段性任務必須標註:建置狀態、測試狀態、整合影響、回滾計畫
 
+## 常用開發命令
+
+### 建置
+
+```bash
+# 建置整個解決方案
+dotnet build src/src.sln
+
+# 建置特定專案
+dotnet build src/ReleaseSync.Console/ReleaseSync.Console.csproj
+
+# Release 模式建置
+dotnet build src/src.sln -c Release
+```
+
+### 測試
+
+```bash
+# 執行所有測試
+dotnet test src/src.sln
+
+# 執行特定測試專案
+dotnet test src/tests/ReleaseSync.Domain.UnitTests/ReleaseSync.Domain.UnitTests.csproj
+
+# 執行單一測試類別
+dotnet test --filter "FullyQualifiedName~ReleaseSync.Domain.UnitTests.Models.DateRangeTests"
+
+# 執行單一測試方法
+dotnet test --filter "FullyQualifiedName~ReleaseSync.Domain.UnitTests.Models.DateRangeTests.Constructor_WithValidDates_ShouldCreateInstance"
+
+# 執行測試並產生覆蓋率報告
+dotnet test src/src.sln --collect:"XPlat Code Coverage"
+
+# 僅執行單元測試 (排除整合測試)
+dotnet test src/src.sln --filter "FullyQualifiedName!~Integration"
+
+# 執行整合測試
+dotnet test src/tests/ReleaseSync.Integration.Tests/ReleaseSync.Integration.Tests.csproj
+```
+
+### 執行應用程式
+
+```bash
+# 從專案根目錄執行 (推薦)
+dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output.json
+
+# 或從 ReleaseSync.Console 目錄執行
+cd src/ReleaseSync.Console
+dotnet run -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output.json
+
+# 啟用 verbose 模式 (Debug 等級日誌)
+dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
+
+# 多平台同步
+dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab --bitbucket --azdo -o output.json
+
+# 顯示說明
+dotnet run --project src/ReleaseSync.Console -- --help
+dotnet run --project src/ReleaseSync.Console -- sync --help
+```
+
+### User Secrets 管理
+
+```bash
+# 設定 User Secrets
+cd src/ReleaseSync.Console
+dotnet user-secrets set "GitLab:PersonalAccessToken" "your-token-here"
+dotnet user-secrets set "BitBucket:Email" "your-email@example.com"
+dotnet user-secrets set "BitBucket:AccessToken" "your-token-here"
+dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "your-token-here"
+
+# 列出所有 User Secrets
+dotnet user-secrets list
+
+# 移除特定 Secret
+dotnet user-secrets remove "GitLab:PersonalAccessToken"
+
+# 清除所有 Secrets
+dotnet user-secrets clear
+```
+
+### 清理
+
+```bash
+# 清理建置產物
+dotnet clean src/src.sln
+
+# 清理並重新建置
+dotnet clean src/src.sln && dotnet build src/src.sln
+```
+
 ## 架構概覽
 
 ### Clean Architecture 分層
@@ -140,12 +231,18 @@ output.json
 
 ## 開發重點
 
+### 解決方案結構
+
+- **解決方案檔案**: `src/src.sln` (注意:位於 `src` 目錄內,非專案根目錄)
+- **測試專案位置**: `src/tests/` 目錄
+
 ### 目標框架
 
 - **主要專案**: .NET 9.0 (ReleaseSync.Console)
 - **函式庫專案**: .NET 8.0 (Domain, Application, Infrastructure)
 - 專案使用 `TreatWarningsAsErrors=true`,確保程式碼品質
 - XML 文件生成已啟用 (`GenerateDocumentationFile=true`)
+- Nullable Reference Types 已全面啟用
 
 ### 日誌記錄
 
@@ -162,8 +259,24 @@ output.json
 
 ### 組態檔結構
 
-- `appsettings.json`: 非敏感設定 (API URLs, 專案清單, Regex 規則) 與敏感資訊 (API Tokens)
-- **User Secrets**: 推薦的敏感資訊管理方式,將 API Tokens 儲存在使用者設定檔中 (UserSecretsId: `1b985d8b-8619-4ade-87b8-1f41a1b54a7e`)
+- **appsettings.json**: 非敏感設定 (API URLs, 專案清單, Regex 規則)
+- **User Secrets**: 推薦的敏感資訊管理方式 (API Tokens),儲存在使用者設定檔中 (UserSecretsId: `1b985d8b-8619-4ade-87b8-1f41a1b54a7e`)
+- **位置**: `src/ReleaseSync.Console/appsettings.json`
+
+### 相依性注入架構
+
+專案使用 Extension Methods 模式組織 DI 註冊:
+
+- **平台服務註冊**: 各平台透過擴展方法註冊 (如 `AddGitLabServices()`, `AddBitBucketServices()`)
+- **位置**: `ReleaseSync.Infrastructure/DependencyInjection/` 目錄
+- **Program.cs**: 僅包含服務註冊呼叫,不包含複雜邏輯 (符合最小化原則)
+
+範例:
+```csharp
+services.AddGitLabServices(configuration);
+services.AddBitBucketServices(configuration);
+services.AddAzureDevOpsServices(configuration);
+```
 
 ### 擴展新平台支援
 
@@ -172,9 +285,10 @@ output.json
 1. 在 `ReleaseSync.Infrastructure/Platforms/` 建立新資料夾
 2. 實作 `IPullRequestRepository` 介面
 3. 繼承 `BasePullRequestRepository` 以重用通用邏輯
-4. 在 `appsettings.json` 新增平台設定區塊
-5. 在 DI 容器中註冊服務
-6. 在 `SyncCommand` 新增對應的命令列選項
+4. 在 `ReleaseSync.Infrastructure/DependencyInjection/` 建立對應的 Extension Method
+5. 在 `appsettings.json` 新增平台設定區塊
+6. 在 `Program.cs` 中呼叫新的 DI 註冊方法
+7. 在 `SyncCommand` 新增對應的命令列選項
 
 ### 程式碼風格
 
@@ -201,8 +315,27 @@ output.json
 - 確保日誌輸出不包含 Token 或敏感資料
 - 定期輪替 Personal Access Tokens
 
+## SpecKit 開發流程
+
+專案使用 SpecKit 進行結構化開發,可用的命令包括:
+
+- `/speckit.constitution` - 更新專案憲章
+- `/speckit.specify` - 建立或更新功能規格
+- `/speckit.clarify` - 針對規格進行澄清
+- `/speckit.plan` - 產生實作計畫
+- `/speckit.tasks` - 產生任務清單
+- `/speckit.analyze` - 分析跨文件一致性
+- `/speckit.implement` - 執行實作任務
+
+**重要**: 在開發新功能時,建議按照以下順序執行:
+1. `/speckit.specify` - 明確定義需求
+2. `/speckit.clarify` - 澄清不明確的地方 (可選)
+3. `/speckit.plan` - 設計實作方案
+4. `/speckit.tasks` - 產生具體任務
+5. `/speckit.implement` - 執行實作
+
 ## 相關文件
 
-- **專案憲章**: `.specify/memory/constitution.md` - 完整的開發原則與規範
-- **技術規格**: `specs/002-pr-aggregation-tool/` - 詳細技術規格與設計決策
+- **專案憲章**: `.specify/memory/constitution.md` - 完整的開發原則與規範 (必讀)
 - **SpecKit 模板**: `.specify/templates/` - 文件與命令模板
+- **README.md**: 使用者快速上手與功能說明

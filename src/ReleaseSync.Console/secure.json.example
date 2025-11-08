@@ -1,5 +1,0 @@
-{
-  "GitHubToken": "YOUR_GITHUB_TOKEN_HERE",
-  "GitLabToken": "YOUR_GITLAB_TOKEN_HERE",
-  "AzureDevOpsToken": "YOUR_AZURE_DEVOPS_TOKEN_HERE"
-}

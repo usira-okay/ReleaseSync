@@ -17,8 +17,6 @@
 
 ## 快速開始
 
-詳細說明請參考: [Quick Start Guide](specs/002-pr-aggregation-tool/quickstart.md)
-
 ### 1. 安裝
 
 ```bash
@@ -312,14 +310,6 @@ src/
     └── Handlers/                # 命令處理器
 ```
 
-## 文件
-
-- [Quick Start Guide](specs/002-pr-aggregation-tool/quickstart.md) - 快速開始指南
-- [Implementation Plan](specs/002-pr-aggregation-tool/plan.md) - 技術架構與設計決策
-- [Data Model](specs/002-pr-aggregation-tool/data-model.md) - 資料模型詳細說明
-- [Tasks](specs/002-pr-aggregation-tool/tasks.md) - 任務清單與執行順序
-- [Research](specs/002-pr-aggregation-tool/research.md) - 技術調查與決策記錄
-
 ## 開發指南
 
 ### 前置需求
@@ -369,4 +359,4 @@ MIT License
 ---
 
 **版本**: 0.1.0
-**最後更新**: 2025-10-27
+**最後更新**: 2025-11-08
