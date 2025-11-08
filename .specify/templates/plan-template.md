@@ -31,7 +31,21 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+此功能設計必須符合以下憲章原則 (詳見 `.specify/memory/constitution.md`):
+
+- **✅ DDD 戰術模式**: 是否清楚定義 Entity、Value Object、Aggregate 邊界?
+- **✅ CQRS 模式**: 命令與查詢是否明確分離?
+- **✅ SOLID 原則**: 設計是否符合 SRP、OCP、LSP、ISP、DIP?
+- **✅ TDD 強制執行**: 是否規劃先寫測試再實作?測試覆蓋率目標?
+- **✅ KISS 原則**: 是否選擇最簡單的解決方案?是否避免過度設計?
+- **✅ 例外處理**: 例外處理策略是否明確?是否僅在必要時捕捉例外?
+- **✅ 繁體中文**: 所有文件、註解、溝通是否使用繁體中文?
+- **✅ 註解規範**: 是否規劃 XML 註解與 inline comment?
+- **✅ 重用優先**: 是否搜尋並重用現有邏輯與元件?
+- **✅ Program.cs 最小化**: 是否保持 Program.cs 簡潔 (啟動、DI、組態)?
+- **✅ 分層架構**: 是否遵循 Domain → Application → Infrastructure → Presentation?
+
+**複雜度警告**: 任何違反上述原則的設計必須在「複雜度追蹤」章節中充分說明理由。
 
 ## Project Structure
 

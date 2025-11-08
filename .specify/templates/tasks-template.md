@@ -12,11 +12,15 @@ description: "Task list template for feature implementation"
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
-## Format: `[ID] [P?] [Story] Description`
+## Format: `[ID] [P?] [Story] Description [Build: ✅/❌] [Tests: ✅/❌]`
 
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
+- **[Build]**: 完成後程式碼是否可成功建置 (✅ 可建置 / ❌ 不可建置 / ⚠ 部分建置)
+- **[Tests]**: 完成後單元測試是否全部通過 (✅ 通過 / ❌ 不通過 / ⚠ 部分通過 / N/A 無測試)
 - Include exact file paths in descriptions
+
+**重要**: 根據專案憲章要求,每個階段性任務完成後必須標註建置與測試狀態,確保開發過程的品質與可追溯性。
 
 ## Path Conventions
 
@@ -48,9 +52,9 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize [language] project with [framework] dependencies
-- [ ] T003 [P] Configure linting and formatting tools
+- [ ] T001 Create project structure per implementation plan [Build: ✅] [Tests: N/A]
+- [ ] T002 Initialize [language] project with [framework] dependencies [Build: ✅] [Tests: N/A]
+- [ ] T003 [P] Configure linting and formatting tools [Build: ✅] [Tests: N/A]
 
 ---
 
@@ -62,12 +66,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Setup database schema and migrations framework [Build: ✅] [Tests: ✅]
+- [ ] T005 [P] Implement authentication/authorization framework [Build: ✅] [Tests: ✅]
+- [ ] T006 [P] Setup API routing and middleware structure [Build: ✅] [Tests: ✅]
+- [ ] T007 Create base models/entities that all stories depend on [Build: ✅] [Tests: ✅]
+- [ ] T008 Configure error handling and logging infrastructure [Build: ✅] [Tests: N/A]
+- [ ] T009 Setup environment configuration management [Build: ✅] [Tests: N/A]
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -83,17 +87,17 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py [Build: ✅] [Tests: ❌ (Red)]
+- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py [Build: ✅] [Tests: ✅]
+- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py [Build: ✅] [Tests: ✅]
+- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013) [Build: ✅] [Tests: ✅]
+- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py [Build: ✅] [Tests: ✅ (Green)]
+- [ ] T016 [US1] Add validation and error handling [Build: ✅] [Tests: ✅]
+- [ ] T017 [US1] Add logging for user story 1 operations [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
