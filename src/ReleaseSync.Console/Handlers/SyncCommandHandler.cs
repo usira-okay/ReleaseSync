@@ -60,17 +60,20 @@ public class SyncCommandHandler
             // 執行同步
             var result = await _syncOrchestrator.SyncAsync(request, cancellationToken);
 
-            _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}", 
+            _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}",
                 result.TotalPullRequestCount, result.IsFullySuccessful);
 
+            // 轉換為 Work Item 為中心的格式
+            var workItemCentricData = WorkItemCentricOutputDto.FromSyncResult(result);
+            
             // 匯出 JSON
             if (!string.IsNullOrWhiteSpace(outputFile))
             {
+
                 await _resultExporter.ExportAsync(
-                    result,
+                    workItemCentricData,
                     outputFile,
                     overwrite: force,
-                    useWorkItemCentricFormat: true,
                     cancellationToken);
                 _logger.LogInformation("匯出完成: {OutputFile}", outputFile);
             }

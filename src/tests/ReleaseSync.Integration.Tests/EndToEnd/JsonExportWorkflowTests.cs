@@ -72,7 +72,8 @@ public class JsonExportWorkflowTests
             var syncResultDto = await orchestrator.SyncAsync(syncRequest);
 
             // Act - Step 2: 匯出 JSON
-            await exporter.ExportAsync(syncResultDto, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
+            var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResultDto);
+            await exporter.ExportAsync(workItemData, tempFilePath, overwrite: true);
 
             // Assert - 驗證檔案存在
             File.Exists(tempFilePath).Should().BeTrue();
@@ -84,17 +85,14 @@ public class JsonExportWorkflowTests
             var jsonDocument = JsonDocument.Parse(jsonContent);
             var root = jsonDocument.RootElement;
 
-            // 驗證基本結構
-            root.TryGetProperty("syncStartedAt", out _).Should().BeTrue();
-            root.TryGetProperty("syncCompletedAt", out _).Should().BeTrue();
+            // 驗證基本結構 (WorkItemCentricOutputDto 格式)
+            root.TryGetProperty("startDate", out _).Should().BeTrue();
+            root.TryGetProperty("endDate", out _).Should().BeTrue();
+            root.TryGetProperty("workItems", out _).Should().BeTrue();
 
-            // 驗證 PlatformStatuses
-            var platformStatuses = root.GetProperty("platformStatuses");
-            platformStatuses.GetArrayLength().Should().BeGreaterThanOrEqualTo(2, "應包含 GitLab 與 BitBucket 兩個平台");
-
-            // 驗證 PullRequests
-            var pullRequests = root.GetProperty("pullRequests");
-            pullRequests.ValueKind.Should().Be(JsonValueKind.Array);
+            // 驗證 WorkItems
+            var workItems = root.GetProperty("workItems");
+            workItems.ValueKind.Should().Be(JsonValueKind.Array);
         }
         finally
         {
@@ -114,6 +112,7 @@ public class JsonExportWorkflowTests
         // Arrange
         var exporter = TestHelper.CreateJsonFileExporter();
         var syncResult = TestHelper.CreateSampleSyncResultDto();
+        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
 
         var tempFilePath = Path.GetTempFileName();
 
@@ -123,7 +122,7 @@ public class JsonExportWorkflowTests
             await File.WriteAllTextAsync(tempFilePath, "existing content");
 
             // Act & Assert - 當 overwrite: false 時應拋出例外
-            var act = async () => await exporter.ExportAsync(syncResult, tempFilePath, overwrite: false);
+            var act = async () => await exporter.ExportAsync(workItemData, tempFilePath, overwrite: false);
 
             await act.Should().ThrowAsync<InvalidOperationException>()
                 .WithMessage("*已存在*");
@@ -146,6 +145,7 @@ public class JsonExportWorkflowTests
         // Arrange
         var exporter = TestHelper.CreateJsonFileExporter();
         var syncResult = TestHelper.CreateSampleSyncResultDto();
+        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
 
         var tempFilePath = Path.GetTempFileName();
 
@@ -155,12 +155,12 @@ public class JsonExportWorkflowTests
             await File.WriteAllTextAsync(tempFilePath, "existing content");
 
             // Act - 使用 overwrite: true 應成功覆寫
-            await exporter.ExportAsync(syncResult, tempFilePath, overwrite: true, useWorkItemCentricFormat: false);
+            await exporter.ExportAsync(workItemData, tempFilePath, overwrite: true);
 
             // Assert
             var content = await File.ReadAllTextAsync(tempFilePath);
             content.Should().NotBe("existing content");
-            content.Should().Contain("\"pullRequests\"");
+            content.Should().Contain("\"workItems\"");
         }
         finally
         {

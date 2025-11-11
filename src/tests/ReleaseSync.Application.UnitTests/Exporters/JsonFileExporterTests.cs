@@ -57,15 +57,26 @@ public class JsonFileExporterTests : IDisposable
 
     #region ExportAsync 測試
 
+    [Fact(DisplayName = "ExportAsync: data 為 null 應拋出例外")]
+    public async Task ExportAsync_NullData_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        var outputPath = Path.Combine(_testOutputDirectory, "output.json");
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _exporter.ExportAsync(null!, outputPath));
+    }
+
     [Fact(DisplayName = "ExportAsync: 成功匯出 JSON 檔案")]
     public async Task ExportAsync_ValidInput_ShouldCreateJsonFile()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "output.json");
 
-        // Act - 使用舊格式以便測試可以反序列化為 SyncResultDto
-        await _exporter.ExportAsync(syncResult, outputPath, useWorkItemCentricFormat: false);
+        // Act
+        await _exporter.ExportAsync(workItemData, outputPath);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
@@ -79,41 +90,41 @@ public class JsonFileExporterTests : IDisposable
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
-        var deserializedResult = JsonSerializer.Deserialize<SyncResultDto>(jsonContent, options);
+        var deserializedResult = JsonSerializer.Deserialize<WorkItemCentricOutputDto>(jsonContent, options);
         deserializedResult.Should().NotBeNull();
-        deserializedResult!.TotalPullRequestCount.Should().Be(syncResult.TotalPullRequestCount);
+        deserializedResult!.WorkItems.Should().HaveCount(workItemData.WorkItems.Count);
     }
 
     [Fact(DisplayName = "ExportAsync: 輸出 JSON 應為 camelCase 格式")]
     public async Task ExportAsync_OutputFormat_ShouldBeCamelCase()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "output_camelcase.json");
 
-        // Act - 使用舊格式測試 camelCase
-        await _exporter.ExportAsync(syncResult, outputPath, useWorkItemCentricFormat: false);
+        // Act
+        await _exporter.ExportAsync(workItemData, outputPath);
 
         // Assert
         var jsonContent = await File.ReadAllTextAsync(outputPath);
 
         // 驗證使用 camelCase 命名 (而非 PascalCase)
-        jsonContent.Should().Contain("\"syncStartedAt\"");
-        jsonContent.Should().Contain("\"totalPullRequestCount\"");
-        jsonContent.Should().Contain("\"platformStatuses\"");
-        jsonContent.Should().NotContain("\"SyncStartedAt\"");
-        jsonContent.Should().NotContain("\"TotalPullRequestCount\"");
+        jsonContent.Should().Contain("\"startDate\"");
+        jsonContent.Should().Contain("\"endDate\"");
+        jsonContent.Should().Contain("\"workItems\"");
+        jsonContent.Should().NotContain("\"StartDate\"");
+        jsonContent.Should().NotContain("\"WorkItems\"");
     }
 
     [Fact(DisplayName = "ExportAsync: 輸出 JSON 應為格式化 (indented) 格式")]
     public async Task ExportAsync_OutputFormat_ShouldBeIndented()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "output_indented.json");
 
         // Act
-        await _exporter.ExportAsync(syncResult, outputPath);
+        await _exporter.ExportAsync(workItemData, outputPath);
 
         // Assert
         var jsonContent = await File.ReadAllTextAsync(outputPath);
@@ -127,7 +138,7 @@ public class JsonFileExporterTests : IDisposable
     public async Task ExportAsync_FileExistsWithoutOverwrite_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "existing.json");
 
         // 先建立檔案
@@ -135,7 +146,7 @@ public class JsonFileExporterTests : IDisposable
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _exporter.ExportAsync(syncResult, outputPath, overwrite: false));
+            _exporter.ExportAsync(workItemData, outputPath, overwrite: false));
 
         exception.Message.Should().Contain("輸出檔案已存在");
         exception.Message.Should().Contain("--force");
@@ -145,31 +156,31 @@ public class JsonFileExporterTests : IDisposable
     public async Task ExportAsync_FileExistsWithOverwrite_ShouldOverwriteFile()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "overwrite.json");
 
         // 先建立檔案
         await File.WriteAllTextAsync(outputPath, "old content");
 
-        // Act - 使用舊格式
-        await _exporter.ExportAsync(syncResult, outputPath, overwrite: true, useWorkItemCentricFormat: false);
+        // Act
+        await _exporter.ExportAsync(workItemData, outputPath, overwrite: true);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
         var jsonContent = await File.ReadAllTextAsync(outputPath);
         jsonContent.Should().NotContain("old content");
-        jsonContent.Should().Contain("\"totalPullRequestCount\"");
+        jsonContent.Should().Contain("\"workItems\"");
     }
 
     [Fact(DisplayName = "ExportAsync: 目錄不存在應自動建立")]
     public async Task ExportAsync_DirectoryNotExists_ShouldCreateDirectory()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var nestedPath = Path.Combine(_testOutputDirectory, "nested", "deep", "output.json");
 
         // Act
-        await _exporter.ExportAsync(syncResult, nestedPath);
+        await _exporter.ExportAsync(workItemData, nestedPath);
 
         // Assert
         File.Exists(nestedPath).Should().BeTrue();
@@ -180,7 +191,7 @@ public class JsonFileExporterTests : IDisposable
     public async Task ExportAsync_WithCancellationToken_ShouldRespectCancellation()
     {
         // Arrange
-        var syncResult = CreateTestSyncResult();
+        var workItemData = CreateTestWorkItemCentricOutput();
         var outputPath = Path.Combine(_testOutputDirectory, "cancelled.json");
         var cts = new CancellationTokenSource();
 
@@ -189,7 +200,7 @@ public class JsonFileExporterTests : IDisposable
 
         // Act & Assert
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            _exporter.ExportAsync(syncResult, outputPath, cancellationToken: cts.Token));
+            _exporter.ExportAsync(workItemData, outputPath, cancellationToken: cts.Token));
     }
 
     [Fact(DisplayName = "ExportAsync: 空的 PullRequests 應成功匯出")]
@@ -201,15 +212,16 @@ public class JsonFileExporterTests : IDisposable
         syncResult.MarkAsCompleted();
 
         var syncResultDto = SyncResultDto.FromDomain(syncResult);
+        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResultDto);
         var outputPath = Path.Combine(_testOutputDirectory, "empty.json");
 
-        // Act - 使用舊格式
-        await _exporter.ExportAsync(syncResultDto, outputPath, useWorkItemCentricFormat: false);
+        // Act
+        await _exporter.ExportAsync(workItemData, outputPath);
 
         // Assert
         File.Exists(outputPath).Should().BeTrue();
         var jsonContent = await File.ReadAllTextAsync(outputPath);
-        jsonContent.Should().Contain("\"totalPullRequestCount\": 0");
+        jsonContent.Should().Contain("\"workItems\": []");
     }
 
     #endregion
@@ -248,9 +260,9 @@ public class JsonFileExporterTests : IDisposable
     #region 輔助方法
 
     /// <summary>
-    /// 建立測試用的 SyncResultDto
+    /// 建立測試用的 WorkItemCentricOutputDto
     /// </summary>
-    private SyncResultDto CreateTestSyncResult()
+    private WorkItemCentricOutputDto CreateTestWorkItemCentricOutput()
     {
         var dateRange = new DateRange(DateTime.UtcNow.AddDays(-7), DateTime.UtcNow);
         var syncResult = new SyncResult { SyncDateRange = dateRange };
@@ -277,7 +289,8 @@ public class JsonFileExporterTests : IDisposable
 
         syncResult.MarkAsCompleted();
 
-        return SyncResultDto.FromDomain(syncResult);
+        var syncResultDto = SyncResultDto.FromDomain(syncResult);
+        return WorkItemCentricOutputDto.FromSyncResult(syncResultDto);
     }
 
     #endregion

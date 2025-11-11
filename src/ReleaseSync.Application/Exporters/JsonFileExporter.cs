@@ -25,12 +25,13 @@ public class JsonFileExporter : IResultExporter
     }
 
     public async Task ExportAsync(
-        SyncResultDto syncResult,
+        WorkItemCentricOutputDto data,
         string outputPath,
         bool overwrite = false,
-        bool useWorkItemCentricFormat = true,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(data);
+
         // 檢查檔案是否存在
         if (File.Exists(outputPath) && !overwrite)
         {
@@ -41,13 +42,8 @@ public class JsonFileExporter : IResultExporter
 
         try
         {
-            // 根據格式選擇序列化的物件
-            object dataToExport = useWorkItemCentricFormat
-                ? WorkItemCentricOutputDto.FromSyncResult(syncResult)
-                : syncResult;
-
             // 序列化為 JSON
-            var json = JsonSerializer.Serialize(dataToExport, _jsonOptions);
+            var json = JsonSerializer.Serialize(data, _jsonOptions);
 
             // 確保目錄存在
             var directory = Path.GetDirectoryName(outputPath);

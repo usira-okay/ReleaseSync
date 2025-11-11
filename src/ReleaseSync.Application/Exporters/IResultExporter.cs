@@ -8,19 +8,17 @@ namespace ReleaseSync.Application.Exporters;
 public interface IResultExporter
 {
     /// <summary>
-    /// 將同步結果匯出至檔案
+    /// 將 Work Item 為中心的資料匯出至檔案
     /// </summary>
-    /// <param name="result">同步結果</param>
+    /// <param name="data">要匯出的資料物件</param>
     /// <param name="outputPath">輸出檔案路徑</param>
     /// <param name="overwrite">是否覆寫現有檔案</param>
-    /// <param name="useWorkItemCentricFormat">是否使用 Work Item 為中心的格式 (預設 true)</param>
     /// <param name="cancellationToken">取消權杖</param>
     /// <returns>Task</returns>
     Task ExportAsync(
-        SyncResultDto result,
+        WorkItemCentricOutputDto data,
         string outputPath,
         bool overwrite = false,
-        bool useWorkItemCentricFormat = true,
         CancellationToken cancellationToken = default
     );
 
