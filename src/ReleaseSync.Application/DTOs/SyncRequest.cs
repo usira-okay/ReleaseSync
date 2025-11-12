@@ -18,22 +18,17 @@ public class SyncRequest
     /// <summary>
     /// 是否啟用 GitLab 平台同步
     /// </summary>
-    public bool EnableGitLab { get; init; } = true;
+    public bool EnableGitLab { get; init; } = false;
 
     /// <summary>
     /// 是否啟用 BitBucket 平台同步
     /// </summary>
-    public bool EnableBitBucket { get; init; } = true;
+    public bool EnableBitBucket { get; init; } = false;
 
     /// <summary>
     /// 是否啟用 Azure DevOps Work Item 整合
     /// </summary>
     public bool EnableAzureDevOps { get; init; } = false;
-
-    /// <summary>
-    /// 是否包含未合併的 PR/MR
-    /// </summary>
-    public bool IncludeUnmerged { get; init; } = true;
 
     /// <summary>
     /// 特定的目標分支清單 (若為空則使用組態檔設定)
