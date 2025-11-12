@@ -50,12 +50,28 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
         var workspace = parts[0];
         var repository = parts[1];
 
-        return await _apiClient.GetPullRequestsAsync(
+        var pullRequests = await _apiClient.GetPullRequestsAsync(
             workspace,
             repository,
             dateRange.StartDate,
             dateRange.EndDate,
             cancellationToken);
+
+        // 雙重保險: 過濾掉非 MERGED 狀態的 PR
+        // (雖然 API 查詢已設定 state=MERGED,但仍在程式碼中額外過濾以確保資料正確性)
+        var mergedPullRequests = pullRequests
+            .Where(pr => pr.State.Equals("MERGED", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        if (mergedPullRequests.Count < pullRequests.Count())
+        {
+            var filteredCount = pullRequests.Count() - mergedPullRequests.Count;
+            _logger.LogWarning(
+                "BitBucket API 回傳了 {FilteredCount} 筆非 MERGED 狀態的 PR,已過濾 - Workspace: {Workspace}, Repo: {Repository}",
+                filteredCount, workspace, repository);
+        }
+
+        return mergedPullRequests;
     }
 
     /// <summary>

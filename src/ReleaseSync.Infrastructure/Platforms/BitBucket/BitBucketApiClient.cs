@@ -152,11 +152,12 @@ public class BitBucketApiClient
         // BitBucket API 2.0 端點
         var baseUrl = $"https://api.bitbucket.org/2.0/repositories/{workspace}/{repository}/pullrequests";
 
-        // 使用 q 參數進行日期篩選 (updated_on >= startDate)
-        var query = $"updated_on>={startDate:yyyy-MM-ddTHH:mm:ss.fffZ}";
+        // 使用 q 參數進行日期篩選與狀態過濾
+        // BitBucket API 查詢語法: updated_on >= "2025-01-01" AND state="MERGED"
+        var query = $"updated_on>={startDate:yyyy-MM-ddTHH:mm:ss.fffZ} AND state=\"MERGED\"";
 
-        // 設定排序與分頁,只抓取已合併的 PR
-        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-updated_on&pagelen=50&state=MERGED";
+        // 設定排序與分頁
+        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-updated_on&pagelen=50";
     }
 
     /// <summary>
