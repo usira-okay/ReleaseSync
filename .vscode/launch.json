@@ -15,6 +15,7 @@
         "--enable-gitlab",
         "--enable-bitbucket",
         "--enable-azure-devops",
+        "--enable-export",
         "-o",
         ".\\output.json",
         "-f",
