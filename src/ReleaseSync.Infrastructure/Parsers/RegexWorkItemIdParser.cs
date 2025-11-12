@@ -76,7 +76,7 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
 
             var value = match.Groups[pattern.CaptureGroup].Value;
 
-            if (!int.TryParse(value, out var id) || id <= 0)
+            if (!int.TryParse(value, out var id) || id < 0)
             {
                 return false;
             }

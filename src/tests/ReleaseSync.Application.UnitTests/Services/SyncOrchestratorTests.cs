@@ -51,14 +51,14 @@ public class SyncOrchestratorTests
         exception.ParamName.Should().Be("logger");
     }
 
-    [Fact(DisplayName = "建構子: workItemService 可為 null")]
-    public void Constructor_NullWorkItemService_ShouldNotThrow()
+    [Fact(DisplayName = "建構子: 使用有效參數應建立實例")]
+    public void Constructor_WithValidParameters_ShouldCreateInstance()
     {
         // Arrange
         var platformServices = Substitute.For<IEnumerable<IPlatformService>>();
 
         // Act
-        var orchestrator = new SyncOrchestrator(platformServices, _logger, workItemService: null);
+        var orchestrator = new SyncOrchestrator(platformServices, _logger);
 
         // Assert
         orchestrator.Should().NotBeNull();
@@ -296,104 +296,8 @@ public class SyncOrchestratorTests
 
     #endregion
 
-    #region Work Item 整合測試
-
-    [Fact(DisplayName = "SyncAsync: 啟用 AzureDevOps 應關聯 Work Items")]
-    public async Task SyncAsync_WithAzureDevOpsEnabled_ShouldEnrichWithWorkItems()
-    {
-        // Arrange
-        var mockPlatformService = CreateMockPlatformService("GitLab", 2);
-        var mockWorkItemService = CreateMockWorkItemService();
-        var platformServices = new List<IPlatformService> { mockPlatformService };
-        var orchestrator = new SyncOrchestrator(platformServices, _logger, mockWorkItemService);
-
-        var request = new SyncRequest
-        {
-            StartDate = DateTime.UtcNow.AddDays(-7),
-            EndDate = DateTime.UtcNow,
-            EnableGitLab = true,
-            EnableAzureDevOps = true
-        };
-
-        // Act
-        var result = await orchestrator.SyncAsync(request);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.TotalPullRequestCount.Should().Be(2);
-        result.LinkedWorkItemCount.Should().BeGreaterThan(0);
-
-        // 驗證 Work Item Service 有被呼叫
-        await mockWorkItemService.Received().GetWorkItemFromBranchAsync(
-            Arg.Any<BranchName>(),
-            Arg.Any<bool>(),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact(DisplayName = "SyncAsync: 未啟用 AzureDevOps 不應呼叫 Work Item 服務")]
-    public async Task SyncAsync_WithoutAzureDevOps_ShouldNotCallWorkItemService()
-    {
-        // Arrange
-        var mockPlatformService = CreateMockPlatformService("GitLab", 2);
-        var mockWorkItemService = CreateMockWorkItemService();
-        var platformServices = new List<IPlatformService> { mockPlatformService };
-        var orchestrator = new SyncOrchestrator(platformServices, _logger, mockWorkItemService);
-
-        var request = new SyncRequest
-        {
-            StartDate = DateTime.UtcNow.AddDays(-7),
-            EndDate = DateTime.UtcNow,
-            EnableGitLab = true,
-            EnableAzureDevOps = false
-        };
-
-        // Act
-        var result = await orchestrator.SyncAsync(request);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.LinkedWorkItemCount.Should().Be(0);
-
-        // 驗證 Work Item Service 沒有被呼叫
-        await mockWorkItemService.DidNotReceive().GetWorkItemFromBranchAsync(
-            Arg.Any<BranchName>(),
-            Arg.Any<bool>(),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact(DisplayName = "SyncAsync: Work Item Service 為 null 但啟用 AzureDevOps 應記錄警告")]
-    public async Task SyncAsync_NullWorkItemServiceWithAzureDevOpsEnabled_ShouldLogWarning()
-    {
-        // Arrange
-        var mockPlatformService = CreateMockPlatformService("GitLab", 2);
-        var platformServices = new List<IPlatformService> { mockPlatformService };
-        var orchestrator = new SyncOrchestrator(platformServices, _logger, workItemService: null);
-
-        var request = new SyncRequest
-        {
-            StartDate = DateTime.UtcNow.AddDays(-7),
-            EndDate = DateTime.UtcNow,
-            EnableGitLab = true,
-            EnableAzureDevOps = true
-        };
-
-        // Act
-        var result = await orchestrator.SyncAsync(request);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.LinkedWorkItemCount.Should().Be(0);
-
-        // 驗證有記錄警告 (檢查 logger 被呼叫且 LogLevel 為 Warning)
-        _logger.Received().Log(
-            LogLevel.Warning,
-            Arg.Any<EventId>(),
-            Arg.Any<object>(),
-            Arg.Any<Exception?>(),
-            Arg.Any<Func<object, Exception?, string>>());
-    }
-
-    #endregion
+    // Note: Work Item 整合測試已移至 SyncCommandHandlerTests
+    // 因為 Work Item 整合邏輯已從 SyncOrchestrator 移至 SyncCommandHandler
 
     #region 輔助方法
 

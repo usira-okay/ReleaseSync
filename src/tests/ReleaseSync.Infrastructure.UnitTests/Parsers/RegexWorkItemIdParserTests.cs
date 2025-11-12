@@ -342,10 +342,10 @@ public class RegexWorkItemIdParserTests
     }
 
     /// <summary>
-    /// 測試當解析結果為 0 或負數時應視為無效
+    /// 測試應支援 Work Item ID 為 0 的情況 (例如: VSTS000000)
     /// </summary>
     [Fact]
-    public void Should_Reject_Zero_Or_Negative_WorkItemId()
+    public void Should_Accept_Zero_WorkItemId()
     {
         // Arrange
         var settings = new AzureDevOpsSettings
@@ -357,8 +357,8 @@ public class RegexWorkItemIdParserTests
             {
                 new WorkItemIdPattern
                 {
-                    Name = "Standard Pattern",
-                    Regex = @"feature/(\d+)-",
+                    Name = "VSTS Pattern",
+                    Regex = @"vsts(\d+)",
                     IgnoreCase = true,
                     CaptureGroup = 1
                 }
@@ -366,14 +366,57 @@ public class RegexWorkItemIdParserTests
         };
 
         var parser = new RegexWorkItemIdParser(settings, _mockLogger);
-        var branchName = new BranchName("feature/0-invalid");  // Work Item ID = 0
+        var branchName = new BranchName("feature/VSTS000000-test");  // Work Item ID = 0
 
         // Act
         var result = parser.TryParseWorkItemId(branchName, out var workItemId);
 
         // Assert
-        result.Should().BeFalse();
-        workItemId.Should().BeNull();
+        result.Should().BeTrue();
+        workItemId.Should().NotBeNull();
+        workItemId!.Value.Should().Be(0);
+    }
+
+    /// <summary>
+    /// 測試應支援 Work Item ID 為 0 的各種前導零格式
+    /// </summary>
+    [Theory]
+    [InlineData("VSTS0", 0)]
+    [InlineData("VSTS00", 0)]
+    [InlineData("VSTS000", 0)]
+    [InlineData("VSTS0000", 0)]
+    [InlineData("VSTS00000", 0)]
+    [InlineData("VSTS000000", 0)]
+    public void Should_Accept_Zero_WorkItemId_With_Leading_Zeros(string branchSuffix, int expectedId)
+    {
+        // Arrange
+        var settings = new AzureDevOpsSettings
+        {
+            PersonalAccessToken = "test-token",
+            OrganizationUrl = "https://dev.azure.com/test",
+            ProjectName = "TestProject",
+            WorkItemIdPatterns = new List<WorkItemIdPattern>
+            {
+                new WorkItemIdPattern
+                {
+                    Name = "VSTS Pattern",
+                    Regex = @"vsts(\d+)",
+                    IgnoreCase = true,
+                    CaptureGroup = 1
+                }
+            }
+        };
+
+        var parser = new RegexWorkItemIdParser(settings, _mockLogger);
+        var branchName = new BranchName($"feature/{branchSuffix}-description");
+
+        // Act
+        var result = parser.TryParseWorkItemId(branchName, out var workItemId);
+
+        // Assert
+        result.Should().BeTrue();
+        workItemId.Should().NotBeNull();
+        workItemId!.Value.Should().Be(expectedId);
     }
 
     /// <summary>

@@ -151,7 +151,7 @@ public class PullRequestDto
     /// <summary>
     /// 關聯的 Work Item
     /// </summary>
-    public WorkItemDto? AssociatedWorkItem { get; init; }
+    public WorkItemDto? AssociatedWorkItem { get; set; }
 
     /// <summary>
     /// 從 Domain 模型轉換為 DTO

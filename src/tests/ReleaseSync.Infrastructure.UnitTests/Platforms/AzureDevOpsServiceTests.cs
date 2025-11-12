@@ -132,6 +132,60 @@ public class AzureDevOpsServiceTests
             Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// 測試當 Work Item ID = 0 時應回傳假的佔位符 Work Item,不呼叫 Repository
+    /// </summary>
+    [Fact]
+    public async Task GetWorkItemAsync_Should_Return_Placeholder_WorkItem_When_Id_Is_Zero()
+    {
+        // Arrange
+        var workItemId = new WorkItemId(0);
+
+        // Act
+        var result = await _service.GetWorkItemAsync(workItemId, includeParent: true);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Value.Should().Be(0);
+        result.Title.Should().Be("無關聯 Work Item");
+        result.Type.Should().Be("Placeholder");
+        result.State.Should().Be("N/A");
+        result.AssignedTo.Should().Be("N/A");
+        result.Team.Should().Be("N/A");
+
+        // 驗證不應該呼叫 Repository
+        await _mockRepository.DidNotReceive().GetWorkItemAsync(
+            Arg.Any<WorkItemId>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    /// <summary>
+    /// 測試 Work Item ID = 0 應該忽略 includeParent 參數
+    /// </summary>
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetWorkItemAsync_Should_Return_Same_Placeholder_Regardless_Of_IncludeParent_When_Id_Is_Zero(bool includeParent)
+    {
+        // Arrange
+        var workItemId = new WorkItemId(0);
+
+        // Act
+        var result = await _service.GetWorkItemAsync(workItemId, includeParent);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Value.Should().Be(0);
+        result.Title.Should().Be("無關聯 Work Item");
+
+        // 驗證不應該呼叫 Repository
+        await _mockRepository.DidNotReceive().GetWorkItemAsync(
+            Arg.Any<WorkItemId>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
+    }
+
     #endregion
 
     #region GetWorkItemFromBranchAsync Tests
@@ -226,6 +280,39 @@ public class AzureDevOpsServiceTests
 
         // Assert
         result.Should().BeNull();
+    }
+
+    /// <summary>
+    /// 測試從 Branch 解析出 Work Item ID = 0 時應回傳假的佔位符 Work Item
+    /// </summary>
+    [Fact]
+    public async Task GetWorkItemFromBranchAsync_Should_Return_Placeholder_When_Parsed_Id_Is_Zero()
+    {
+        // Arrange
+        var branchName = new BranchName("feature/VSTS000000-description");
+        var workItemId = new WorkItemId(0);
+
+        _mockParser.TryParseWorkItemId(branchName, out Arg.Any<WorkItemId>())
+            .Returns(callInfo =>
+            {
+                callInfo[1] = workItemId;
+                return true;
+            });
+
+        // Act
+        var result = await _service.GetWorkItemFromBranchAsync(branchName, includeParent: true);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Value.Should().Be(0);
+        result.Title.Should().Be("無關聯 Work Item");
+        result.Type.Should().Be("Placeholder");
+
+        // 驗證不應該呼叫 Repository
+        await _mockRepository.DidNotReceive().GetWorkItemAsync(
+            Arg.Any<WorkItemId>(),
+            Arg.Any<bool>(),
+            Arg.Any<CancellationToken>());
     }
 
     #endregion

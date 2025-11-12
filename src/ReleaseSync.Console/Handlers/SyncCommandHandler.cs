@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.DTOs;
 using ReleaseSync.Application.Exporters;
 using ReleaseSync.Application.Services;
+using ReleaseSync.Console.Services;
 
 namespace ReleaseSync.Console.Handlers;
 
@@ -12,6 +13,7 @@ public class SyncCommandHandler
 {
     private readonly ISyncOrchestrator _syncOrchestrator;
     private readonly IResultExporter _resultExporter;
+    private readonly IWorkItemEnricher _workItemEnricher;
     private readonly ILogger<SyncCommandHandler> _logger;
 
     /// <summary>
@@ -20,11 +22,13 @@ public class SyncCommandHandler
     public SyncCommandHandler(
         ISyncOrchestrator syncOrchestrator,
         IResultExporter resultExporter,
+        IWorkItemEnricher workItemEnricher,
         ILogger<SyncCommandHandler> logger)
     {
-        _syncOrchestrator = syncOrchestrator ?? throw new ArgumentNullException(nameof(syncOrchestrator));
-        _resultExporter = resultExporter ?? throw new ArgumentNullException(nameof(resultExporter));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _syncOrchestrator = syncOrchestrator;
+        _resultExporter = resultExporter;
+        _workItemEnricher = workItemEnricher;
+        _logger = logger;
     }
 
     /// <summary>
@@ -58,12 +62,24 @@ public class SyncCommandHandler
             _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}",
                 result.TotalPullRequestCount, result.IsFullySuccessful);
 
+            // 整合 Azure DevOps Work Items (僅在符合條件時執行)
+            // 條件: 任一平台啟用 + Azure DevOps 開關開啟 + 有指定 OutputFile
+            bool shouldEnrichWithWorkItems =
+                (options.EnableGitLab || options.EnableBitBucket) &&
+                options.EnableAzureDevOps &&
+                !string.IsNullOrWhiteSpace(options.OutputFile);
+
+            if (shouldEnrichWithWorkItems)
+            {
+                await _workItemEnricher.EnrichAsync(result, cancellationToken);
+            }
+
             // 匯出 JSON (僅在啟用匯出功能時執行)
             if (options.EnableExport)
             {
                 // 轉換為 Work Item 為中心的格式
                 var workItemCentricData = WorkItemCentricOutputDto.FromSyncResult(result);
-                
+
                 // 匯出到檔案或 Console
                 if (!string.IsNullOrWhiteSpace(options.OutputFile))
                 {

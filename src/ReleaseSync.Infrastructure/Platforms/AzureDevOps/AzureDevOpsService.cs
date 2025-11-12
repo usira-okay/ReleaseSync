@@ -35,6 +35,15 @@ public class AzureDevOpsService : IWorkItemService
         bool includeParent = true,
         CancellationToken cancellationToken = default)
     {
+        // 當 Work Item ID = 0 時,回傳假的佔位符 Work Item
+        if (workItemId.IsPlaceholder)
+        {
+            _logger.LogInformation(
+                "Work Item ID = 0 (佔位符),回傳假資料,不呼叫 Azure DevOps API");
+
+            return CreatePlaceholderWorkItem();
+        }
+
         _logger.LogInformation(
             "開始取得 Work Item: {WorkItemId}, IncludeParent={IncludeParent}",
             workItemId.Value, includeParent);
@@ -65,6 +74,27 @@ public class AzureDevOpsService : IWorkItemService
                 workItemId.Value);
             return null;
         }
+    }
+
+    /// <summary>
+    /// 建立佔位符 Work Item (用於 VSTS000000 等無關聯 Work Item 的情況)
+    /// </summary>
+    /// <remarks>
+    /// 所有 Work Item ID = 0 的 PR 都會使用同一個佔位符 Work Item
+    /// </remarks>
+    private static WorkItemInfo CreatePlaceholderWorkItem()
+    {
+        return new WorkItemInfo
+        {
+            Id = new WorkItemId(0),
+            Title = "無關聯 Work Item",
+            Type = "Placeholder",
+            State = "N/A",
+            AssignedTo = "N/A",
+            Team = "N/A",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
     }
 
     /// <summary>

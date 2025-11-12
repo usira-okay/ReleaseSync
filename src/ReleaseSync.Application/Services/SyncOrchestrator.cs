@@ -13,12 +13,11 @@ using ReleaseSync.Domain.Services;
 
 /// <summary>
 /// 同步協調器
-/// 協調多平台的 PR/MR 抓取與 Work Item 整合
+/// 協調多平台的 PR/MR 抓取
 /// </summary>
 public class SyncOrchestrator : ISyncOrchestrator
 {
     private readonly IEnumerable<IPlatformService> _platformServices;
-    private readonly IWorkItemService? _workItemService;
     private readonly ILogger<SyncOrchestrator> _logger;
 
     /// <summary>
@@ -26,12 +25,10 @@ public class SyncOrchestrator : ISyncOrchestrator
     /// </summary>
     public SyncOrchestrator(
         IEnumerable<IPlatformService> platformServices,
-        ILogger<SyncOrchestrator> logger,
-        IWorkItemService? workItemService = null)
+        ILogger<SyncOrchestrator> logger)
     {
         _platformServices = platformServices ?? throw new ArgumentNullException(nameof(platformServices));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _workItemService = workItemService;
     }
 
     /// <summary>
@@ -115,12 +112,6 @@ public class SyncOrchestrator : ISyncOrchestrator
             }
         }
 
-        // 整合 Azure DevOps Work Items (如果啟用)
-        if (request.EnableAzureDevOps)
-        {
-            await EnrichWithWorkItemsAsync(syncResult, cancellationToken);
-        }
-
         syncResult.MarkAsCompleted();
 
         // 計算總耗時與效能指標
@@ -140,71 +131,7 @@ public class SyncOrchestrator : ISyncOrchestrator
                 totalElapsedMs / 1000.0);
         }
 
-        // 轉換為 DTO
         return SyncResultDto.FromDomain(syncResult);
-    }
-
-    /// <summary>
-    /// 從 Work Item 服務抓取資訊並關聯到 PR/MR
-    /// </summary>
-    private async Task EnrichWithWorkItemsAsync(
-        SyncResult syncResult,
-        CancellationToken cancellationToken)
-    {
-        if (_workItemService == null)
-        {
-            _logger.LogWarning("Work Item 服務未註冊,無法整合 Work Item 資訊");
-            return;
-        }
-
-        var stopwatch = Stopwatch.StartNew();
-        int successCount = 0;
-        int failureCount = 0;
-
-        foreach (var pr in syncResult.PullRequests)
-        {
-            var result = await TryEnrichPullRequestWithWorkItemAsync(pr, cancellationToken);
-            if (result)
-                successCount++;
-            else
-                failureCount++;
-        }
-
-        stopwatch.Stop();
-
-        _logger.LogInformation(
-            "Work Item 整合完成 - 成功: {SuccessCount}, 失敗: {FailureCount}, {ElapsedMs} ms",
-            successCount, failureCount, stopwatch.ElapsedMilliseconds);
-    }
-
-    private async Task<bool> TryEnrichPullRequestWithWorkItemAsync(
-        PullRequestInfo pr,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            // 從 Branch 名稱解析並取得 Work Item
-            var workItem = await _workItemService!.GetWorkItemFromBranchAsync(
-                pr.SourceBranch,
-                includeParent: true,
-                cancellationToken);
-
-            if (workItem != null)
-            {
-                pr.AssociatedWorkItem = workItem;
-                return true;
-            }
-
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex,
-                "整合 Work Item 失敗: PR={PrTitle}, Branch={BranchName}",
-                pr.Title, pr.SourceBranch.Value);
-
-            return false;
-        }
     }
 
     /// <summary>
