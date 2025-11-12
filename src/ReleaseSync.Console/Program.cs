@@ -69,23 +69,34 @@ class Program
             rootCommand.AddCommand(syncCommand);
 
             // 設定 handler
-            syncCommand.SetHandler(async (DateTime startDate, DateTime endDate, bool enableGitLab,
-                bool enableBitBucket, bool enableAzureDevOps, string? outputFile, bool force, bool verboseParam) =>
+            syncCommand.SetHandler(async (context) =>
             {
+                var options = new SyncCommandOptions
+                {
+                    StartDate = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-s"))),
+                    EndDate = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-e"))),
+                    EnableGitLab = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--gitlab"))),
+                    EnableBitBucket = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--bitbucket"))),
+                    EnableAzureDevOps = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--azdo"))),
+                    EnableExport = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--export"))),
+                    OutputFile = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("-o"))),
+                    Force = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-f"))),
+                    Verbose = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v")))
+                };
+
                 using var scope = serviceProvider.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<SyncCommandHandler>();
-                await handler.HandleAsync(startDate, endDate, enableGitLab, enableBitBucket,
-                    enableAzureDevOps, outputFile, force, verboseParam, CancellationToken.None);
-            },
-            syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-s")),
-            syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-e")),
-            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--gitlab")),
-            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--bitbucket")),
-            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--azdo")),
-            syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("-o")),
-            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-f")),
-            syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v"))
-            );
+                await handler.HandleAsync(options, CancellationToken.None);
+            });
 
             // 執行命令
             return await rootCommand.InvokeAsync(args);

@@ -43,6 +43,11 @@ public static class SyncCommand
             description: "啟用 Azure DevOps Work Item 整合");
 
         // 匯出選項
+        var enableExportOption = new Option<bool>(
+            aliases: new[] { "--enable-export", "--export" },
+            getDefaultValue: () => false,
+            description: "啟用 JSON 匯出功能");
+
         var outputFileOption = new Option<string?>(
             aliases: new[] { "--output-file", "-o" },
             description: "JSON 匯出檔案路徑");
@@ -62,6 +67,7 @@ public static class SyncCommand
         command.AddOption(enableGitLabOption);
         command.AddOption(enableBitBucketOption);
         command.AddOption(enableAzureDevOpsOption);
+        command.AddOption(enableExportOption);
         command.AddOption(outputFileOption);
         command.AddOption(forceOption);
         command.AddOption(verboseOption);

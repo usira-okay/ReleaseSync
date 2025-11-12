@@ -31,30 +31,25 @@ public class SyncCommandHandler
     /// 處理 sync 命令
     /// </summary>
     public async Task<int> HandleAsync(
-        DateTime startDate,
-        DateTime endDate,
-        bool enableGitLab,
-        bool enableBitBucket,
-        bool enableAzureDevOps,
-        string? outputFile,
-        bool force,
-        bool verbose,
+        SyncCommandOptions options,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         try
         {
             _logger.LogInformation("=== ReleaseSync 同步工具 ===");
             _logger.LogInformation("時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}",
-                startDate, endDate, enableGitLab, enableBitBucket, enableAzureDevOps);
+                options.StartDate, options.EndDate, options.EnableGitLab, options.EnableBitBucket, options.EnableAzureDevOps);
 
             // 建立請求
             var request = new SyncRequest
             {
-                StartDate = startDate,
-                EndDate = endDate,
-                EnableGitLab = enableGitLab,
-                EnableBitBucket = enableBitBucket,
-                EnableAzureDevOps = enableAzureDevOps
+                StartDate = options.StartDate,
+                EndDate = options.EndDate,
+                EnableGitLab = options.EnableGitLab,
+                EnableBitBucket = options.EnableBitBucket,
+                EnableAzureDevOps = options.EnableAzureDevOps
             };
 
             // 執行同步
@@ -63,19 +58,30 @@ public class SyncCommandHandler
             _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}",
                 result.TotalPullRequestCount, result.IsFullySuccessful);
 
-            // 轉換為 Work Item 為中心的格式
-            var workItemCentricData = WorkItemCentricOutputDto.FromSyncResult(result);
-            
-            // 匯出 JSON
-            if (!string.IsNullOrWhiteSpace(outputFile))
+            // 匯出 JSON (僅在啟用匯出功能時執行)
+            if (options.EnableExport)
             {
-
-                await _resultExporter.ExportAsync(
-                    workItemCentricData,
-                    outputFile,
-                    overwrite: force,
-                    cancellationToken);
-                _logger.LogInformation("匯出完成: {OutputFile}", outputFile);
+                // 轉換為 Work Item 為中心的格式
+                var workItemCentricData = WorkItemCentricOutputDto.FromSyncResult(result);
+                
+                // 匯出到檔案或 Console
+                if (!string.IsNullOrWhiteSpace(options.OutputFile))
+                {
+                    await _resultExporter.ExportAsync(
+                        workItemCentricData,
+                        options.OutputFile,
+                        overwrite: options.Force,
+                        cancellationToken);
+                    _logger.LogInformation("匯出完成: {OutputFile}", options.OutputFile);
+                }
+                else
+                {
+                    // 輸出到 Console
+                    var json = System.Text.Json.JsonSerializer.Serialize(
+                        workItemCentricData,
+                        new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                    System.Console.WriteLine(json);
+                }
             }
 
             return 0;
@@ -97,7 +103,7 @@ public class SyncCommandHandler
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("輸出檔案已存在"))
         {
-            _logger.LogWarning("輸出檔案已存在: {OutputFile} - 請使用 --force 參數強制覆蓋", outputFile);
+            _logger.LogWarning("輸出檔案已存在: {OutputFile} - 請使用 --force 參數強制覆蓋", options.OutputFile);
             return 1;
         }
         catch (ArgumentException ex) when (ex.Message.Contains("至少須啟用一個平台"))
