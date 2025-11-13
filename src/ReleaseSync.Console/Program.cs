@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.Exporters;
+using ReleaseSync.Application.Importers;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Console.Commands;
 using ReleaseSync.Console.Handlers;
@@ -56,6 +57,7 @@ class Program
             // 註冊 Application 服務
             services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
             services.AddScoped<IResultExporter, JsonFileExporter>();
+            services.AddScoped<IResultImporter, JsonFileImporter>();
 
             // 註冊 Console 層服務
             services.AddScoped<IWorkItemEnricher, WorkItemEnricher>();

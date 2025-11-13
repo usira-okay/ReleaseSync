@@ -49,4 +49,22 @@ public class SyncCommandOptions
     /// 是否啟用詳細日誌輸出
     /// </summary>
     public bool Verbose { get; init; }
+
+    /// <summary>
+    /// 是否需要執行 PR/MR 資料抓取
+    /// 條件: 任一平台啟用 (EnableGitLab 或 EnableBitBucket)
+    /// </summary>
+    public bool ShouldFetchPullRequests => EnableGitLab || EnableBitBucket;
+
+    /// <summary>
+    /// 是否需要執行 Azure DevOps Work Item 整合
+    /// 條件: EnableAzureDevOps = true 且有啟用任一平台
+    /// </summary>
+    public bool ShouldEnrichWithWorkItems => EnableAzureDevOps && ShouldFetchPullRequests;
+
+    /// <summary>
+    /// 是否需要匯出 JSON 至檔案
+    /// 條件: EnableExport = true 且 OutputFile 有值
+    /// </summary>
+    public bool ShouldExportToFile => EnableExport && !string.IsNullOrWhiteSpace(OutputFile);
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.DTOs;
 using ReleaseSync.Application.Exporters;
+using ReleaseSync.Application.Importers;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Console.Services;
 
@@ -13,6 +14,7 @@ public class SyncCommandHandler
 {
     private readonly ISyncOrchestrator _syncOrchestrator;
     private readonly IResultExporter _resultExporter;
+    private readonly IResultImporter _resultImporter;
     private readonly IWorkItemEnricher _workItemEnricher;
     private readonly ILogger<SyncCommandHandler> _logger;
 
@@ -22,11 +24,13 @@ public class SyncCommandHandler
     public SyncCommandHandler(
         ISyncOrchestrator syncOrchestrator,
         IResultExporter resultExporter,
+        IResultImporter resultImporter,
         IWorkItemEnricher workItemEnricher,
         ILogger<SyncCommandHandler> logger)
     {
         _syncOrchestrator = syncOrchestrator;
         _resultExporter = resultExporter;
+        _resultImporter = resultImporter;
         _workItemEnricher = workItemEnricher;
         _logger = logger;
     }
@@ -42,63 +46,18 @@ public class SyncCommandHandler
 
         try
         {
-            _logger.LogInformation("=== ReleaseSync 同步工具 ===");
-            _logger.LogInformation("時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}",
-                options.StartDate, options.EndDate, options.EnableGitLab, options.EnableBitBucket, options.EnableAzureDevOps);
+            LogStartup(options);
 
-            // 建立請求
-            var request = new SyncRequest
+            var workItemCentricData = options.ShouldFetchPullRequests
+                ? await FetchAndProcessPullRequestsAsync(options, cancellationToken)
+                : await LoadFromFileAsync(options, cancellationToken);
+
+            if (workItemCentricData == null)
             {
-                StartDate = options.StartDate,
-                EndDate = options.EndDate,
-                EnableGitLab = options.EnableGitLab,
-                EnableBitBucket = options.EnableBitBucket,
-                EnableAzureDevOps = options.EnableAzureDevOps
-            };
-
-            // 執行同步
-            var result = await _syncOrchestrator.SyncAsync(request, cancellationToken);
-
-            _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}",
-                result.TotalPullRequestCount, result.IsFullySuccessful);
-
-            // 整合 Azure DevOps Work Items (僅在符合條件時執行)
-            // 條件: 任一平台啟用 + Azure DevOps 開關開啟 + 有指定 OutputFile
-            bool shouldEnrichWithWorkItems =
-                (options.EnableGitLab || options.EnableBitBucket) &&
-                options.EnableAzureDevOps &&
-                !string.IsNullOrWhiteSpace(options.OutputFile);
-
-            if (shouldEnrichWithWorkItems)
-            {
-                await _workItemEnricher.EnrichAsync(result, cancellationToken);
+                return 1;
             }
 
-            // 匯出 JSON (僅在啟用匯出功能時執行)
-            if (options.EnableExport)
-            {
-                // 轉換為 Work Item 為中心的格式
-                var workItemCentricData = WorkItemCentricOutputDto.FromSyncResult(result);
-
-                // 匯出到檔案或 Console
-                if (!string.IsNullOrWhiteSpace(options.OutputFile))
-                {
-                    await _resultExporter.ExportAsync(
-                        workItemCentricData,
-                        options.OutputFile,
-                        overwrite: options.Force,
-                        cancellationToken);
-                    _logger.LogInformation("匯出完成: {OutputFile}", options.OutputFile);
-                }
-                else
-                {
-                    // 輸出到 Console
-                    var json = System.Text.Json.JsonSerializer.Serialize(
-                        workItemCentricData,
-                        new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                    System.Console.WriteLine(json);
-                }
-            }
+            await ExportResultIfNeededAsync(options, workItemCentricData, cancellationToken);
 
             return 0;
         }
@@ -122,15 +81,101 @@ public class SyncCommandHandler
             _logger.LogWarning("輸出檔案已存在: {OutputFile} - 請使用 --force 參數強制覆蓋", options.OutputFile);
             return 1;
         }
-        catch (ArgumentException ex) when (ex.Message.Contains("至少須啟用一個平台"))
-        {
-            _logger.LogError("未啟用任何平台 - 請使用 --gitlab 或 --bitbucket 參數");
-            return 1;
-        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "執行失敗 - 使用 --verbose 參數可查看詳細錯誤資訊");
             return 1;
         }
+    }
+
+    /// <summary>
+    /// 記錄啟動日誌
+    /// </summary>
+    private void LogStartup(SyncCommandOptions options)
+    {
+        _logger.LogInformation("=== ReleaseSync 同步工具 ===");
+        _logger.LogInformation("時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}",
+            options.StartDate, options.EndDate, options.EnableGitLab, options.EnableBitBucket, options.EnableAzureDevOps);
+    }
+
+    /// <summary>
+    /// 抓取並處理 PR/MR 資料
+    /// </summary>
+    private async Task<WorkItemCentricOutputDto?> FetchAndProcessPullRequestsAsync(
+        SyncCommandOptions options,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("開始抓取 PR/MR 資料...");
+
+        var request = new SyncRequest
+        {
+            StartDate = options.StartDate,
+            EndDate = options.EndDate,
+            EnableGitLab = options.EnableGitLab,
+            EnableBitBucket = options.EnableBitBucket,
+            EnableAzureDevOps = options.EnableAzureDevOps
+        };
+
+        var result = await _syncOrchestrator.SyncAsync(request, cancellationToken);
+
+        _logger.LogInformation("同步完成 - 總計 PR/MR: {Count} 筆, 完全成功: {IsSuccess}",
+            result.TotalPullRequestCount, result.IsFullySuccessful);
+
+        if (options.ShouldEnrichWithWorkItems)
+        {
+            await EnrichWithWorkItemsAsync(result, cancellationToken);
+        }
+
+        return WorkItemCentricOutputDto.FromSyncResult(result);
+    }
+
+    /// <summary>
+    /// 從檔案載入資料
+    /// </summary>
+    private async Task<WorkItemCentricOutputDto?> LoadFromFileAsync(
+        SyncCommandOptions options,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(options.OutputFile))
+        {
+            _logger.LogError("未啟用任何平台且未指定輸入檔案 - 請啟用至少一個平台 (--gitlab, --bitbucket) 或指定輸入檔案 (-o)");
+            return null;
+        }
+
+        _logger.LogInformation("未啟用任何平台,從檔案讀取資料: {InputFile}", options.OutputFile);
+        return await _resultImporter.ImportAsync(options.OutputFile, cancellationToken);
+    }
+
+    /// <summary>
+    /// 整合 Azure DevOps Work Items
+    /// </summary>
+    private async Task EnrichWithWorkItemsAsync(
+        SyncResultDto syncResult,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("開始整合 Azure DevOps Work Items...");
+        await _workItemEnricher.EnrichAsync(syncResult, cancellationToken);
+    }
+
+    /// <summary>
+    /// 匯出結果 (如果需要)
+    /// </summary>
+    private async Task ExportResultIfNeededAsync(
+        SyncCommandOptions options,
+        WorkItemCentricOutputDto workItemCentricData,
+        CancellationToken cancellationToken)
+    {
+        if (!options.ShouldExportToFile)
+        {
+            return;
+        }
+
+        _logger.LogInformation("開始匯出 JSON 檔案...");
+        await _resultExporter.ExportAsync(
+            workItemCentricData,
+            options.OutputFile!,
+            overwrite: options.Force,
+            cancellationToken);
+        _logger.LogInformation("匯出完成: {OutputFile}", options.OutputFile);
     }
 }
