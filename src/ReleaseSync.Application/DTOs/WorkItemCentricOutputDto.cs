@@ -62,7 +62,7 @@ public class WorkItemCentricOutputDto
                     AuthorUserId = pr.AuthorUserId,
                     AuthorDisplayName = pr.AuthorDisplayName,
                     Url = pr.Url,
-                    RepositoryName = pr.RepositoryName
+                    RepositoryName = ExtractRepositoryName(pr.RepositoryName)
                 }).ToList()
             };
         }).ToList();
@@ -73,6 +73,16 @@ public class WorkItemCentricOutputDto
             EndDate = syncResult.EndDate,
             WorkItems = workItems
         };
+    }
+
+    /// <summary>
+    /// 從完整的 Repository 路徑中提取 Repository 名稱
+    /// 例如: "owner/repo" -> "repo", "single" -> "single"
+    /// </summary>
+    private static string ExtractRepositoryName(string repositoryName)
+    {
+        var parts = repositoryName.Split('/');
+        return parts.Length == 2 ? parts[1] : repositoryName;
     }
 
     /// <summary>

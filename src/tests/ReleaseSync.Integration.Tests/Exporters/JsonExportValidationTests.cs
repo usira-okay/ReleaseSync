@@ -186,7 +186,8 @@ public class JsonExportValidationTests
                 firstPR.GetProperty("sourceBranch").GetString().Should().Be("feature/test");
                 firstPR.GetProperty("targetBranch").GetString().Should().Be("main");
                 firstPR.GetProperty("authorDisplayName").GetString().Should().Be("Test User");
-                firstPR.GetProperty("repositoryName").GetString().Should().Be("test/repo");
+                // repositoryName 應從 "test/repo" 轉換為 "repo" (split('/')[1])
+                firstPR.GetProperty("repositoryName").GetString().Should().Be("repo");
                 firstPR.GetProperty("url").GetString().Should().Be("https://gitlab.com/test/repo/-/merge_requests/42");
             }
         }
