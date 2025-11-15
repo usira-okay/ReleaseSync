@@ -60,14 +60,9 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
             // 套用目標分支過濾（如果需要）
             var filteredPullRequests = ApplyTargetBranchFilter(allPullRequests, targetBranches, projectName);
 
-            // 根據 UserMapping 過濾 PR (如果啟用)
-            var beforeUserFilterCount = filteredPullRequests.Count;
-            filteredPullRequests = filteredPullRequests
-                .Where(pr => pr.AuthorDisplayName != null && _userMappingService.HasMapping(PlatformName, pr.AuthorUserId))
-                .ToList();
-
-            // 記錄過濾統計
-            LogUserMappingFilterResults(beforeUserFilterCount, filteredPullRequests.Count, projectName);
+            _logger.LogInformation(
+                "取得 {Count} 筆 PR/MR - 平台: {Platform}, 專案: {ProjectName}",
+                filteredPullRequests.Count, PlatformName, projectName);
 
             return filteredPullRequests;
         }
@@ -104,33 +99,4 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
         return pullRequests;
     }
 
-    /// <summary>
-    /// 記錄 UserMapping 過濾結果
-    /// </summary>
-    private void LogUserMappingFilterResults(int beforeCount, int afterCount, string projectName)
-    {
-        var filteredCount = beforeCount - afterCount;
-
-        if (_userMappingService.IsFilteringEnabled())
-        {
-            if (filteredCount > 0)
-            {
-                _logger.LogInformation(
-                    "根據 UserMapping 過濾 {FilteredCount} 筆 PR/MR (總共 {TotalCount} 筆,保留 {RetainedCount} 筆) - 專案: {ProjectName}",
-                    filteredCount, beforeCount, afterCount, projectName);
-            }
-            else
-            {
-                _logger.LogInformation(
-                    "所有 {Count} 筆 PR/MR 都在 UserMapping 中,無需過濾 - 專案: {ProjectName}",
-                    beforeCount, projectName);
-            }
-        }
-        else
-        {
-            _logger.LogInformation(
-                "UserMapping 為空,保留所有 {Count} 筆 PR/MR (向後相容模式) - 專案: {ProjectName}",
-                afterCount, projectName);
-        }
-    }
 }
