@@ -76,7 +76,8 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
 
             var value = match.Groups[pattern.CaptureGroup].Value;
 
-            if (!int.TryParse(value, out var id) || id < 0)
+            // 拒絕 0 和負數,只接受正整數 (Work Item ID 必須 > 0)
+            if (!int.TryParse(value, out var id) || id <= 0)
             {
                 return false;
             }

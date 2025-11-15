@@ -342,10 +342,11 @@ public class RegexWorkItemIdParserTests
     }
 
     /// <summary>
-    /// 測試應支援 Work Item ID 為 0 的情況 (例如: VSTS000000)
+    /// 測試應拒絕 Work Item ID 為 0 的情況 (例如: VSTS000000)
+    /// 因為 0 不是有效的 Work Item ID
     /// </summary>
     [Fact]
-    public void Should_Accept_Zero_WorkItemId()
+    public void Should_Reject_Zero_WorkItemId()
     {
         // Arrange
         var settings = new AzureDevOpsSettings
@@ -366,28 +367,27 @@ public class RegexWorkItemIdParserTests
         };
 
         var parser = new RegexWorkItemIdParser(settings, _mockLogger);
-        var branchName = new BranchName("feature/VSTS000000-test");  // Work Item ID = 0
+        var branchName = new BranchName("feature/VSTS000000-test");  // Work Item ID = 0 (無效)
 
         // Act
         var result = parser.TryParseWorkItemId(branchName, out var workItemId);
 
         // Assert
-        result.Should().BeTrue();
-        workItemId.Should().NotBeNull();
-        workItemId!.Value.Should().Be(0);
+        result.Should().BeFalse();
+        workItemId.Should().BeNull();
     }
 
     /// <summary>
-    /// 測試應支援 Work Item ID 為 0 的各種前導零格式
+    /// 測試應拒絕所有 Work Item ID 為 0 的各種前導零格式
     /// </summary>
     [Theory]
-    [InlineData("VSTS0", 0)]
-    [InlineData("VSTS00", 0)]
-    [InlineData("VSTS000", 0)]
-    [InlineData("VSTS0000", 0)]
-    [InlineData("VSTS00000", 0)]
-    [InlineData("VSTS000000", 0)]
-    public void Should_Accept_Zero_WorkItemId_With_Leading_Zeros(string branchSuffix, int expectedId)
+    [InlineData("VSTS0")]
+    [InlineData("VSTS00")]
+    [InlineData("VSTS000")]
+    [InlineData("VSTS0000")]
+    [InlineData("VSTS00000")]
+    [InlineData("VSTS000000")]
+    public void Should_Reject_Zero_WorkItemId_With_Leading_Zeros(string branchSuffix)
     {
         // Arrange
         var settings = new AzureDevOpsSettings
@@ -414,9 +414,8 @@ public class RegexWorkItemIdParserTests
         var result = parser.TryParseWorkItemId(branchName, out var workItemId);
 
         // Assert
-        result.Should().BeTrue();
-        workItemId.Should().NotBeNull();
-        workItemId!.Value.Should().Be(expectedId);
+        result.Should().BeFalse();
+        workItemId.Should().BeNull();
     }
 
     /// <summary>
