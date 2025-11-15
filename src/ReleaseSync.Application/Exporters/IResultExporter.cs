@@ -8,7 +8,7 @@ namespace ReleaseSync.Application.Exporters;
 public interface IResultExporter
 {
     /// <summary>
-    /// 將 Work Item 為中心的資料匯出至檔案
+    /// 將 Repository 為中心的資料匯出至檔案
     /// </summary>
     /// <param name="data">要匯出的資料物件</param>
     /// <param name="outputPath">輸出檔案路徑</param>
@@ -16,7 +16,7 @@ public interface IResultExporter
     /// <param name="cancellationToken">取消權杖</param>
     /// <returns>Task</returns>
     Task ExportAsync(
-        WorkItemCentricOutputDto data,
+        RepositoryBasedOutputDto data,
         string outputPath,
         bool overwrite = false,
         CancellationToken cancellationToken = default

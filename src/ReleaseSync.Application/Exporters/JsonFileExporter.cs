@@ -25,7 +25,7 @@ public class JsonFileExporter : IResultExporter
     }
 
     public async Task ExportAsync(
-        WorkItemCentricOutputDto data,
+        RepositoryBasedOutputDto data,
         string outputPath,
         bool overwrite = false,
         CancellationToken cancellationToken = default)

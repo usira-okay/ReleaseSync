@@ -21,7 +21,7 @@ public class JsonFileImporter : IResultImporter
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<WorkItemCentricOutputDto> ImportAsync(
+    public async Task<RepositoryBasedOutputDto> ImportAsync(
         string inputPath,
         CancellationToken cancellationToken = default)
     {
@@ -42,7 +42,7 @@ public class JsonFileImporter : IResultImporter
             var json = await File.ReadAllTextAsync(inputPath, cancellationToken);
 
             // 反序列化為物件
-            var data = JsonSerializer.Deserialize<WorkItemCentricOutputDto>(json, _jsonOptions);
+            var data = JsonSerializer.Deserialize<RepositoryBasedOutputDto>(json, _jsonOptions);
 
             if (data == null)
             {
@@ -50,8 +50,8 @@ public class JsonFileImporter : IResultImporter
                 throw new InvalidOperationException($"無法解析 JSON 檔案: {inputPath}");
             }
 
-            _logger.LogInformation("成功讀取 JSON 檔案: {InputPath}, Work Items 數量: {Count}",
-                inputPath, data.WorkItems.Count);
+            _logger.LogInformation("成功讀取 JSON 檔案: {InputPath}, Repositories 數量: {Count}",
+                inputPath, data.Repositories.Count);
 
             return data;
         }
