@@ -339,3 +339,10 @@ services.AddAzureDevOpsServices(configuration);
 - **專案憲章**: `.specify/memory/constitution.md` - 完整的開發原則與規範 (必讀)
 - **SpecKit 模板**: `.specify/templates/` - 文件與命令模板
 - **README.md**: 使用者快速上手與功能說明
+
+## Active Technologies
+- C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌) (001-repository-based-export)
+- 檔案系統 (JSON 檔案輸出) (001-repository-based-export)
+
+## Recent Changes
+- 001-repository-based-export: Added C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌)
