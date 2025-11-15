@@ -48,16 +48,16 @@ public class SyncCommandHandler
         {
             LogStartup(options);
 
-            var workItemCentricData = options.ShouldFetchPullRequests
+            var repositoryBasedData = options.ShouldFetchPullRequests
                 ? await FetchAndProcessPullRequestsAsync(options, cancellationToken)
                 : await LoadFromFileAsync(options, cancellationToken);
 
-            if (workItemCentricData == null)
+            if (repositoryBasedData == null)
             {
                 return 1;
             }
 
-            await ExportResultIfNeededAsync(options, workItemCentricData, cancellationToken);
+            await ExportResultIfNeededAsync(options, repositoryBasedData, cancellationToken);
 
             return 0;
         }
@@ -101,7 +101,7 @@ public class SyncCommandHandler
     /// <summary>
     /// 抓取並處理 PR/MR 資料
     /// </summary>
-    private async Task<WorkItemCentricOutputDto?> FetchAndProcessPullRequestsAsync(
+    private async Task<RepositoryBasedOutputDto?> FetchAndProcessPullRequestsAsync(
         SyncCommandOptions options,
         CancellationToken cancellationToken)
     {
@@ -126,13 +126,13 @@ public class SyncCommandHandler
             await EnrichWithWorkItemsAsync(result, cancellationToken);
         }
 
-        return WorkItemCentricOutputDto.FromSyncResult(result);
+        return RepositoryBasedOutputDto.FromSyncResult(result);
     }
 
     /// <summary>
     /// 從檔案載入資料
     /// </summary>
-    private async Task<WorkItemCentricOutputDto?> LoadFromFileAsync(
+    private async Task<RepositoryBasedOutputDto?> LoadFromFileAsync(
         SyncCommandOptions options,
         CancellationToken cancellationToken)
     {
@@ -162,7 +162,7 @@ public class SyncCommandHandler
     /// </summary>
     private async Task ExportResultIfNeededAsync(
         SyncCommandOptions options,
-        WorkItemCentricOutputDto workItemCentricData,
+        RepositoryBasedOutputDto repositoryBasedData,
         CancellationToken cancellationToken)
     {
         if (!options.ShouldExportToFile)
@@ -172,7 +172,7 @@ public class SyncCommandHandler
 
         _logger.LogInformation("開始匯出 JSON 檔案...");
         await _resultExporter.ExportAsync(
-            workItemCentricData,
+            repositoryBasedData,
             options.OutputFile!,
             overwrite: options.Force,
             cancellationToken);

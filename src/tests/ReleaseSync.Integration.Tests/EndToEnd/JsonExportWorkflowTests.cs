@@ -72,7 +72,7 @@ public class JsonExportWorkflowTests
             var syncResultDto = await orchestrator.SyncAsync(syncRequest);
 
             // Act - Step 2: 匯出 JSON
-            var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResultDto);
+            var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResultDto);
             await exporter.ExportAsync(workItemData, tempFilePath, overwrite: true);
 
             // Assert - 驗證檔案存在
@@ -85,7 +85,7 @@ public class JsonExportWorkflowTests
             var jsonDocument = JsonDocument.Parse(jsonContent);
             var root = jsonDocument.RootElement;
 
-            // 驗證基本結構 (WorkItemCentricOutputDto 格式)
+            // 驗證基本結構 (RepositoryBasedOutputDto 格式)
             root.TryGetProperty("startDate", out _).Should().BeTrue();
             root.TryGetProperty("endDate", out _).Should().BeTrue();
             root.TryGetProperty("workItems", out _).Should().BeTrue();
@@ -112,7 +112,7 @@ public class JsonExportWorkflowTests
         // Arrange
         var exporter = TestHelper.CreateJsonFileExporter();
         var syncResult = TestHelper.CreateSampleSyncResultDto();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
 
         var tempFilePath = Path.GetTempFileName();
 
@@ -145,7 +145,7 @@ public class JsonExportWorkflowTests
         // Arrange
         var exporter = TestHelper.CreateJsonFileExporter();
         var syncResult = TestHelper.CreateSampleSyncResultDto();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
 
         var tempFilePath = Path.GetTempFileName();
 

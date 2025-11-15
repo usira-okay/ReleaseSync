@@ -18,7 +18,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateSampleSyncResultDto();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 
@@ -83,7 +83,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateSyncResultDtoWithChineseContent();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 
@@ -124,7 +124,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateSampleSyncResultDto();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 
@@ -161,7 +161,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateFullSyncResultDto();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 
@@ -208,7 +208,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateSyncResultDtoWithNullFields();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 
@@ -250,7 +250,7 @@ public class JsonExportValidationTests
     {
         // Arrange
         var syncResult = TestHelper.CreateSyncResultDtoWithWorkItem();
-        var workItemData = WorkItemCentricOutputDto.FromSyncResult(syncResult);
+        var workItemData = RepositoryBasedOutputDto.FromSyncResult(syncResult);
         var exporter = TestHelper.CreateJsonFileExporter();
         var tempFilePath = Path.GetTempFileName();
 

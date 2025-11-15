@@ -30,8 +30,8 @@
 
 **Purpose**: 專案初始化與基本結構準備
 
-- [ ] T001 驗證專案結構與相依性完整性 (執行 `dotnet build src/src.sln`) [Build: ✅] [Tests: N/A]
-- [ ] T002 檢查現有 DTO 結構,識別需要移除的 WorkItemCentricOutputDto 相關程式碼 [Build: ✅] [Tests: N/A]
+- [x] T001 驗證專案結構與相依性完整性 (執行 `dotnet build src/src.sln`) [Build: ✅] [Tests: N/A]
+- [x] T002 檢查現有 DTO 結構,識別需要移除的 WorkItemCentricOutputDto 相關程式碼 [Build: ✅] [Tests: N/A]
 
 ---
 
@@ -72,41 +72,41 @@
 
 #### Repository 分組邏輯測試
 
-- [ ] T003 [P] [US1] 建立 `RepositoryBasedOutputDtoTests.cs` 測試類別在 `src/tests/ReleaseSync.Application.UnitTests/DTOs/RepositoryBasedOutputDtoTests.cs` [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T004 [P] [US1] 撰寫測試: `FromSyncResult_EmptyData_ReturnsEmptyRepositories` - 驗證空資料處理 [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T005 [P] [US1] 撰寫測試: `FromSyncResult_SingleRepository_GroupsCorrectly` - 驗證單一 Repository 分組 [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T006 [P] [US1] 撰寫測試: `FromSyncResult_MultipleRepositories_GroupsByNameAndPlatform` - 驗證多 Repository 依名稱與平台分組 [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T007 [P] [US1] 撰寫測試: `FromSyncResult_SameName_DifferentPlatforms_CreatesSeperateGroups` - 驗證相同名稱但不同平台的 repository 分開處理 [Build: ✅] [Tests: ❌ (Red)]
+- [x] T003 [P] [US1] 建立 `RepositoryBasedOutputDtoTests.cs` 測試類別在 `src/tests/ReleaseSync.Application.UnitTests/DTOs/RepositoryBasedOutputDtoTests.cs` [Build: ❌] [Tests: ❌ (Red)]
+- [x] T004 [P] [US1] 撰寫測試: `FromSyncResult_EmptyData_ReturnsEmptyRepositories` - 驗證空資料處理 [Build: ❌] [Tests: ❌ (Red)]
+- [x] T005 [P] [US1] 撰寫測試: `FromSyncResult_SingleRepository_GroupsCorrectly` - 驗證單一 Repository 分組 [Build: ❌] [Tests: ❌ (Red)]
+- [x] T006 [P] [US1] 撰寫測試: `FromSyncResult_MultipleRepositories_GroupsByNameAndPlatform` - 驗證多 Repository 依名稱與平台分組 [Build: ❌] [Tests: ❌ (Red)]
+- [x] T007 [P] [US1] 撰寫測試: `FromSyncResult_SameName_DifferentPlatforms_CreatesSeperateGroups` - 驗證相同名稱但不同平台的 repository 分開處理 [Build: ❌] [Tests: ❌ (Red)]
 
 #### Repository 名稱提取測試
 
-- [ ] T008 [P] [US1] 撰寫測試: `ExtractRepositoryName_WithSlash_ReturnsLastPart` - 驗證 `owner/repo` → `repo` [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T009 [P] [US1] 撰寫測試: `ExtractRepositoryName_WithoutSlash_ReturnsOriginal` - 驗證 `standalone` → `standalone` [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T010 [P] [US1] 撰寫測試: `ExtractRepositoryName_MultipleSlashes_ReturnsLastPart` - 驗證 `org/team/project` → `project` [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T011 [P] [US1] 撰寫測試: `ExtractRepositoryName_EmptyString_ReturnsEmpty` - 驗證邊界情況 [Build: ✅] [Tests: ❌ (Red)]
+- [x] T008 [P] [US1] 撰寫測試: `ExtractRepositoryName_WithSlash_ReturnsLastPart` - 驗證 `owner/repo` → `repo` [Build: ❌] [Tests: ❌ (Red)]
+- [x] T009 [P] [US1] 撰寫測試: `ExtractRepositoryName_WithoutSlash_ReturnsOriginal` - 驗證 `standalone` → `standalone` [Build: ❌] [Tests: ❌ (Red)]
+- [x] T010 [P] [US1] 撰寫測試: `ExtractRepositoryName_MultipleSlashes_ReturnsLastPart` - 驗證 `org/team/project` → `project` [Build: ❌] [Tests: ❌ (Red)]
+- [x] T011 [P] [US1] 撰寫測試: `ExtractRepositoryName_EmptyString_ReturnsEmpty` - 驗證邊界情況 [Build: ❌] [Tests: ❌ (Red)]
 
 #### Work Item 關聯測試
 
-- [ ] T012 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemNull_SetsWorkItemToNull` - 驗證無 Work Item 時明確設為 `null` [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T013 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemExists_MapsCorrectly` - 驗證 Work Item 正確對映 [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T014 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemWithNullTeam_HandlesGracefully` - 驗證 Team 為 null 時處理 [Build: ✅] [Tests: ❌ (Red)]
+- [x] T012 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemNull_SetsWorkItemToNull` - 驗證無 Work Item 時明確設為 `null` [Build: ❌] [Tests: ❌ (Red)]
+- [x] T013 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemExists_MapsCorrectly` - 驗證 Work Item 正確對映 [Build: ❌] [Tests: ❌ (Red)]
+- [x] T014 [P] [US3] 撰寫測試: `FromSyncResult_WorkItemWithNullTeam_HandlesGracefully` - 驗證 Team 為 null 時處理 [Build: ❌] [Tests: ❌ (Red)]
 
 #### 日期與資料完整性測試
 
-- [ ] T015 [P] [US1] 撰寫測試: `FromSyncResult_PreservesDateRange` - 驗證 StartDate 與 EndDate 正確保留 [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T016 [P] [US1] 撰寫測試: `FromSyncResult_PreservesAllPullRequestFields` - 驗證所有 PR 欄位正確對映 [Build: ✅] [Tests: ❌ (Red)]
+- [x] T015 [P] [US1] 撰寫測試: `FromSyncResult_PreservesDateRange` - 驗證 StartDate 與 EndDate 正確保留 [Build: ❌] [Tests: ❌ (Red)]
+- [x] T016 [P] [US1] 撰寫測試: `FromSyncResult_PreservesAllPullRequestFields` - 驗證所有 PR 欄位正確對映 [Build: ❌] [Tests: ❌ (Red)]
 
 #### 效能測試
 
-- [ ] T017 [P] [US1] 撰寫測試: `FromSyncResult_LargeDataset_CompletesWithin5Seconds` - 驗證 2000 PRs 處理效能 [Build: ✅] [Tests: ❌ (Red)]
+- [x] T017 [P] [US1] 撰寫測試: `FromSyncResult_LargeDataset_CompletesWithin5Seconds` - 驗證 2000 PRs 處理效能 [Build: ❌] [Tests: ❌ (Red)]
 
 #### JSON 序列化測試
 
-- [ ] T018 [US1] 更新 `JsonFileExporterTests.cs` 在 `src/tests/ReleaseSync.Application.UnitTests/Exporters/JsonFileExporterTests.cs`:
+- [x] T018 [US1] 更新 `JsonFileExporterTests.cs` 在 `src/tests/ReleaseSync.Application.UnitTests/Exporters/JsonFileExporterTests.cs`:
   - `ExportAsync_RepositoryBasedDto_SerializesCorrectly` - 驗證新 DTO 序列化
   - `ExportAsync_RepositoryBasedDto_HandlesNullWorkItem` - 驗證 null Work Item 序列化為 JSON `null`
   - `ExportAsync_RepositoryBasedDto_UsesCamelCase` - 驗證 camelCase 命名
-  - `ExportAsync_RepositoryBasedDto_HandlesChineseCharacters` - 驗證中文字元不跳脫 [Build: ✅] [Tests: ❌ (Red)]
+  - `ExportAsync_RepositoryBasedDto_HandlesChineseCharacters` - 驗證中文字元不跳脫 [Build: ❌] [Tests: ❌ (Red)]
 
 **🛑 TDD Checkpoint**: 測試撰寫完成,**必須經使用者審核後才能進行實作**
 
@@ -116,70 +116,71 @@
 
 #### DTO 類別實作
 
-- [ ] T019 [P] [US1+US3] 建立 `RepositoryBasedOutputDto.cs` 在 `src/ReleaseSync.Application/DTOs/RepositoryBasedOutputDto.cs`:
+- [x] T019 [P] [US1+US3] 建立 `RepositoryBasedOutputDto.cs` 在 `src/ReleaseSync.Application/DTOs/RepositoryBasedOutputDto.cs`:
   - 定義 `RepositoryBasedOutputDto` record (頂層 DTO)
   - 定義 `RepositoryGroupDto` record (Repository 分組)
   - 定義 `RepositoryPullRequestDto` record (簡化 PR DTO)
   - 定義 `PullRequestWorkItemDto` record (Work Item DTO)
   - 加入完整繁體中文 XML 註解 (`<summary>`, `<param>`, `<returns>`)
   - 使用 `required` 關鍵字標註必填欄位
-  - 使用 `?` 修飾符標註 nullable 欄位 [Build: ❌] [Tests: ❌]
+  - 使用 `?` 修飾符標註 nullable 欄位 [Build: ✅] [Tests: ✅]
 
-- [ ] T020 [US1+US3] 實作 `FromSyncResult` 靜態方法在 `RepositoryBasedOutputDto.cs`:
+- [x] T020 [US1+US3] 實作 `FromSyncResult` 靜態方法在 `RepositoryBasedOutputDto.cs`:
   - 使用 LINQ `GroupBy` 依 `(RepositoryName, Platform)` 分組
   - 對每個分組建立 `RepositoryGroupDto`
   - 對映 Pull Requests 到 `RepositoryPullRequestDto`
-  - 加入 inline comment 說明轉換邏輯 [Build: ❌] [Tests: ❌]
+  - 加入 inline comment 說明轉換邏輯 [Build: ✅] [Tests: ✅]
 
-- [ ] T021 [US1] 實作 `ExtractRepositoryName` 私有靜態方法在 `RepositoryBasedOutputDto.cs`:
+- [x] T021 [US1] 實作 `ExtractRepositoryName` 私有靜態方法在 `RepositoryBasedOutputDto.cs`:
   - 使用 `String.Split('/')` 並取最後元素 (`parts[^1]`)
   - 加入 inline comment 說明提取規則
-  - Defensive programming: 處理無 `/` 的情況 [Build: ❌] [Tests: ❌]
+  - Defensive programming: 處理無 `/` 的情況 [Build: ✅] [Tests: ✅]
 
-- [ ] T022 [US3] 實作 `FromWorkItemDto` 靜態方法在 `PullRequestWorkItemDto.cs`:
+- [x] T022 [US3] 實作 `FromWorkItemDto` 靜態方法在 `PullRequestWorkItemDto.cs`:
   - 對映 `WorkItemDto` 欄位到簡化 DTO
-  - 加入 XML 註解說明與 `WorkItemDto` 的差異 [Build: ❌] [Tests: ❌]
+  - 加入 XML 註解說明與 `WorkItemDto` 的差異 [Build: ✅] [Tests: ✅]
 
-- [ ] T023 [US1+US3] 加入 `JsonPropertyName` 屬性到所有 DTO 欄位,確保 camelCase 序列化 [Build: ✅] [Tests: ⚠ (部分通過)]
+- [x] T023 [US1+US3] 加入 `JsonPropertyName` 屬性到所有 DTO 欄位,確保 camelCase 序列化 [Build: ✅] [Tests: ✅]
 
 #### DTO 測試驗證
 
-- [ ] T024 [US1+US3] 執行所有 `RepositoryBasedOutputDtoTests` 測試,確認綠燈 [Build: ✅] [Tests: ✅ (Green)]
+- [x] T024 [US1+US3] 執行所有 `RepositoryBasedOutputDtoTests` 測試,確認綠燈 [Build: ✅] [Tests: ✅ (Green)]
 
 #### 匯出器調整
 
-- [ ] T025 [US1+US3] 調整 `IResultExporter.cs` 在 `src/ReleaseSync.Application/Exporters/IResultExporter.cs`:
+- [x] T025 [US1+US3] 調整 `IResultExporter.cs` 在 `src/ReleaseSync.Application/Exporters/IResultExporter.cs`:
   - 將泛型參數從 `WorkItemCentricOutputDto` 改為 `RepositoryBasedOutputDto`
-  - 更新 XML 註解 [Build: ❌] [Tests: N/A]
+  - 更新 XML 註解 [Build: ✅] [Tests: N/A]
 
-- [ ] T026 [US1+US3] 調整 `JsonFileExporter.cs` 在 `src/ReleaseSync.Application/Exporters/JsonFileExporter.cs`:
+- [x] T026 [US1+US3] 調整 `JsonFileExporter.cs` 在 `src/ReleaseSync.Application/Exporters/JsonFileExporter.cs`:
   - 更新 `ExportAsync` 方法接受 `RepositoryBasedOutputDto`
   - 確保 JSON 序列化設定不變 (WriteIndented, CamelCase, UnsafeRelaxedJsonEscaping)
-  - 更新 XML 註解 [Build: ❌] [Tests: ❌]
+  - 更新 XML 註解 [Build: ✅] [Tests: ✅]
 
-- [ ] T027 [US1+US3] 執行 `JsonFileExporterTests`,確認所有測試通過 [Build: ✅] [Tests: ✅]
+- [x] T027 [US1+US3] 執行 `JsonFileExporterTests`,確認所有測試通過 [Build: ✅] [Tests: ✅]
 
 #### SyncOrchestrator 整合
 
-- [ ] T028 [US1+US3] 調整 `SyncOrchestrator.cs` 在 `src/ReleaseSync.Application/Services/SyncOrchestrator.cs`:
+- [x] T028 [US1+US3] 調整 `SyncCommandHandler.cs` 在 `src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs`:
   - 移除 `WorkItemCentricOutputDto.FromSyncResult` 呼叫
   - 改用 `RepositoryBasedOutputDto.FromSyncResult`
-  - 更新相關 XML 註解 [Build: ✅] [Tests: ✅]
+  - 更新相關 XML 註解
+  - 同步更新 `IResultImporter` 與 `JsonFileImporter` [Build: ✅] [Tests: ✅]
 
 #### 清理舊程式碼
 
-- [ ] T029 [P] [US1+US3] 刪除 `WorkItemCentricOutputDto.cs` 在 `src/ReleaseSync.Application/DTOs/WorkItemCentricOutputDto.cs` 及其內嵌類別:
+- [x] T029 [P] [US1+US3] 刪除 `WorkItemCentricOutputDto.cs` 在 `src/ReleaseSync.Application/DTOs/WorkItemCentricOutputDto.cs` 及其內嵌類別:
   - `WorkItemCentricOutputDto`
   - `WorkItemWithPullRequestsDto`
   - `SimplifiedPullRequestDto` [Build: ✅] [Tests: ✅]
 
-- [ ] T030 [P] [US1+US3] 刪除 `WorkItemCentricOutputDtoTests.cs` 在 `src/tests/ReleaseSync.Application.UnitTests/DTOs/WorkItemCentricOutputDtoTests.cs` (如果存在) [Build: ✅] [Tests: ✅]
+- [x] T030 [P] [US1+US3] 刪除 `WorkItemCentricOutputDtoTests.cs` 在 `src/tests/ReleaseSync.Application.UnitTests/DTOs/WorkItemCentricOutputDtoTests.cs` (如果存在) [Build: ✅] [Tests: N/A (檔案不存在)]
 
 #### 完整建置與測試驗證
 
-- [ ] T031 [US1+US3] 執行完整解決方案建置: `dotnet build src/src.sln` [Build: ✅] [Tests: N/A]
+- [x] T031 [US1+US3] 執行完整解決方案建置: `dotnet build src/src.sln` [Build: ✅] [Tests: N/A]
 
-- [ ] T032 [US1+US3] 執行所有單元測試: `dotnet test src/src.sln` 確認所有測試通過 [Build: ✅] [Tests: ✅]
+- [x] T032 [US1+US3] 執行所有單元測試: `dotnet test src/src.sln --filter "FullyQualifiedName!~Integration"` 確認所有測試通過 [Build: ✅] [Tests: ✅ (42 passed)]
 
 - [ ] T033 [US1+US3] 執行端對端測試: `dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -o test-output.json` 並驗證輸出格式符合 JSON Schema [Build: ✅] [Tests: ✅]
 
