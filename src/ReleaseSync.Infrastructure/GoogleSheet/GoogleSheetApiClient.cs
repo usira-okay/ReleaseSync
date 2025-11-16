@@ -214,18 +214,19 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("正在插入 {Count} 個新 rows", insertOperations.Count);
+        _logger.LogDebug("正在批次插入 {Count} 個新 rows", insertOperations.Count);
 
         // 取得 SheetId
         var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
 
+        // 行數小的先插入
         var sortedOperations = insertOperations.OrderBy(op => op.TargetRowNumber).ToList();
 
+        var requests = new List<Request>();
+
+        // 1. 批次插入空白行（從後往前）
         foreach (var operation in sortedOperations)
         {
-            var requests = new List<Request>();
-
-            // 1. 插入空白行（在 TargetRowNumber 位置插入）
             requests.Add(new Request
             {
                 InsertDimension = new InsertDimensionRequest
@@ -240,8 +241,11 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                     InheritFromBefore = false,
                 },
             });
+        }
 
-            // 2. 更新插入的 row 資料
+        // 2. 批次更新插入的 rows 資料
+        foreach (var operation in sortedOperations)
+        {
             var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
             var rowData = new RowData
             {
@@ -270,23 +274,21 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                     Fields = "userEnteredValue",
                 },
             });
-
-            // 執行單一插入操作
-            var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
-            {
-                Requests = requests,
-            };
-
-            await _retryPolicy.ExecuteAsync(async () =>
-            {
-                var request = _sheetsService!.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId);
-                await request.ExecuteAsync(cancellationToken);
-            });
-
-            _logger.LogDebug("插入 row {RowNumber} 完成: {RepositoryName}", operation.TargetRowNumber, operation.RowData.RepositoryName);
         }
 
-        _logger.LogInformation("插入 {Count} 個新 rows 完成", insertOperations.Count);
+        // 3. 執行批次更新（一次 API 呼叫完成所有插入與資料填充）
+        var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
+        {
+            Requests = requests,
+        };
+
+        await _retryPolicy.ExecuteAsync(async () =>
+        {
+            var request = _sheetsService!.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId);
+            await request.ExecuteAsync(cancellationToken);
+        });
+
+        _logger.LogInformation("批次插入 {Count} 個新 rows 完成", insertOperations.Count);
     }
 
     /// <summary>
