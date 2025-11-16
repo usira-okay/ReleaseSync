@@ -247,15 +247,35 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         foreach (var operation in sortedOperations)
         {
             var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
+            var cellDataList = new List<CellData>();
+
+            for (int i = 0; i < rowValues.Count; i++)
+            {
+                // 檢查是否為 Feature 欄位且有 FeatureUrl
+                if (IsFeatureColumn(i, columnMapping) &&
+                    !string.IsNullOrWhiteSpace(operation.RowData.FeatureUrl))
+                {
+                    // 建立超連結儲存格
+                    cellDataList.Add(CreateHyperlinkCell(
+                        operation.RowData.Feature,
+                        operation.RowData.FeatureUrl));
+                }
+                else
+                {
+                    // 一般儲存格
+                    cellDataList.Add(new CellData
+                    {
+                        UserEnteredValue = new ExtendedValue
+                        {
+                            StringValue = rowValues[i]?.ToString(),
+                        },
+                    });
+                }
+            }
+
             var rowData = new RowData
             {
-                Values = rowValues.Select(v => new CellData
-                {
-                    UserEnteredValue = new ExtendedValue
-                    {
-                        StringValue = v?.ToString(),
-                    },
-                }).ToList(),
+                Values = cellDataList,
             };
 
             requests.Add(new Request
@@ -302,30 +322,69 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     {
         _logger.LogDebug("正在更新 {Count} 個現有 rows", updateOperations.Count);
 
-        var updateValues = new List<ValueRange>();
-        var sheetName = _settings.SheetName;
+        var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
+        var requests = new List<Request>();
 
         foreach (var operation in updateOperations)
         {
             var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
-            var range = $"{sheetName}!A{operation.TargetRowNumber}";
+            var cellDataList = new List<CellData>();
 
-            updateValues.Add(new ValueRange
+            for (int i = 0; i < rowValues.Count; i++)
             {
-                Range = range,
-                Values = new List<IList<object>> { rowValues },
+                // 檢查是否為 Feature 欄位且有 FeatureUrl
+                if (IsFeatureColumn(i, columnMapping) &&
+                    !string.IsNullOrWhiteSpace(operation.RowData.FeatureUrl))
+                {
+                    // 建立超連結儲存格
+                    cellDataList.Add(CreateHyperlinkCell(
+                        operation.RowData.Feature,
+                        operation.RowData.FeatureUrl));
+                }
+                else
+                {
+                    // 一般儲存格
+                    cellDataList.Add(new CellData
+                    {
+                        UserEnteredValue = new ExtendedValue
+                        {
+                            StringValue = rowValues[i]?.ToString(),
+                        },
+                    });
+                }
+            }
+
+            var rowData = new RowData
+            {
+                Values = cellDataList,
+            };
+
+            requests.Add(new Request
+            {
+                UpdateCells = new UpdateCellsRequest
+                {
+                    Range = new GridRange
+                    {
+                        SheetId = sheetId,
+                        StartRowIndex = operation.TargetRowNumber - 1, // 0-based index
+                        EndRowIndex = operation.TargetRowNumber,
+                        StartColumnIndex = 0,
+                        EndColumnIndex = rowValues.Count,
+                    },
+                    Rows = new List<RowData> { rowData },
+                    Fields = "userEnteredValue",
+                },
             });
         }
 
-        var batchUpdateRequest = new BatchUpdateValuesRequest
+        var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
         {
-            Data = updateValues,
-            ValueInputOption = "USER_ENTERED",
+            Requests = requests,
         };
 
         await _retryPolicy.ExecuteAsync(async () =>
         {
-            var request = _sheetsService!.Spreadsheets.Values.BatchUpdate(batchUpdateRequest, spreadsheetId);
+            var request = _sheetsService!.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId);
             await request.ExecuteAsync(cancellationToken);
         });
 
@@ -350,6 +409,71 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         }
 
         return sheet.Properties.SheetId ?? 0;
+    }
+
+    /// <summary>
+    /// 判斷指定的欄位索引是否為 Feature 欄位。
+    /// </summary>
+    /// <param name="columnIndex">欄位索引 (0-based)。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <returns>是否為 Feature 欄位。</returns>
+    private static bool IsFeatureColumn(int columnIndex, GoogleSheetColumnMapping columnMapping)
+    {
+        var featureColumnIndex = ColumnLetterToIndex(columnMapping.FeatureColumn);
+        return columnIndex == featureColumnIndex;
+    }
+
+    /// <summary>
+    /// 建立包含超連結的儲存格資料。
+    /// </summary>
+    /// <param name="displayText">顯示文字。</param>
+    /// <param name="url">超連結 URL。</param>
+    /// <returns>包含超連結的 CellData。</returns>
+    private static CellData CreateHyperlinkCell(string displayText, string url)
+    {
+        if (string.IsNullOrWhiteSpace(displayText))
+        {
+            throw new ArgumentException("顯示文字不可為空", nameof(displayText));
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            throw new ArgumentException("URL 不可為空", nameof(url));
+        }
+
+        return new CellData
+        {
+            UserEnteredValue = new ExtendedValue
+            {
+                FormulaValue = $"=HYPERLINK(\"{url}\", \"{displayText}\")",
+            },
+        };
+    }
+
+    /// <summary>
+    /// 將欄位字母轉換為索引 (0-based)。
+    /// </summary>
+    /// <param name="columnLetter">欄位字母 (如 "A", "B", "AA")。</param>
+    /// <returns>0-based 索引。</returns>
+    private static int ColumnLetterToIndex(string columnLetter)
+    {
+        if (string.IsNullOrWhiteSpace(columnLetter))
+        {
+            throw new ArgumentException("欄位字母不可為空", nameof(columnLetter));
+        }
+
+        var index = 0;
+        foreach (var c in columnLetter.ToUpperInvariant())
+        {
+            if (!char.IsLetter(c))
+            {
+                throw new ArgumentException($"無效的欄位字母: {columnLetter}", nameof(columnLetter));
+            }
+
+            index = (index * 26) + (c - 'A' + 1);
+        }
+
+        return index - 1; // 轉換為 0-based
     }
 
     /// <inheritdoc/>

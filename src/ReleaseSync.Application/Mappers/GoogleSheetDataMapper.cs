@@ -24,7 +24,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
         {
             // 根據 (WorkItemId, RepositoryName) 分組 PR/MR
             var groupedByWorkItem = repository.PullRequests
-                .Where(pr => pr.WorkItem != null)
+                .Where(pr => pr.WorkItem != null)// TODO
                 .GroupBy(pr => pr.WorkItem!.WorkItemId);
 
             foreach (var group in groupedByWorkItem)
