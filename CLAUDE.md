@@ -343,6 +343,7 @@ services.AddAzureDevOpsServices(configuration);
 ## Active Technologies
 - C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌) (001-repository-based-export)
 - 檔案系統 (JSON 檔案輸出) (001-repository-based-export)
+- [if applicable, e.g., PostgreSQL, CoreData, files or N/A]   (002-google-sheet-sync)
 
 ## Recent Changes
 - 001-repository-based-export: Added C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌)
