@@ -51,6 +51,11 @@ public class SyncCommandOptions
     public bool Verbose { get; init; }
 
     /// <summary>
+    /// 是否啟用 Google Sheet 同步
+    /// </summary>
+    public bool EnableGoogleSheet { get; init; }
+
+    /// <summary>
     /// 是否需要執行 PR/MR 資料抓取
     /// 條件: 任一平台啟用 (EnableGitLab 或 EnableBitBucket)
     /// </summary>
@@ -67,4 +72,10 @@ public class SyncCommandOptions
     /// 條件: EnableExport = true 且 OutputFile 有值
     /// </summary>
     public bool ShouldExportToFile => EnableExport && !string.IsNullOrWhiteSpace(OutputFile);
+
+    /// <summary>
+    /// 是否需要同步至 Google Sheet
+    /// 條件: EnableGoogleSheet = true 且 (有啟用任一平台或有 OutputFile)
+    /// </summary>
+    public bool ShouldSyncToGoogleSheet => EnableGoogleSheet && (ShouldFetchPullRequests || !string.IsNullOrWhiteSpace(OutputFile));
 }

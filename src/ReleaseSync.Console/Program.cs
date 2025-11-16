@@ -53,6 +53,7 @@ class Program
             services.AddAzureDevOpsServices(configuration);
             services.AddUserMappingServices(configuration);
             services.AddTeamMappingServices();
+            services.AddGoogleSheetServices(configuration);
 
             // 註冊 Application 服務
             services.AddScoped<ISyncOrchestrator, SyncOrchestrator>();
@@ -96,7 +97,9 @@ class Program
                     Force = context.ParseResult.GetValueForOption(
                         syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-f"))),
                     Verbose = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v")))
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v"))),
+                    EnableGoogleSheet = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--google-sheet")))
                 };
 
                 using var scope = serviceProvider.CreateScope();

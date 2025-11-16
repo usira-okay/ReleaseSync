@@ -19,7 +19,8 @@
         "-o",
         ".\\output.json",
         "-f",
-        "-v"
+        "-v",
+        "--enable-google-sheet"
       ],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
