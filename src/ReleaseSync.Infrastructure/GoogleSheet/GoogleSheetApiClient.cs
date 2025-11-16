@@ -189,16 +189,16 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                                           .ToList();
         var updateOperations = operations.Where(op => op.OperationType == SheetOperationType.Update).ToList();
 
-        // 先執行插入操作（按行數由小到大，確保插入順序正確）
-        if (insertOperations.Count > 0)
-        {
-            await InsertRowsAsync(spreadsheetId, insertOperations, columnMapping, cancellationToken);
-        }
-
         // 再執行更新操作
         if (updateOperations.Count > 0)
         {
             await UpdateExistingRowsAsync(spreadsheetId, updateOperations, columnMapping, cancellationToken);
+        }
+
+        // 先執行插入操作（按行數由小到大，確保插入順序正確）
+        if (insertOperations.Count > 0)
+        {
+            await InsertRowsAsync(spreadsheetId, insertOperations, columnMapping, cancellationToken);
         }
 
         _logger.LogInformation("批次更新完成: {InsertCount} 新增, {UpdateCount} 更新", insertOperations.Count, updateOperations.Count);
@@ -219,8 +219,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         // 取得 SheetId
         var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
 
-        // 為了避免插入後行數錯亂，需要從後往前插入（行數大的先插入）
-        var sortedOperations = insertOperations.OrderByDescending(op => op.TargetRowNumber).ToList();
+        var sortedOperations = insertOperations.OrderBy(op => op.TargetRowNumber).ToList();
 
         foreach (var operation in sortedOperations)
         {

@@ -220,6 +220,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
     /// <summary>
     /// 產生同步操作清單。
+    /// 先處理所有 Update 操作以確定固定的 row 編號，再處理 Insert 操作並計算偏移值。
     /// </summary>
     /// <param name="newRowDataList">新的 row 資料清單。</param>
     /// <param name="ukToRowIndex">UK 到 Row 索引的字典。</param>
@@ -233,10 +234,12 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
         GoogleSheetColumnMapping columnMapping)
     {
         var operations = new List<SheetSyncOperation>();
+        var pendingInserts = new List<(SheetRowData RowData, string RepositoryName)>();
 
         // 建立 RepositoryName 到最後一筆資料 row 的索引
         var repositoryLastRowIndex = BuildRepositoryLastRowIndex(existingData, columnMapping);
 
+        // 第一階段：處理所有 Update 操作，確定固定的 TargetRowNumber
         foreach (var newRowData in newRowDataList)
         {
             if (ukToRowIndex.TryGetValue(newRowData.UniqueKey, out var existingRowNumber))
@@ -254,26 +257,45 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             }
             else
             {
-                // 插入新 row - 插入在該 Repository 最後一筆資料的下一行
-                var insertPosition = 0;
-                if (repositoryLastRowIndex.TryGetValue(newRowData.RepositoryName, out var lastRowIndex))
-                {
-                    // 插入位置為最後一筆的下一行
-                    lastRowIndex.Index++;
-                    // 更新該 Repository 的最後一筆行數（因為插入了新資料）
-                    insertPosition = lastRowIndex.Index;
-                }
-
-                var rowDataWithNumber = newRowData with { RowNumber = insertPosition };
-                operations.Add(new SheetSyncOperation
-                {
-                    OperationType = SheetOperationType.Insert,
-                    TargetRowNumber = insertPosition,
-                    RowData = rowDataWithNumber,
-                });
+                // 收集需要插入的資料，稍後處理
+                pendingInserts.Add((newRowData, newRowData.RepositoryName));
             }
         }
 
+        // 第二階段：處理 Insert 操作，按照 Repository 最後行的索引從小到大排序處理
+        // 這樣可以正確計算偏移值
+        // var insertOperations = new List<(int OriginalInsertPosition, SheetRowData RowData)>();
+        int offset = 0;
+        var sortedRepositories = repositoryLastRowIndex
+                                .Select(x => (x.Key, x.Value.Index))
+                                .OrderBy(x => x.Index)
+                                .Select(x => x.Key)
+                                .ToArray();
+
+        foreach (var repositoryName in sortedRepositories)
+        {
+            var lastRowIndex = repositoryLastRowIndex[repositoryName];
+
+            if (!lastRowIndex.IsAdded)
+                lastRowIndex.Add(offset);
+
+            var waitToInserts = pendingInserts
+                                    .Where(x => x.RepositoryName == repositoryName)
+                                    .OrderBy(x => x.RowData.MergedAt)
+                                    .Select(x =>
+                                    {
+                                        offset++;
+                                        lastRowIndex.Add();
+                                        return new SheetSyncOperation
+                                        {
+                                            OperationType = SheetOperationType.Insert,
+                                            TargetRowNumber = lastRowIndex.Index,
+                                            RowData = x.RowData,
+                                        };
+                                    });
+            operations.AddRange(waitToInserts);
+
+        }
         return operations;
     }
 
@@ -294,7 +316,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             if (!string.IsNullOrWhiteSpace(rowData.RepositoryName))
             {
                 var repositories = rowData.RepositoryName.Split(',');
-                var lastRowIndex = new LastRowIndex { Index = i + 1 };
+                var lastRowIndex = new LastRowIndex(i + 1);
                 // 記錄每個 Repository 最後出現的行數
                 foreach (var repo in repositories)
                 {
