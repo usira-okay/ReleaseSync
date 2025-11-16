@@ -31,12 +31,12 @@
 
 **Purpose**: 安裝必要的 NuGet 套件並建立基礎專案結構
 
-- [ ] T001 安裝 Google.Apis.Sheets.v4 NuGet 套件至 ReleaseSync.Infrastructure 專案 [Build: ✅] [Tests: N/A]
-- [ ] T002 安裝 Polly NuGet 套件至 ReleaseSync.Infrastructure 專案 [Build: ✅] [Tests: N/A]
-- [ ] T003 [P] 建立 src/ReleaseSync.Infrastructure/GoogleSheet/ 目錄結構 [Build: ✅] [Tests: N/A]
-- [ ] T004 [P] 建立 src/ReleaseSync.Infrastructure/Exceptions/ 目錄結構 [Build: ✅] [Tests: N/A]
-- [ ] T005 [P] 建立 src/ReleaseSync.Application/Mappers/ 目錄結構 [Build: ✅] [Tests: N/A]
-- [ ] T006 [P] 建立 src/ReleaseSync.Application/Models/ 目錄結構 (若不存在) [Build: ✅] [Tests: N/A]
+- [X] T001 安裝 Google.Apis.Sheets.v4 NuGet 套件至 ReleaseSync.Infrastructure 專案 [Build: ✅] [Tests: N/A]
+- [X] T002 安裝 Polly NuGet 套件至 ReleaseSync.Infrastructure 專案 [Build: ✅] [Tests: N/A]
+- [X] T003 [P] 建立 src/ReleaseSync.Infrastructure/GoogleSheet/ 目錄結構 [Build: ✅] [Tests: N/A]
+- [X] T004 [P] 建立 src/ReleaseSync.Infrastructure/Exceptions/ 目錄結構 [Build: ✅] [Tests: N/A]
+- [X] T005 [P] 建立 src/ReleaseSync.Application/Mappers/ 目錄結構 [Build: ✅] [Tests: N/A]
+- [X] T006 [P] 建立 src/ReleaseSync.Application/Models/ 目錄結構 (若不存在) [Build: ✅] [Tests: N/A]
 
 ---
 
@@ -48,19 +48,19 @@
 
 ### Foundational Tests (TDD - Red Phase)
 
-- [ ] T007 [P] 建立 GoogleSheetColumnMapping 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/GoogleSheetColumnMappingTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T008 [P] 建立 SheetRowData 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/SheetRowDataTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T009 [P] 建立 GoogleSheetSyncResult 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/GoogleSheetSyncResultTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T007 [P] 建立 GoogleSheetColumnMapping 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/GoogleSheetColumnMappingTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T008 [P] 建立 SheetRowData 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/SheetRowDataTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T009 [P] 建立 GoogleSheetSyncResult 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Models/GoogleSheetSyncResultTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Foundational Implementation
 
-- [ ] T010 [P] 實作 GoogleSheetColumnMapping Value Object in src/ReleaseSync.Application/Models/GoogleSheetColumnMapping.cs [Build: ✅] [Tests: ✅]
-- [ ] T011 [P] 實作 SheetRowData Value Object in src/ReleaseSync.Application/Models/SheetRowData.cs [Build: ✅] [Tests: ✅]
-- [ ] T012 [P] 實作 SheetSyncOperation Value Object in src/ReleaseSync.Application/Models/SheetSyncOperation.cs [Build: ✅] [Tests: ✅]
-- [ ] T013 [P] 實作 GoogleSheetSyncResult Value Object in src/ReleaseSync.Application/Models/GoogleSheetSyncResult.cs [Build: ✅] [Tests: ✅]
-- [ ] T014 [P] 實作自訂例外類型 in src/ReleaseSync.Infrastructure/Exceptions/GoogleSheetExceptions.cs [Build: ✅] [Tests: N/A]
-- [ ] T015 實作 GoogleSheetSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/GoogleSheetSettings.cs [Build: ✅] [Tests: N/A]
-- [ ] T016 更新 appsettings.json 新增 GoogleSheet 組態區塊 in src/ReleaseSync.Console/appsettings.json [Build: ✅] [Tests: N/A]
+- [X] T010 [P] 實作 GoogleSheetColumnMapping Value Object in src/ReleaseSync.Application/Models/GoogleSheetColumnMapping.cs [Build: ✅] [Tests: ✅]
+- [X] T011 [P] 實作 SheetRowData Value Object in src/ReleaseSync.Application/Models/SheetRowData.cs [Build: ✅] [Tests: ✅]
+- [X] T012 [P] 實作 SheetSyncOperation Value Object in src/ReleaseSync.Application/Models/SheetSyncOperation.cs [Build: ✅] [Tests: ✅]
+- [X] T013 [P] 實作 GoogleSheetSyncResult Value Object in src/ReleaseSync.Application/Models/GoogleSheetSyncResult.cs [Build: ✅] [Tests: ✅]
+- [X] T014 [P] 實作自訂例外類型 in src/ReleaseSync.Infrastructure/Exceptions/GoogleSheetExceptions.cs [Build: ✅] [Tests: N/A]
+- [X] T015 實作 GoogleSheetSettings 組態模型 in src/ReleaseSync.Infrastructure/Configuration/GoogleSheetSettings.cs [Build: ✅] [Tests: N/A]
+- [X] T016 更新 appsettings.json 新增 GoogleSheet 組態區塊 in src/ReleaseSync.Console/appsettings.json [Build: ✅] [Tests: N/A]
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -76,26 +76,26 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T017 [P] [US1] 建立 GoogleSheetRowParser 單元測試 in src/tests/ReleaseSync.Infrastructure.UnitTests/GoogleSheet/GoogleSheetRowParserTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T018 [P] [US1] 建立 GoogleSheetDataMapper 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Mappers/GoogleSheetDataMapperTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T019 [P] [US1] 建立 GoogleSheetSyncService 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Services/GoogleSheetSyncServiceTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T020 [P] [US1] 建立 SyncCommandHandler Google Sheet 整合測試 in src/tests/ReleaseSync.Console.UnitTests/Handlers/SyncCommandHandlerGoogleSheetTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T017 [P] [US1] 建立 GoogleSheetRowParser 單元測試 in src/tests/ReleaseSync.Infrastructure.UnitTests/GoogleSheet/GoogleSheetRowParserTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T018 [P] [US1] 建立 GoogleSheetDataMapper 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Mappers/GoogleSheetDataMapperTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T019 [P] [US1] 建立 GoogleSheetSyncService 單元測試 in src/tests/ReleaseSync.Application.UnitTests/Services/GoogleSheetSyncServiceTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T020 [P] [US1] 建立 SyncCommandHandler Google Sheet 整合測試 in src/tests/ReleaseSync.Console.UnitTests/Handlers/SyncCommandHandlerGoogleSheetTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 1
 
-- [ ] T021 [P] [US1] 實作 IGoogleSheetRowParser 介面 in src/ReleaseSync.Infrastructure/GoogleSheet/IGoogleSheetRowParser.cs [Build: ✅] [Tests: ❌]
-- [ ] T022 [US1] 實作 GoogleSheetRowParser in src/ReleaseSync.Infrastructure/GoogleSheet/GoogleSheetRowParser.cs [Build: ✅] [Tests: ✅]
-- [ ] T023 [P] [US1] 實作 IGoogleSheetDataMapper 介面 in src/ReleaseSync.Application/Mappers/IGoogleSheetDataMapper.cs [Build: ✅] [Tests: ❌]
-- [ ] T024 [US1] 實作 GoogleSheetDataMapper in src/ReleaseSync.Application/Mappers/GoogleSheetDataMapper.cs [Build: ✅] [Tests: ✅]
-- [ ] T025 [P] [US1] 實作 IGoogleSheetApiClient 介面 in src/ReleaseSync.Infrastructure/GoogleSheet/IGoogleSheetApiClient.cs [Build: ✅] [Tests: ❌]
-- [ ] T026 [US1] 實作 GoogleSheetApiClient (含 Polly Retry) in src/ReleaseSync.Infrastructure/GoogleSheet/GoogleSheetApiClient.cs [Build: ✅] [Tests: ⚠️ (Mock 測試)]
-- [ ] T027 [P] [US1] 實作 IGoogleSheetSyncService 介面 in src/ReleaseSync.Application/Services/IGoogleSheetSyncService.cs [Build: ✅] [Tests: ❌]
-- [ ] T028 [US1] 實作 GoogleSheetSyncService in src/ReleaseSync.Application/Services/GoogleSheetSyncService.cs [Build: ✅] [Tests: ✅]
-- [ ] T029 [US1] 實作 GoogleSheetServiceExtensions DI 擴展 in src/ReleaseSync.Infrastructure/DependencyInjection/GoogleSheetServiceExtensions.cs [Build: ✅] [Tests: N/A]
-- [ ] T030 [US1] 修改 SyncCommandOptions 新增 EnableGoogleSheet 屬性 in src/ReleaseSync.Console/Handlers/SyncCommandOptions.cs [Build: ✅] [Tests: ❌]
-- [ ] T031 [US1] 修改 SyncCommand 新增 --google-sheet 參數 in src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ❌]
-- [ ] T032 [US1] 修改 SyncCommandHandler 整合 GoogleSheetSyncService in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs [Build: ✅] [Tests: ✅]
-- [ ] T033 [US1] 修改 Program.cs 新增 AddGoogleSheetServices 呼叫 in src/ReleaseSync.Console/Program.cs [Build: ✅] [Tests: ✅]
+- [X] T021 [P] [US1] 實作 IGoogleSheetRowParser 介面 in src/ReleaseSync.Application/Services/IGoogleSheetRowParser.cs [Build: ✅] [Tests: ❌]
+- [X] T022 [US1] 實作 GoogleSheetRowParser in src/ReleaseSync.Infrastructure/GoogleSheet/GoogleSheetRowParser.cs [Build: ✅] [Tests: ✅]
+- [X] T023 [P] [US1] 實作 IGoogleSheetDataMapper 介面 in src/ReleaseSync.Application/Mappers/IGoogleSheetDataMapper.cs [Build: ✅] [Tests: ❌]
+- [X] T024 [US1] 實作 GoogleSheetDataMapper in src/ReleaseSync.Application/Mappers/GoogleSheetDataMapper.cs [Build: ✅] [Tests: ✅]
+- [X] T025 [P] [US1] 實作 IGoogleSheetApiClient 介面 in src/ReleaseSync.Application/Services/IGoogleSheetApiClient.cs [Build: ✅] [Tests: ❌]
+- [X] T026 [US1] 實作 GoogleSheetApiClient (含 Polly Retry) in src/ReleaseSync.Infrastructure/GoogleSheet/GoogleSheetApiClient.cs [Build: ✅] [Tests: ⚠️ (Mock 測試)]
+- [X] T027 [P] [US1] 實作 IGoogleSheetSyncService 介面 in src/ReleaseSync.Application/Services/IGoogleSheetSyncService.cs [Build: ✅] [Tests: ❌]
+- [X] T028 [US1] 實作 GoogleSheetSyncService in src/ReleaseSync.Application/Services/GoogleSheetSyncService.cs [Build: ✅] [Tests: ✅]
+- [X] T029 [US1] 實作 GoogleSheetServiceExtensions DI 擴展 in src/ReleaseSync.Infrastructure/DependencyInjection/GoogleSheetServiceExtensions.cs [Build: ✅] [Tests: N/A]
+- [X] T030 [US1] 修改 SyncCommandOptions 新增 EnableGoogleSheet 屬性 in src/ReleaseSync.Console/Handlers/SyncCommandOptions.cs [Build: ✅] [Tests: ❌]
+- [X] T031 [US1] 修改 SyncCommand 新增 --google-sheet 參數 in src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ❌]
+- [X] T032 [US1] 修改 SyncCommandHandler 整合 GoogleSheetSyncService in src/ReleaseSync.Console/Handlers/SyncCommandHandler.cs [Build: ✅] [Tests: ✅]
+- [X] T033 [US1] 修改 Program.cs 新增 AddGoogleSheetServices 呼叫 in src/ReleaseSync.Console/Program.cs [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: User Story 1 完成 - 系統可透過 --google-sheet 參數觸發同步流程
 

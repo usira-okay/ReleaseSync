@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.DTOs;
+using ReleaseSync.Application.Exceptions;
 using ReleaseSync.Application.Exporters;
 using ReleaseSync.Application.Importers;
 using ReleaseSync.Application.Services;
@@ -16,6 +17,7 @@ public class SyncCommandHandler
     private readonly IResultExporter _resultExporter;
     private readonly IResultImporter _resultImporter;
     private readonly IWorkItemEnricher _workItemEnricher;
+    private readonly IGoogleSheetSyncService? _googleSheetSyncService;
     private readonly ILogger<SyncCommandHandler> _logger;
 
     /// <summary>
@@ -26,12 +28,14 @@ public class SyncCommandHandler
         IResultExporter resultExporter,
         IResultImporter resultImporter,
         IWorkItemEnricher workItemEnricher,
-        ILogger<SyncCommandHandler> logger)
+        ILogger<SyncCommandHandler> logger,
+        IGoogleSheetSyncService? googleSheetSyncService = null)
     {
         _syncOrchestrator = syncOrchestrator;
         _resultExporter = resultExporter;
         _resultImporter = resultImporter;
         _workItemEnricher = workItemEnricher;
+        _googleSheetSyncService = googleSheetSyncService;
         _logger = logger;
     }
 
@@ -58,8 +62,14 @@ public class SyncCommandHandler
             }
 
             await ExportResultIfNeededAsync(options, repositoryBasedData, cancellationToken);
+            await SyncToGoogleSheetIfNeededAsync(options, repositoryBasedData, cancellationToken);
 
             return 0;
+        }
+        catch (GoogleSheetException ex)
+        {
+            _logger.LogError(ex, "Google Sheet 同步失敗: {Message}", ex.Message);
+            return 1;
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -94,8 +104,14 @@ public class SyncCommandHandler
     private void LogStartup(SyncCommandOptions options)
     {
         _logger.LogInformation("=== ReleaseSync 同步工具 ===");
-        _logger.LogInformation("時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}",
-            options.StartDate, options.EndDate, options.EnableGitLab, options.EnableBitBucket, options.EnableAzureDevOps);
+        _logger.LogInformation(
+            "時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}, GoogleSheet={GoogleSheet}",
+            options.StartDate,
+            options.EndDate,
+            options.EnableGitLab,
+            options.EnableBitBucket,
+            options.EnableAzureDevOps,
+            options.EnableGoogleSheet);
     }
 
     /// <summary>
@@ -177,5 +193,47 @@ public class SyncCommandHandler
             overwrite: options.Force,
             cancellationToken);
         _logger.LogInformation("匯出完成: {OutputFile}", options.OutputFile);
+    }
+
+    /// <summary>
+    /// 同步至 Google Sheet (如果需要)
+    /// </summary>
+    private async Task SyncToGoogleSheetIfNeededAsync(
+        SyncCommandOptions options,
+        RepositoryBasedOutputDto repositoryBasedData,
+        CancellationToken cancellationToken)
+    {
+        if (!options.ShouldSyncToGoogleSheet)
+        {
+            return;
+        }
+
+        if (_googleSheetSyncService == null)
+        {
+            _logger.LogWarning("Google Sheet 同步服務未註冊，跳過同步");
+            return;
+        }
+
+        _logger.LogInformation("開始同步至 Google Sheet...");
+        var result = await _googleSheetSyncService.SyncAsync(repositoryBasedData, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            _logger.LogInformation(
+                "Google Sheet 同步完成 - 更新: {UpdatedCount} rows, 新增: {InsertedCount} rows, 處理 PR/MR: {ProcessedCount}, 執行時間: {Duration:F1} 秒",
+                result.UpdatedRowCount,
+                result.InsertedRowCount,
+                result.ProcessedPullRequestCount,
+                result.ExecutionDuration.TotalSeconds);
+
+            if (!string.IsNullOrWhiteSpace(result.SpreadsheetUrl))
+            {
+                _logger.LogInformation("Google Sheet URL: {Url}", result.SpreadsheetUrl);
+            }
+        }
+        else
+        {
+            _logger.LogWarning("Google Sheet 同步失敗: {ErrorMessage}", result.ErrorMessage);
+        }
     }
 }

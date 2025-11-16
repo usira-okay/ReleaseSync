@@ -62,6 +62,11 @@ public static class SyncCommand
             getDefaultValue: () => false,
             description: "啟用詳細日誌輸出");
 
+        var enableGoogleSheetOption = new Option<bool>(
+            aliases: new[] { "--enable-google-sheet", "--google-sheet" },
+            getDefaultValue: () => false,
+            description: "啟用 Google Sheet 同步功能");
+
         command.AddOption(startDateOption);
         command.AddOption(endDateOption);
         command.AddOption(enableGitLabOption);
@@ -71,6 +76,7 @@ public static class SyncCommand
         command.AddOption(outputFileOption);
         command.AddOption(forceOption);
         command.AddOption(verboseOption);
+        command.AddOption(enableGoogleSheetOption);
 
         return command;
     }
