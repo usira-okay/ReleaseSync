@@ -60,11 +60,14 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
             // 套用目標分支過濾（如果需要）
             var filteredPullRequests = ApplyTargetBranchFilter(allPullRequests, targetBranches, projectName);
 
+            // 套用 UserMapping 過濾 (過濾不在清單內的使用者)
+            var userFilteredPullRequests = ApplyUserMappingFilter(filteredPullRequests, projectName);
+
             _logger.LogInformation(
                 "取得 {Count} 筆 PR/MR - 平台: {Platform}, 專案: {ProjectName}",
-                filteredPullRequests.Count, PlatformName, projectName);
+                userFilteredPullRequests.Count, PlatformName, projectName);
 
-            return filteredPullRequests;
+            return userFilteredPullRequests;
         }
         catch (Exception ex)
         {
@@ -99,4 +102,52 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
         return pullRequests;
     }
 
+    /// <summary>
+    /// 套用 UserMapping 過濾 (過濾不在清單內的使用者)
+    /// </summary>
+    /// <param name="pullRequests">待過濾的 Pull Requests</param>
+    /// <param name="projectName">專案名稱 (用於日誌)</param>
+    /// <returns>過濾後的 Pull Requests</returns>
+    protected virtual List<PullRequestInfo> ApplyUserMappingFilter(
+        List<PullRequestInfo> pullRequests,
+        string projectName)
+    {
+        // 如果未啟用過濾 (UserMapping 為空)，則不過濾
+        if (!_userMappingService.IsFilteringEnabled())
+        {
+            _logger.LogDebug(
+                "UserMapping 過濾未啟用，保留所有 PR/MR - 平台: {Platform}, 專案: {ProjectName}",
+                PlatformName, projectName);
+            return pullRequests;
+        }
+
+        var originalCount = pullRequests.Count;
+        var filteredPullRequests = new List<PullRequestInfo>();
+
+        foreach (var pr in pullRequests)
+        {
+            if (_userMappingService.HasMapping(PlatformName, pr.AuthorUserId))
+            {
+                filteredPullRequests.Add(pr);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "過濾 PR/MR: 作者不在 UserMapping 清單中 - 平台: {Platform}, PR: #{Number}, 作者: {AuthorUserId} ({AuthorDisplayName})",
+                    PlatformName, pr.Number, pr.AuthorUserId, pr.AuthorDisplayName);
+            }
+        }
+
+        var removedCount = originalCount - filteredPullRequests.Count;
+        if (removedCount > 0)
+        {
+            _logger.LogInformation(
+                "UserMapping 過濾完成 - 平台: {Platform}, 專案: {ProjectName}, 原始數量: {OriginalCount}, 移除: {RemovedCount}, 保留: {RemainingCount}",
+                PlatformName, projectName, originalCount, removedCount, filteredPullRequests.Count);
+        }
+
+        return filteredPullRequests;
+    }
+
 }
+

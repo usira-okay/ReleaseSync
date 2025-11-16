@@ -76,17 +76,26 @@ public class RegexWorkItemIdParser : IWorkItemIdParser
 
             var value = match.Groups[pattern.CaptureGroup].Value;
 
-            // 拒絕 0 和負數,只接受正整數 (Work Item ID 必須 > 0)
-            if (!int.TryParse(value, out var id) || id <= 0)
+            // 拒絕負數,但允許 0 (用於 VSTS000000 等佔位符情況)
+            if (!int.TryParse(value, out var id) || id < 0)
             {
                 return false;
             }
 
             workItemId = new WorkItemId(id);
 
-            _logger.LogInformation(
-                "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName} using pattern: {PatternName}",
-                id, branchName.Value, pattern.Name);
+            if (id == 0)
+            {
+                _logger.LogInformation(
+                    "解析到佔位符 Work Item ID (ID=0): Branch={BranchName} using pattern: {PatternName}",
+                    branchName.Value, pattern.Name);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "成功解析 Work Item ID: {WorkItemId} from Branch: {BranchName} using pattern: {PatternName}",
+                    id, branchName.Value, pattern.Name);
+            }
 
             return true;
         }
