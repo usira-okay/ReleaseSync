@@ -30,7 +30,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
             foreach (var group in groupedByWorkItem)
             {
                 var workItemId = group.Key;
-                var firstPr = group.First();
+                var firstPr = group.First();// TODO
                 var workItem = firstPr.WorkItem!;
 
                 // 收集所有 Authors (使用 HashSet 避免重複)
@@ -62,6 +62,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
                     Team = workItem.WorkItemTeam ?? string.Empty,
                     Authors = authors,
                     PullRequestUrls = pullRequestUrls,
+                    MergedAt = firstPr.MergedAt
                 };
 
                 result.Add(rowData);

@@ -51,6 +51,8 @@ public sealed record SheetRowData
     /// </summary>
     public HashSet<string> PullRequestUrls { get; init; } = new();
 
+    public DateTime? MergedAt { get; init; }
+
     /// <summary>
     /// 驗證 row 資料是否有效。
     /// </summary>

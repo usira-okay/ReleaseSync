@@ -183,10 +183,128 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
 
         _logger.LogDebug("正在執行批次更新: {OperationCount} 個操作", operations.Count);
 
+        // 分離 Insert 和 Update 操作
+        var insertOperations = operations.Where(op => op.OperationType == SheetOperationType.Insert)
+                                          .OrderBy(op => op.TargetRowNumber) // 從小到大排序
+                                          .ToList();
+        var updateOperations = operations.Where(op => op.OperationType == SheetOperationType.Update).ToList();
+
+        // 先執行插入操作（按行數由小到大，確保插入順序正確）
+        if (insertOperations.Count > 0)
+        {
+            await InsertRowsAsync(spreadsheetId, insertOperations, columnMapping, cancellationToken);
+        }
+
+        // 再執行更新操作
+        if (updateOperations.Count > 0)
+        {
+            await UpdateExistingRowsAsync(spreadsheetId, updateOperations, columnMapping, cancellationToken);
+        }
+
+        _logger.LogInformation("批次更新完成: {InsertCount} 新增, {UpdateCount} 更新", insertOperations.Count, updateOperations.Count);
+        return operations.Count;
+    }
+
+    /// <summary>
+    /// 插入新 rows（在指定位置插入並下推現有資料）。
+    /// </summary>
+    private async Task InsertRowsAsync(
+        string spreadsheetId,
+        IReadOnlyList<SheetSyncOperation> insertOperations,
+        GoogleSheetColumnMapping columnMapping,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("正在插入 {Count} 個新 rows", insertOperations.Count);
+
+        // 取得 SheetId
+        var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
+
+        // 為了避免插入後行數錯亂，需要從後往前插入（行數大的先插入）
+        var sortedOperations = insertOperations.OrderByDescending(op => op.TargetRowNumber).ToList();
+
+        foreach (var operation in sortedOperations)
+        {
+            var requests = new List<Request>();
+
+            // 1. 插入空白行（在 TargetRowNumber 位置插入）
+            requests.Add(new Request
+            {
+                InsertDimension = new InsertDimensionRequest
+                {
+                    Range = new DimensionRange
+                    {
+                        SheetId = sheetId,
+                        Dimension = "ROWS",
+                        StartIndex = operation.TargetRowNumber - 1, // 0-based index
+                        EndIndex = operation.TargetRowNumber, // 插入 1 行
+                    },
+                    InheritFromBefore = false,
+                },
+            });
+
+            // 2. 更新插入的 row 資料
+            var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
+            var rowData = new RowData
+            {
+                Values = rowValues.Select(v => new CellData
+                {
+                    UserEnteredValue = new ExtendedValue
+                    {
+                        StringValue = v?.ToString(),
+                    },
+                }).ToList(),
+            };
+
+            requests.Add(new Request
+            {
+                UpdateCells = new UpdateCellsRequest
+                {
+                    Range = new GridRange
+                    {
+                        SheetId = sheetId,
+                        StartRowIndex = operation.TargetRowNumber - 1, // 0-based index
+                        EndRowIndex = operation.TargetRowNumber,
+                        StartColumnIndex = 0,
+                        EndColumnIndex = rowValues.Count,
+                    },
+                    Rows = new List<RowData> { rowData },
+                    Fields = "userEnteredValue",
+                },
+            });
+
+            // 執行單一插入操作
+            var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
+            {
+                Requests = requests,
+            };
+
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                var request = _sheetsService!.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId);
+                await request.ExecuteAsync(cancellationToken);
+            });
+
+            _logger.LogDebug("插入 row {RowNumber} 完成: {RepositoryName}", operation.TargetRowNumber, operation.RowData.RepositoryName);
+        }
+
+        _logger.LogInformation("插入 {Count} 個新 rows 完成", insertOperations.Count);
+    }
+
+    /// <summary>
+    /// 更新現有 rows。
+    /// </summary>
+    private async Task UpdateExistingRowsAsync(
+        string spreadsheetId,
+        IReadOnlyList<SheetSyncOperation> updateOperations,
+        GoogleSheetColumnMapping columnMapping,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("正在更新 {Count} 個現有 rows", updateOperations.Count);
+
         var updateValues = new List<ValueRange>();
         var sheetName = _settings.SheetName;
 
-        foreach (var operation in operations)
+        foreach (var operation in updateOperations)
         {
             var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
             var range = $"{sheetName}!A{operation.TargetRowNumber}";
@@ -210,8 +328,27 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
             await request.ExecuteAsync(cancellationToken);
         });
 
-        _logger.LogInformation("批次更新完成: {OperationCount} 個操作", operations.Count);
-        return operations.Count;
+        _logger.LogInformation("更新 {Count} 個現有 rows 完成", updateOperations.Count);
+    }
+
+    /// <summary>
+    /// 取得 Sheet ID。
+    /// </summary>
+    private async Task<int> GetSheetIdAsync(string spreadsheetId, string sheetName, CancellationToken cancellationToken)
+    {
+        var spreadsheet = await _retryPolicy.ExecuteAsync(async () =>
+        {
+            var request = _sheetsService!.Spreadsheets.Get(spreadsheetId);
+            return await request.ExecuteAsync(cancellationToken);
+        });
+
+        var sheet = spreadsheet.Sheets.FirstOrDefault(s => s.Properties.Title == sheetName);
+        if (sheet == null)
+        {
+            throw new GoogleSheetNotFoundException($"找不到工作表: {sheetName}");
+        }
+
+        return sheet.Properties.SheetId ?? 0;
     }
 
     /// <inheritdoc/>

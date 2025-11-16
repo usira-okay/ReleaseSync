@@ -233,7 +233,9 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
         GoogleSheetColumnMapping columnMapping)
     {
         var operations = new List<SheetSyncOperation>();
-        var nextRowNumber = existingData.Count + 1; // 新增資料的起始位置
+
+        // 建立 RepositoryName 到最後一筆資料 row 的索引
+        var repositoryLastRowIndex = BuildRepositoryLastRowIndex(existingData, columnMapping);
 
         foreach (var newRowData in newRowDataList)
         {
@@ -252,18 +254,56 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             }
             else
             {
-                // 插入新 row
-                var rowDataWithNumber = newRowData with { RowNumber = nextRowNumber };
+                // 插入新 row - 插入在該 Repository 最後一筆資料的下一行
+                var insertPosition = 0;
+                if (repositoryLastRowIndex.TryGetValue(newRowData.RepositoryName, out var lastRowIndex))
+                {
+                    // 插入位置為最後一筆的下一行
+                    lastRowIndex.Index++;
+                    // 更新該 Repository 的最後一筆行數（因為插入了新資料）
+                    insertPosition = lastRowIndex.Index;
+                }
+
+                var rowDataWithNumber = newRowData with { RowNumber = insertPosition };
                 operations.Add(new SheetSyncOperation
                 {
                     OperationType = SheetOperationType.Insert,
-                    TargetRowNumber = nextRowNumber,
+                    TargetRowNumber = insertPosition,
                     RowData = rowDataWithNumber,
                 });
-                nextRowNumber++;
             }
         }
 
         return operations;
+    }
+
+    /// <summary>
+    /// 建立 RepositoryName 到最後一筆資料 row 的索引。
+    /// </summary>
+    /// <param name="sheetData">工作表資料。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <returns>RepositoryName 到最後一筆 row number 的字典。</returns>
+    private Dictionary<string, LastRowIndex> BuildRepositoryLastRowIndex(IList<IList<object>> sheetData, GoogleSheetColumnMapping columnMapping)
+    {
+        var index = new Dictionary<string, LastRowIndex>(StringComparer.OrdinalIgnoreCase);
+
+        // 跳過第一行 (標題列)，從第二行開始
+        for (var i = 1; i < sheetData.Count; i++)
+        {
+            var rowData = _rowParser.ParseRow(sheetData[i], i + 1, columnMapping);
+            if (!string.IsNullOrWhiteSpace(rowData.RepositoryName))
+            {
+                var repositories = rowData.RepositoryName.Split(',');
+                var lastRowIndex = new LastRowIndex { Index = i + 1 };
+                // 記錄每個 Repository 最後出現的行數
+                foreach (var repo in repositories)
+                {
+                    index[repo.Trim()] = lastRowIndex; // 1-based row number
+                }
+            }
+        }
+
+        _logger.LogDebug("建立 Repository 最後行數索引: {Count} repositories", index.Count);
+        return index;
     }
 }
