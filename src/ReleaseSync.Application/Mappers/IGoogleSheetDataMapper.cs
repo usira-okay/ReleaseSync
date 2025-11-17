@@ -28,5 +28,5 @@ public interface IGoogleSheetDataMapper
     /// <param name="workItemId">Work Item ID。</param>
     /// <param name="repositoryName">Repository 名稱。</param>
     /// <returns>Unique Key 字串。</returns>
-    string GenerateUniqueKey(int workItemId, string repositoryName);
+    string GenerateUniqueKey(int workItemId, string repositoryName, string platform = "");
 }

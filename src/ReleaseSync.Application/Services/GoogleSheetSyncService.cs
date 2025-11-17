@@ -281,7 +281,6 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
             var waitToInserts = pendingInserts
                                     .Where(x => x.RepositoryName == repositoryName)
-                                    .OrderBy(x => x.RowData.MergedAt)
                                     .Select(x =>
                                     {
                                         offset++;

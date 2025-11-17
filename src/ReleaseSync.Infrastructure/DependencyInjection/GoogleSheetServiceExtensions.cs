@@ -35,7 +35,8 @@ public static class GoogleSheetServiceExtensions
         services.AddScoped<IGoogleSheetApiClient, GoogleSheetApiClient>();
 
         // 註冊 Application 層服務
-        services.AddSingleton<IGoogleSheetDataMapper, GoogleSheetDataMapper>();
+        // 注意: GoogleSheetDataMapper 需要 IWorkItemIdParser (Scoped)，因此改為 Scoped
+        services.AddScoped<IGoogleSheetDataMapper, GoogleSheetDataMapper>();
         services.AddScoped<IGoogleSheetSyncService, GoogleSheetSyncService>();
 
         return services;
