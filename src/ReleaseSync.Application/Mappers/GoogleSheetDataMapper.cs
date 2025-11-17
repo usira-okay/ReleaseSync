@@ -52,7 +52,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
             result.AddRange(rowsWithoutWorkItem);
         }
 
-        return [.. result.OrderBy(x=>x.RepositoryName).ThenBy(x=>_teamMappingService.GetTeamSortOrder(x.Team)).ThenBy(x=>x.MergedAt)];
+        return [.. result.OrderBy(x => x.RepositoryName).ThenBy(x => _teamMappingService.GetTeamSortOrder(x.Team)).ThenBy(x => x.MergedAt)];
     }
 
     /// <summary>
@@ -100,7 +100,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
                 RepositoryName = repositoryName,
                 Feature = feature,
                 FeatureUrl = workItem.WorkItemUrl,
-                Team = workItem.WorkItemTeam ?? string.Empty,
+                Team = workItem.WorkItemTeam ?? string.Join('\n', authors),
                 Authors = authors,
                 PullRequestUrls = pullRequestUrls,
                 MergedAt = firstPr.MergedAt
@@ -144,8 +144,10 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
             // 收集 PR URLs
             var pullRequestUrls = new HashSet<string>([item.PullRequest.PullRequestUrl ?? string.Empty], StringComparer.OrdinalIgnoreCase);
 
+            var prId = item.PullRequest.PullRequestUrl?.Split('/').LastOrDefault() ?? "UnknownPR";
+
             // 產生 Unique Key
-            var uniqueKey = GenerateUniqueKey(workItemId, repositoryName, platform);
+            var uniqueKey = GenerateUniqueKey(workItemId, repositoryName, platform + prId);
 
             var rowData = new SheetRowData
             {
@@ -154,7 +156,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
                 RepositoryName = repositoryName,
                 Feature = item.PullRequest.SourceBranch,
                 FeatureUrl = string.Empty, // 沒有 WorkItem 資訊，無 URL
-                Team = string.Empty, // 沒有 WorkItem 資訊，無 Team
+                Team = string.Join('\n', authors), // 沒有 WorkItem 資訊，無 Team
                 Authors = authors,
                 PullRequestUrls = pullRequestUrls,
                 MergedAt = item.PullRequest.MergedAt
@@ -199,7 +201,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
     }
 
     /// <inheritdoc/>
-    public string GenerateUniqueKey(int workItemId, string repositoryName, string platform = "")
+    public string GenerateUniqueKey(int workItemId, string repositoryName, string flag = "")
     {
         if (string.IsNullOrWhiteSpace(repositoryName))
         {
@@ -207,6 +209,6 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
         }
 
         // UK 格式: {WorkItemId}{RepositoryName}
-        return $"{workItemId}{repositoryName}{platform}";
+        return $"{workItemId}{repositoryName}{flag}";
     }
 }
