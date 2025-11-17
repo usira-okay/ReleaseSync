@@ -6,7 +6,8 @@
 
 - 🔄 支援多平台: GitLab, BitBucket Cloud
 - 🔗 Azure DevOps Work Item 整合
-- 📊 JSON 格式匯出
+- 📊 JSON 格式匯出/匯入
+- 📈 Google Sheet 同步功能
 - 🛡️ 部分失敗容錯處理
 - 📝 詳細的日誌記錄（Serilog）
 - ⚡ 並行查詢提升效能
@@ -47,6 +48,7 @@ dotnet run --project src/ReleaseSync.Console -- sync \
   --end-date 2025-01-31 \
   --enable-gitlab \
   --enable-bitbucket \
+  --export \
   --output-file output.json
 ```
 
@@ -73,8 +75,11 @@ dotnet run --project src/ReleaseSync.Console -- sync \
   -e 2025-01-31 \
   --gitlab \
   --bitbucket \
+  --export \
   -o ./output/sync-result.json
 ```
+
+**注意**: 使用 `--export` 參數啟用 JSON 匯出功能,並透過 `-o` 指定輸出檔案路徑。
 
 ### Azure DevOps Work Item 整合
 
@@ -86,8 +91,22 @@ dotnet run --project src/ReleaseSync.Console -- sync \
   -e 2025-01-31 \
   --gitlab \
   --azdo \
+  --export \
   -o ./output/full-sync.json \
   --verbose
+```
+
+### Google Sheet 同步
+
+同步資料到 Google Sheet (需先設定服務帳號憑證):
+
+```bash
+dotnet run --project src/ReleaseSync.Console -- sync \
+  -s 2025-01-01 \
+  -e 2025-01-31 \
+  --gitlab \
+  --bitbucket \
+  --google-sheet
 ```
 
 ## 命令列參數
@@ -99,9 +118,11 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 | `--enable-gitlab` | `--gitlab` | 啟用 GitLab 平台 |
 | `--enable-bitbucket` | `--bitbucket` | 啟用 BitBucket 平台 |
 | `--enable-azure-devops` | `--azdo` | 啟用 Azure DevOps Work Item 整合 |
+| `--enable-export` | `--export` | 啟用 JSON 匯出功能 |
 | `--output-file` | `-o` | JSON 匯出檔案路徑 |
 | `--force` | `-f` | 強制覆蓋已存在的輸出檔案 |
 | `--verbose` | `-v` | 啟用詳細日誌輸出 (Debug 等級) |
+| `--enable-google-sheet` | `--google-sheet` | 啟用 Google Sheet 同步功能 |
 
 ## 組態設定
 
@@ -179,10 +200,17 @@ User Secrets 將敏感資訊儲存在使用者設定檔中 (`~/.microsoft/userse
 
 ```bash
 cd src/ReleaseSync.Console
+
+# 版控平台 Tokens
 dotnet user-secrets set "GitLab:PersonalAccessToken" "glpat-xxxxxxxxxxxxxxxxxxxx"
 dotnet user-secrets set "BitBucket:Email" "your.email@example.com"
 dotnet user-secrets set "BitBucket:AccessToken" "ATBB..."
 dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
+
+# Google Sheet 設定 (選用)
+dotnet user-secrets set "GoogleSheet:SpreadsheetId" "your-spreadsheet-id"
+dotnet user-secrets set "GoogleSheet:SheetName" "Sheet1"
+dotnet user-secrets set "GoogleSheet:ServiceAccountCredentialPath" "/path/to/service-account.json"
 ```
 
 **或者直接將敏感資訊加入 appsettings.json (不推薦)**
@@ -190,6 +218,19 @@ dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
 若您不想使用 User Secrets,也可以直接將 Token 寫入 `appsettings.json` 的對應區段,但請務必確保該檔案不會被提交至版本控制。
 
 ## 進階功能
+
+### JSON 檔案匯入
+
+除了從版控平台抓取資料,也支援從既有的 JSON 檔案匯入資料,方便資料重複使用或離線處理:
+
+```bash
+# 透過程式碼使用 JsonFileImporter
+# 範例程式碼:
+var importer = new JsonFileImporter();
+var results = await importer.ImportAsync("output.json");
+```
+
+**注意**: 此功能主要供程式內部使用,目前未提供命令列介面。
 
 ### User Mapping (使用者對照)
 
@@ -242,6 +283,58 @@ dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "xxxxxxxxxxxxxxxxxxxx"
 **解析行為設定:**
 - `OnParseFailure`: 當無法解析 Work Item ID 時的處理方式（LogWarningAndContinue 或 ThrowException）
 - `StopOnFirstMatch`: 找到第一個符合的規則後即停止（true 推薦）
+
+### Google Sheet 整合
+
+將同步結果自動上傳至 Google Sheet,方便團隊協作與資料視覺化:
+
+**前置需求:**
+1. 在 Google Cloud Console 建立專案並啟用 Google Sheets API
+2. 建立服務帳號並下載 JSON 金鑰檔
+3. 將服務帳號的 Email 加入目標 Google Sheet 的編輯者權限
+
+**組態設定 (appsettings.json 或 User Secrets):**
+
+```json
+{
+  "GoogleSheet": {
+    "SpreadsheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+    "SheetName": "Sheet1",
+    "ServiceAccountCredentialPath": "path/to/service-account.json",
+    "RetryCount": 3,
+    "RetryWaitSeconds": 60,
+    "ColumnMapping": {
+      "UniqueKeyColumn": "Y",
+      "FeatureColumn": "B",
+      "TeamColumn": "D",
+      "AuthorsColumn": "W",
+      "PullRequestUrlsColumn": "X",
+      "RepositoryNameColumn": "Z"
+    }
+  }
+}
+```
+
+**使用方式:**
+
+```bash
+dotnet run --project src/ReleaseSync.Console -- sync \
+  -s 2025-01-01 \
+  -e 2025-01-31 \
+  --gitlab \
+  --bitbucket \
+  --google-sheet
+```
+
+同步後,資料將自動寫入指定的 Google Sheet,包含以下欄位:
+- **Unique Key** (Y 欄) - 唯一識別碼 (WorkItemId + RepositoryName)
+- **Feature** (B 欄) - Work Item 描述 (格式: VSTS{ID} - {Title})
+- **Team** (D 欄) - 上線團隊名稱
+- **Authors** (W 欄) - RD 負責人清單 (多人以換行分隔)
+- **PR/MR URLs** (X 欄) - Pull Request 連結清單 (多筆以換行分隔)
+- **Repository Name** (Z 欄) - 專案名稱
+
+**注意**: 欄位位置可透過 `appsettings.json` 的 `GoogleSheet:ColumnMapping` 自訂。
 
 ## 錯誤處理
 
@@ -298,11 +391,13 @@ src/
 │   ├── Services/                # 領域服務介面
 │   └── Repositories/            # Repository 介面
 ├── ReleaseSync.Application/     # 應用層
-│   ├── Services/                # 應用服務 (SyncOrchestrator)
+│   ├── Services/                # 應用服務 (SyncOrchestrator, GoogleSheetSyncService)
 │   ├── DTOs/                    # 資料傳輸物件
-│   └── Exporters/               # 匯出器 (JSON)
+│   ├── Exporters/               # 匯出器 (JsonFileExporter)
+│   └── Importers/               # 匯入器 (JsonFileImporter)
 ├── ReleaseSync.Infrastructure/  # 基礎設施層
 │   ├── Platforms/               # 平台整合 (GitLab, BitBucket, Azure DevOps)
+│   ├── GoogleSheet/             # Google Sheet API 整合
 │   ├── Configuration/           # 組態模型
 │   └── Parsers/                 # Work Item ID 解析器
 └── ReleaseSync.Console/         # 命令列介面
@@ -316,17 +411,29 @@ src/
 
 - .NET 9.0 SDK
 - 存取 GitLab / BitBucket / Azure DevOps API 的權限
+- (選用) Google Cloud 服務帳號 (若需使用 Google Sheet 功能)
 
 ### 建置
 
 ```bash
-dotnet build
+# 建置整個解決方案
+dotnet build src/src.sln
+
+# Release 模式建置
+dotnet build src/src.sln -c Release
 ```
 
 ### 測試
 
 ```bash
-dotnet test
+# 執行所有測試
+dotnet test src/src.sln
+
+# 執行單元測試 (排除整合測試)
+dotnet test src/src.sln --filter "FullyQualifiedName!~Integration"
+
+# 產生測試覆蓋率報告
+dotnet test src/src.sln --collect:"XPlat Code Coverage"
 ```
 
 ### 程式碼品質
@@ -358,5 +465,5 @@ MIT License
 
 ---
 
-**版本**: 0.1.0
-**最後更新**: 2025-11-08
+**版本**: 0.2.0
+**最後更新**: 2025-11-17
