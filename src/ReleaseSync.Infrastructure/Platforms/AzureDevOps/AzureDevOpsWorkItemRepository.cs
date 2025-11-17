@@ -32,7 +32,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
     {
         var workItem = await _apiClient.GetWorkItemAsync(
             workItemId.Value,
-            includeRelations: includeParent,
+            includeRelations: true,
             cancellationToken);
 
         if (workItem == null)
@@ -43,15 +43,54 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
 
         var workItemInfo = ConvertToWorkItemInfo(workItem);
 
+        // 如果當前 Work Item 不是 User Story,向上查找 User Story
+        if (!workItemInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation(
+                "Work Item {WorkItemId} 類型為 {Type},非 User Story,向上查找 Parent User Story",
+                workItemId.Value, workItemInfo.Type);
+
+            var userStory = await FindParentUserStoryAsync(workItem, cancellationToken);
+
+            if (userStory == null)
+            {
+                _logger.LogWarning(
+                    "Work Item {WorkItemId} (Type={Type}) 無法找到 Parent User Story,回傳原始 Work Item",
+                    workItemId.Value, workItemInfo.Type);
+                // 即使找不到 User Story,仍然需要進行 TeamMapping 過濾
+                if (!ShouldIncludeWorkItem(workItemInfo, workItemId))
+                {
+                    return null!;
+                }
+                return workItemInfo;
+            }
+
+            _logger.LogInformation(
+                "Work Item {WorkItemId} 找到 Parent User Story: {UserStoryId} - {UserStoryTitle}",
+                workItemId.Value, userStory.Id.Value, userStory.Title);
+
+            workItemInfo = userStory;
+        }
+
         // 根據 TeamMapping 過濾 Work Item
         if (!ShouldIncludeWorkItem(workItemInfo, workItemId))
         {
             return null!;
         }
 
+        // 取得 User Story 的 Parent (Feature/Epic 等更高階層)
         if (includeParent)
         {
-            workItemInfo.ParentWorkItem = await GetParentWorkItemAsync(workItem, workItemId, cancellationToken);
+            // 重新取得當前 workItemInfo 對應的完整 WorkItem,因為 workItemInfo 可能已經被替換為 Parent User Story
+            var currentWorkItem = await _apiClient.GetWorkItemAsync(
+                workItemInfo.Id.Value,
+                includeRelations: true,
+                cancellationToken);
+
+            if (currentWorkItem != null)
+            {
+                workItemInfo.ParentWorkItem = await GetParentWorkItemAsync(currentWorkItem, workItemInfo.Id, cancellationToken);
+            }
         }
 
         return workItemInfo;
@@ -156,7 +195,7 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
         foreach (var workItem in workItemList)
         {
             var workItemInfo = await ProcessWorkItemAsync(workItem, includeParent, cancellationToken);
-            
+
             if (workItemInfo == null)
             {
                 filteredCount++;
@@ -183,10 +222,34 @@ public class AzureDevOpsWorkItemRepository : IWorkItemRepository
     {
         var workItemInfo = ConvertToWorkItemInfo(workItem);
 
+        // 如果當前 Work Item 不是 User Story,向上查找 User Story
+        if (!workItemInfo.Type.Equals("User Story", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation(
+                "批次查詢 - Work Item {WorkItemId} 類型為 {Type},非 User Story,向上查找 Parent User Story",
+                workItem.Id, workItemInfo.Type);
+
+            var userStory = await FindParentUserStoryAsync(workItem, cancellationToken);
+
+            if (userStory == null)
+            {
+                _logger.LogWarning(
+                    "批次查詢 - Work Item {WorkItemId} (Type={Type}) 無法找到 Parent User Story,回傳原始 Work Item",
+                    workItem.Id, workItemInfo.Type);
+                return workItemInfo;
+            }
+
+            _logger.LogInformation(
+                "批次查詢 - Work Item {WorkItemId} 找到 Parent User Story: {UserStoryId} - {UserStoryTitle}",
+                workItem.Id, userStory.Id.Value, userStory.Title);
+
+            workItemInfo = userStory;
+        }
+
         // 根據 TeamMapping 過濾 Work Item
         if (_teamMappingService.IsFilteringEnabled())
         {
-            if (!workItemInfo.Id.IsPlaceholder && 
+            if (!workItemInfo.Id.IsPlaceholder &&
                 !_teamMappingService.HasMapping(workItemInfo.OriginalTeamName))
             {
                 return null;
