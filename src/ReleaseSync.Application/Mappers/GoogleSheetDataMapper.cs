@@ -24,13 +24,13 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
         {
             // 根據 (WorkItemId, RepositoryName) 分組 PR/MR
             var groupedByWorkItem = repository.PullRequests
-                .Where(pr => pr.WorkItem != null)// TODO
+                .Where(pr => pr.WorkItem != null)
                 .GroupBy(pr => pr.WorkItem!.WorkItemId);
 
             foreach (var group in groupedByWorkItem)
             {
                 var workItemId = group.Key;
-                var firstPr = group.First();// TODO
+                var firstPr = group.First();
                 var workItem = firstPr.WorkItem!;
 
                 // 收集所有 Authors (使用 HashSet 避免重複)
