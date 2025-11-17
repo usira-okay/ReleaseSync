@@ -33,4 +33,15 @@ public interface ITeamMappingService
     /// </summary>
     /// <returns>如果 TeamMapping 非空返回 true</returns>
     bool IsFilteringEnabled();
+
+    /// <summary>
+    /// 取得團隊在 TeamMapping 中的排序索引
+    /// </summary>
+    /// <param name="displayName">團隊顯示名稱</param>
+    /// <returns>
+    /// 團隊在 TeamMapping 清單中的索引 (0-based);
+    /// 如果團隊不在清單中返回 int.MaxValue (排在最後);
+    /// 如果 displayName 為 null 或空白返回 int.MaxValue
+    /// </returns>
+    int GetTeamSortOrder(string? displayName);
 }

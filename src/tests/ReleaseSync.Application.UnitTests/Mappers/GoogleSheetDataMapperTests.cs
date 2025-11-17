@@ -15,12 +15,22 @@ namespace ReleaseSync.Application.UnitTests.Mappers;
 public class GoogleSheetDataMapperTests
 {
     private readonly IWorkItemIdParser _mockParser;
+    private readonly ITeamMappingService _mockTeamMappingService;
     private readonly GoogleSheetDataMapper _mapper;
 
     public GoogleSheetDataMapperTests()
     {
         _mockParser = Substitute.For<IWorkItemIdParser>();
-        _mapper = new GoogleSheetDataMapper(_mockParser);
+        _mockTeamMappingService = Substitute.For<ITeamMappingService>();
+        
+        // 預設行為: 返回固定排序值 (模擬字母排序)
+        _mockTeamMappingService.GetTeamSortOrder(Arg.Any<string?>()).Returns(callInfo =>
+        {
+            var teamName = callInfo.ArgAt<string?>(0);
+            return string.IsNullOrWhiteSpace(teamName) ? int.MaxValue : 0;
+        });
+        
+        _mapper = new GoogleSheetDataMapper(_mockParser, _mockTeamMappingService);
     }
 
     #region WorkItem != null 測試

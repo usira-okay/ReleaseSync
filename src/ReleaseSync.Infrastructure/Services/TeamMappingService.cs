@@ -12,6 +12,7 @@ public class TeamMappingService : ITeamMappingService
     private readonly List<TeamMapping> _mappings;
     private readonly HashSet<string> _teamNames;
     private readonly Dictionary<string, string> _displayNames;
+    private readonly Dictionary<string, int> _sortOrder;
 
     /// <summary>
     /// 建立 TeamMappingService
@@ -34,6 +35,17 @@ public class TeamMappingService : ITeamMappingService
             m => m.DisplayName,
             StringComparer.OrdinalIgnoreCase
         );
+
+        // 建立團隊排序索引字典 (以 DisplayName 為 Key)
+        _sortOrder = _mappings
+            .Select(x => x.DisplayName)
+            .Distinct()
+            .Select((displayName, index) => new { DsiplayName = displayName, Index = index })
+            .ToDictionary(
+                x => x.DsiplayName,
+                x => x.Index,
+                StringComparer.OrdinalIgnoreCase
+            );
     }
 
     /// <inheritdoc/>
@@ -77,5 +89,23 @@ public class TeamMappingService : ITeamMappingService
     public bool IsFilteringEnabled()
     {
         return _mappings.Count > 0;
+    }
+
+    /// <inheritdoc/>
+    public int GetTeamSortOrder(string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return int.MaxValue;
+        }
+
+        // 嘗試從字典查找排序索引
+        if (_sortOrder.TryGetValue(displayName, out var order))
+        {
+            return order;
+        }
+
+        // 未找到對應的團隊，排在最後
+        return int.MaxValue;
     }
 }

@@ -17,14 +17,17 @@ namespace ReleaseSync.Application.Mappers;
 public class GoogleSheetDataMapper : IGoogleSheetDataMapper
 {
     private readonly IWorkItemIdParser _workItemIdParser;
+    private readonly ITeamMappingService _teamMappingService;
 
     /// <summary>
     /// 初始化 GoogleSheetDataMapper 實例。
     /// </summary>
     /// <param name="workItemIdParser">Work Item ID 解析器，用於從 SourceBranch 或 PR Title 解析 VSTS ID。</param>
-    public GoogleSheetDataMapper(IWorkItemIdParser workItemIdParser)
+    /// <param name="teamMappingService">團隊對應服務，用於取得團隊排序順序。</param>
+    public GoogleSheetDataMapper(IWorkItemIdParser workItemIdParser, ITeamMappingService teamMappingService)
     {
         _workItemIdParser = workItemIdParser ?? throw new ArgumentNullException(nameof(workItemIdParser));
+        _teamMappingService = teamMappingService ?? throw new ArgumentNullException(nameof(teamMappingService));
     }
 
     /// <inheritdoc/>
@@ -49,7 +52,7 @@ public class GoogleSheetDataMapper : IGoogleSheetDataMapper
             result.AddRange(rowsWithoutWorkItem);
         }
 
-        return [.. result.OrderBy(x=>x.RepositoryName).ThenBy(x=>x.Team).ThenBy(x=>x.MergedAt)];
+        return [.. result.OrderBy(x=>x.RepositoryName).ThenBy(x=>_teamMappingService.GetTeamSortOrder(x.Team)).ThenBy(x=>x.MergedAt)];
     }
 
     /// <summary>
