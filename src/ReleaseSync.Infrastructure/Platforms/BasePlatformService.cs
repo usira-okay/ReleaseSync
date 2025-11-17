@@ -68,10 +68,8 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
             return Enumerable.Empty<PullRequestInfo>();
         }
 
-        var allPullRequests = new List<PullRequestInfo>();
-
-        // 依序查詢所有專案
-        foreach (var project in projects)
+        // 並行查詢所有專案
+        var projectTasks = projects.Select(async project =>
         {
             try
             {
@@ -88,15 +86,20 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
                 _logger.LogInformation("{Platform} - {ProjectId}: {Count} 筆 PR/MR",
                     PlatformName, projectId, prList.Count);
 
-                allPullRequests.AddRange(prList);
+                return prList;
             }
             catch (Exception ex)
             {
                 var projectId = GetProjectIdentifier(project);
                 _logger.LogError(ex, "抓取 {Platform} 專案 {ProjectId} 失敗", PlatformName, projectId);
                 // 不要因為單一專案失敗而中斷其他專案
+                return new List<PullRequestInfo>();
             }
-        }
+        });
+
+        // 等待所有專案完成並彙整結果
+        var projectResults = await Task.WhenAll(projectTasks);
+        var allPullRequests = projectResults.SelectMany(pr => pr).ToList();
 
         _logger.LogInformation("{Platform} 完成 - 總共 {TotalCount} 筆 PR/MR",
             PlatformName, allPullRequests.Count);

@@ -71,8 +71,8 @@ public class SyncOrchestrator : ISyncOrchestrator
             return SyncResultDto.FromDomain(syncResult);
         }
 
-        // 依序執行所有啟用的平台
-        foreach (var service in enabledServices)
+        // 並行執行所有啟用的平台
+        var platformTasks = enabledServices.Select(async service =>
         {
             var stopwatch = Stopwatch.StartNew();
             try
@@ -87,15 +87,15 @@ public class SyncOrchestrator : ISyncOrchestrator
                 _logger.LogInformation("平台 {Platform} 完成 - {Count} 筆 PR/MR, {ElapsedMs} ms",
                     service.PlatformName, prList.Count, stopwatch.ElapsedMilliseconds);
 
-                // 加入到 SyncResult
-                syncResult.AddPullRequests(prList);
-
-                // 記錄平台狀態
-                syncResult.RecordPlatformStatus(
-                    PlatformSyncStatus.Success(
+                return (
+                    Success: true,
+                    Service: service,
+                    PullRequests: prList,
+                    Status: PlatformSyncStatus.Success(
                         service.PlatformName,
                         prList.Count,
-                        stopwatch.ElapsedMilliseconds));
+                        stopwatch.ElapsedMilliseconds)
+                );
             }
             catch (Exception ex)
             {
@@ -103,13 +103,29 @@ public class SyncOrchestrator : ISyncOrchestrator
                 _logger.LogError(ex, "平台 {Platform} 失敗 - {ElapsedMs} ms",
                     service.PlatformName, stopwatch.ElapsedMilliseconds);
 
-                // 記錄失敗狀態
-                syncResult.RecordPlatformStatus(
-                    PlatformSyncStatus.Failure(
+                return (
+                    Success: false,
+                    Service: service,
+                    PullRequests: new List<PullRequestInfo>(),
+                    Status: PlatformSyncStatus.Failure(
                         service.PlatformName,
                         ex.Message,
-                        stopwatch.ElapsedMilliseconds));
+                        stopwatch.ElapsedMilliseconds)
+                );
             }
+        });
+
+        // 等待所有平台完成
+        var platformResults = await Task.WhenAll(platformTasks);
+
+        // 彙整結果
+        foreach (var result in platformResults)
+        {
+            if (result.Success)
+            {
+                syncResult.AddPullRequests(result.PullRequests);
+            }
+            syncResult.RecordPlatformStatus(result.Status);
         }
 
         syncResult.MarkAsCompleted();
