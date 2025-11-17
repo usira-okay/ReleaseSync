@@ -66,18 +66,6 @@ ReleaseSync 是一個從多個平台 (GitLab, BitBucket, Azure DevOps) 聚合 Pu
 - 組態載入
 - **禁止**: 業務邏輯、複雜初始化、錯誤處理邏輯
 
-### 開發流程規範
-
-使用 SpecKit 命令進行結構化開發:
-
-- **Plan 階段** (`/speckit.plan`):
-  - 優先重用現有元件,避免重複
-  - 清楚識別相依性
-  - 設計方案必須符合所有核心原則
-
-- **Task 階段** (`/speckit.tasks`, `/speckit.implement`):
-  - 每個階段性任務必須標註:建置狀態、測試狀態、整合影響、回滾計畫
-
 ## 常用開發命令
 
 ### 建置
@@ -238,10 +226,7 @@ output.json
 
 ### 目標框架
 
-- **主要專案**: .NET 9.0 (ReleaseSync.Console)
-- **函式庫專案**: .NET 8.0 (Domain, Application, Infrastructure)
-- 專案使用 `TreatWarningsAsErrors=true`,確保程式碼品質
-- XML 文件生成已啟用 (`GenerateDocumentationFile=true`)
+- **所有專案**: .NET 9.0
 - Nullable Reference Types 已全面啟用
 
 ### 日誌記錄
@@ -315,35 +300,7 @@ services.AddAzureDevOpsServices(configuration);
 - 確保日誌輸出不包含 Token 或敏感資料
 - 定期輪替 Personal Access Tokens
 
-## SpecKit 開發流程
-
-專案使用 SpecKit 進行結構化開發,可用的命令包括:
-
-- `/speckit.constitution` - 更新專案憲章
-- `/speckit.specify` - 建立或更新功能規格
-- `/speckit.clarify` - 針對規格進行澄清
-- `/speckit.plan` - 產生實作計畫
-- `/speckit.tasks` - 產生任務清單
-- `/speckit.analyze` - 分析跨文件一致性
-- `/speckit.implement` - 執行實作任務
-
-**重要**: 在開發新功能時,建議按照以下順序執行:
-1. `/speckit.specify` - 明確定義需求
-2. `/speckit.clarify` - 澄清不明確的地方 (可選)
-3. `/speckit.plan` - 設計實作方案
-4. `/speckit.tasks` - 產生具體任務
-5. `/speckit.implement` - 執行實作
-
 ## 相關文件
 
 - **專案憲章**: `.specify/memory/constitution.md` - 完整的開發原則與規範 (必讀)
-- **SpecKit 模板**: `.specify/templates/` - 文件與命令模板
 - **README.md**: 使用者快速上手與功能說明
-
-## Active Technologies
-- C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌) (001-repository-based-export)
-- 檔案系統 (JSON 檔案輸出) (001-repository-based-export)
-- [if applicable, e.g., PostgreSQL, CoreData, files or N/A]   (002-google-sheet-sync)
-
-## Recent Changes
-- 001-repository-based-export: Added C# / .NET 9.0 (Console), .NET 8.0 (Libraries) + System.Text.Json (序列化), Microsoft.Extensions.Logging (日誌)
