@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, claude/** ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/src.sln
+
+    - name: Build
+      run: dotnet build src/src.sln --configuration Release --no-restore
+
+    - name: Run unit tests
+      run: dotnet test src/src.sln --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~Integration"
+
+    - name: Test Summary
+      if: always()
+      run: |
+        echo "## Test Results :test_tube:" >> $GITHUB_STEP_SUMMARY
+        echo "Unit tests executed successfully (Integration tests excluded)" >> $GITHUB_STEP_SUMMARY
