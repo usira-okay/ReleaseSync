@@ -40,29 +40,29 @@ public class JsonExportValidationTests
             // 驗證頂層結構 (camelCase 命名)
             root.TryGetProperty("startDate", out _).Should().BeTrue();
             root.TryGetProperty("endDate", out _).Should().BeTrue();
-            root.TryGetProperty("workItems", out _).Should().BeTrue();
+            root.TryGetProperty("repositories", out _).Should().BeTrue();
 
-            // 驗證 WorkItems 結構
-            var workItems = root.GetProperty("workItems");
-            workItems.ValueKind.Should().Be(JsonValueKind.Array);
+            // 驗證 Repositories 結構
+            var repositories = root.GetProperty("repositories");
+            repositories.ValueKind.Should().Be(JsonValueKind.Array);
 
-            if (workItems.GetArrayLength() > 0)
+            if (repositories.GetArrayLength() > 0)
             {
-                var firstWorkItem = workItems[0];
-                firstWorkItem.TryGetProperty("workItemId", out _).Should().BeTrue();
-                firstWorkItem.TryGetProperty("workItemTitle", out _).Should().BeTrue();
-                firstWorkItem.TryGetProperty("pullRequests", out _).Should().BeTrue();
+                var firstRepository = repositories[0];
+                firstRepository.TryGetProperty("repositoryName", out _).Should().BeTrue();
+                firstRepository.TryGetProperty("platform", out _).Should().BeTrue();
+                firstRepository.TryGetProperty("pullRequests", out _).Should().BeTrue();
 
                 // 驗證 PullRequests 結構
-                var pullRequests = firstWorkItem.GetProperty("pullRequests");
+                var pullRequests = firstRepository.GetProperty("pullRequests");
                 pullRequests.GetArrayLength().Should().BeGreaterThan(0);
 
                 var firstPR = pullRequests[0];
-                firstPR.TryGetProperty("platform", out _).Should().BeTrue();
-                firstPR.TryGetProperty("title", out _).Should().BeTrue();
+                firstPR.TryGetProperty("pullRequestTitle", out _).Should().BeTrue();
                 firstPR.TryGetProperty("sourceBranch", out _).Should().BeTrue();
                 firstPR.TryGetProperty("targetBranch", out _).Should().BeTrue();
-                firstPR.TryGetProperty("repositoryName", out _).Should().BeTrue();
+                firstPR.TryGetProperty("pullRequestUrl", out _).Should().BeTrue();
+                firstPR.TryGetProperty("authorDisplayName", out _).Should().BeTrue();
             }
         }
         finally
@@ -97,13 +97,13 @@ public class JsonExportValidationTests
 
             // 驗證 JSON 可正確解析中文字元（JSON 可能使用 Unicode escape 序列）
             var jsonDocument = JsonDocument.Parse(jsonContent);
-            var workItems = jsonDocument.RootElement.GetProperty("workItems");
-            if (workItems.GetArrayLength() > 0)
+            var repositories = jsonDocument.RootElement.GetProperty("repositories");
+            if (repositories.GetArrayLength() > 0)
             {
-                var firstWorkItem = workItems[0];
-                var pullRequests = firstWorkItem.GetProperty("pullRequests");
+                var firstRepository = repositories[0];
+                var pullRequests = firstRepository.GetProperty("pullRequests");
                 var firstPR = pullRequests[0];
-                var title = firstPR.GetProperty("title").GetString();
+                var title = firstPR.GetProperty("pullRequestTitle").GetString();
                 title.Should().Be("測試中文標題 Test Chinese Title");
             }
         }
@@ -173,22 +173,21 @@ public class JsonExportValidationTests
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
             var jsonDocument = JsonDocument.Parse(jsonContent);
-            var workItems = jsonDocument.RootElement.GetProperty("workItems");
+            var repositories = jsonDocument.RootElement.GetProperty("repositories");
             
-            if (workItems.GetArrayLength() > 0)
+            if (repositories.GetArrayLength() > 0)
             {
-                var firstWorkItem = workItems[0];
-                var pullRequests = firstWorkItem.GetProperty("pullRequests");
+                var firstRepository = repositories[0];
+                var pullRequests = firstRepository.GetProperty("pullRequests");
                 var firstPR = pullRequests[0];
 
-                firstPR.GetProperty("platform").GetString().Should().Be("GitLab");
-                firstPR.GetProperty("title").GetString().Should().Be("Test PR");
+                firstRepository.GetProperty("platform").GetString().Should().Be("GitLab");
+                firstRepository.GetProperty("repositoryName").GetString().Should().Be("repo");
+                firstPR.GetProperty("pullRequestTitle").GetString().Should().Be("Test PR");
                 firstPR.GetProperty("sourceBranch").GetString().Should().Be("feature/test");
                 firstPR.GetProperty("targetBranch").GetString().Should().Be("main");
                 firstPR.GetProperty("authorDisplayName").GetString().Should().Be("Test User");
-                // repositoryName 應從 "test/repo" 轉換為 "repo" (split('/')[1])
-                firstPR.GetProperty("repositoryName").GetString().Should().Be("repo");
-                firstPR.GetProperty("url").GetString().Should().Be("https://gitlab.com/test/repo/-/merge_requests/42");
+                firstPR.GetProperty("pullRequestUrl").GetString().Should().Be("https://gitlab.com/test/repo/-/merge_requests/42");
             }
         }
         finally
@@ -220,12 +219,12 @@ public class JsonExportValidationTests
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
             var jsonDocument = JsonDocument.Parse(jsonContent);
-            var workItems = jsonDocument.RootElement.GetProperty("workItems");
+            var repositories = jsonDocument.RootElement.GetProperty("repositories");
             
-            if (workItems.GetArrayLength() > 0)
+            if (repositories.GetArrayLength() > 0)
             {
-                var firstWorkItem = workItems[0];
-                var pullRequests = firstWorkItem.GetProperty("pullRequests");
+                var firstRepository = repositories[0];
+                var pullRequests = firstRepository.GetProperty("pullRequests");
                 var firstPR = pullRequests[0];
 
                 // 驗證 null 值欄位存在且值為 null
@@ -262,17 +261,20 @@ public class JsonExportValidationTests
             // Assert
             var jsonContent = await File.ReadAllTextAsync(tempFilePath);
             var jsonDocument = JsonDocument.Parse(jsonContent);
-            var workItems = jsonDocument.RootElement.GetProperty("workItems");
+            var repositories = jsonDocument.RootElement.GetProperty("repositories");
             
-            workItems.GetArrayLength().Should().BeGreaterThan(0);
+            repositories.GetArrayLength().Should().BeGreaterThan(0);
             
-            var firstWorkItem = workItems[0];
-            firstWorkItem.TryGetProperty("workItemId", out var workItemId).Should().BeTrue();
-            workItemId.ValueKind.Should().Be(JsonValueKind.Number);
+            var firstRepository = repositories[0];
+            var pullRequests = firstRepository.GetProperty("pullRequests");
+            var firstPR = pullRequests[0];
             
-            firstWorkItem.GetProperty("workItemId").GetInt32().Should().Be(1234);
-            firstWorkItem.GetProperty("workItemTitle").GetString().Should().Be("Test Work Item");
-            firstWorkItem.GetProperty("workItemType").GetString().Should().Be("User Story");
+            firstPR.TryGetProperty("workItem", out var workItem).Should().BeTrue();
+            workItem.ValueKind.Should().Be(JsonValueKind.Object);
+            
+            workItem.GetProperty("workItemId").GetInt32().Should().Be(1234);
+            workItem.GetProperty("workItemTitle").GetString().Should().Be("Test Work Item");
+            workItem.GetProperty("workItemType").GetString().Should().Be("User Story");
         }
         finally
         {

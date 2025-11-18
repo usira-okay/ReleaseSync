@@ -88,11 +88,11 @@ public class JsonExportWorkflowTests
             // 驗證基本結構 (RepositoryBasedOutputDto 格式)
             root.TryGetProperty("startDate", out _).Should().BeTrue();
             root.TryGetProperty("endDate", out _).Should().BeTrue();
-            root.TryGetProperty("workItems", out _).Should().BeTrue();
+            root.TryGetProperty("repositories", out _).Should().BeTrue();
 
-            // 驗證 WorkItems
-            var workItems = root.GetProperty("workItems");
-            workItems.ValueKind.Should().Be(JsonValueKind.Array);
+            // 驗證 Repositories
+            var repositories = root.GetProperty("repositories");
+            repositories.ValueKind.Should().Be(JsonValueKind.Array);
         }
         finally
         {
@@ -160,7 +160,7 @@ public class JsonExportWorkflowTests
             // Assert
             var content = await File.ReadAllTextAsync(tempFilePath);
             content.Should().NotBe("existing content");
-            content.Should().Contain("\"workItems\"");
+            content.Should().Contain("\"repositories\"");
         }
         finally
         {

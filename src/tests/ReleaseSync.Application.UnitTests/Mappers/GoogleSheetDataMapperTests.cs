@@ -128,10 +128,10 @@ public class GoogleSheetDataMapperTests
         // Assert
         result.Should().HaveCount(1);
         var row = result[0];
-        row.Feature.Should().Be("VSTS54321");
+        row.Feature.Should().Be("vsts54321-fix-issue"); // Feature 為 SourceBranch
         row.FeatureUrl.Should().BeEmpty();
-        row.Team.Should().BeEmpty();
-        row.UniqueKey.Should().Be("54321backend-api");
+        row.Team.Should().Be("John Doe"); // Team 為 Authors 的換行連接
+        row.UniqueKey.Should().Be("54321backend-apiGitLab1"); // UniqueKey 包含 workItemId + repositoryName + platform + prId
         row.RepositoryName.Should().Be("backend-api");
         row.Authors.Should().Contain("John Doe");
     }
@@ -169,8 +169,8 @@ public class GoogleSheetDataMapperTests
         // Assert
         result.Should().HaveCount(1);
         var row = result[0];
-        row.Feature.Should().Be("VSTS67890");
-        row.UniqueKey.Should().Be("67890backend-api");
+        row.Feature.Should().Be("feature/some-feature"); // Feature 為 SourceBranch
+        row.UniqueKey.Should().Be("67890backend-apiGitLab1"); // UniqueKey 包含 workItemId + repositoryName + platform + prId
     }
 
     [Fact]
@@ -194,10 +194,10 @@ public class GoogleSheetDataMapperTests
         // Assert
         result.Should().HaveCount(1);
         var row = result[0];
-        row.Feature.Should().Be("VSTS0");
-        row.UniqueKey.Should().Be("0backend-api");
+        row.Feature.Should().Be("feature/no-vsts-id"); // Feature 為 SourceBranch
+        row.UniqueKey.Should().Be("0backend-apiGitLab1"); // UniqueKey 包含 0 + repositoryName + platform + prId
         row.FeatureUrl.Should().BeEmpty();
-        row.Team.Should().BeEmpty();
+        row.Team.Should().Be("John Doe"); // Team 為 Authors 的換行連接
     }
 
     #endregion
@@ -248,9 +248,9 @@ public class GoogleSheetDataMapperTests
         workItemRow.Feature.Should().Be("VSTS12345 - Fix bug");
         workItemRow.Team.Should().Be("Backend");
 
-        var nullWorkItemRow = result.First(r => r.Feature.Contains("54321"));
-        nullWorkItemRow.Feature.Should().Be("VSTS54321");
-        nullWorkItemRow.Team.Should().BeEmpty();
+        var nullWorkItemRow = result.First(r => r.Feature.Contains("vsts54321-feature"));
+        nullWorkItemRow.Feature.Should().Be("vsts54321-feature"); // Feature 為 SourceBranch
+        nullWorkItemRow.Team.Should().Be("Jane Smith"); // Team 為 Authors 的換行連接
     }
 
     [Fact]
@@ -287,12 +287,18 @@ public class GoogleSheetDataMapperTests
         // Act
         var result = _mapper.MapToSheetRows(repositoryData);
 
-        // Assert
-        result.Should().HaveCount(1);
-        var row = result[0];
-        row.Feature.Should().Be("VSTS99999");
-        row.Authors.Should().HaveCount(2);
-        row.PullRequestUrls.Should().HaveCount(2);
+        // Assert - 程式邏輯為每個 PR 產生一個 row,不會分組
+        result.Should().HaveCount(2);
+        
+        var firstRow = result[0];
+        firstRow.Feature.Should().Be("vsts99999-part1"); // Feature 為 SourceBranch
+        firstRow.Authors.Should().Contain("John Doe");
+        firstRow.PullRequestUrls.Should().Contain("https://gitlab.com/mr/1");
+        
+        var secondRow = result[1];
+        secondRow.Feature.Should().Be("vsts99999-part2"); // Feature 為 SourceBranch
+        secondRow.Authors.Should().Contain("Jane Smith");
+        secondRow.PullRequestUrls.Should().Contain("https://gitlab.com/mr/2");
     }
 
     #endregion
