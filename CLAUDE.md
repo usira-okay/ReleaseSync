@@ -282,6 +282,12 @@ services.AddAzureDevOpsServices(configuration);
 - **縮排**: 4 spaces (C# code), 2 spaces (JSON/XML)
 - **Nullable Reference Types**: 已啟用,確保 null 安全
 
+### Markdown 文件撰寫規範
+
+- **僅在明確要求時撰寫**: 不要主動建立 .md 文件用於規劃、筆記或追蹤用途
+- **優先記憶工作**: 規劃與追蹤資訊應保留在記憶中處理,而非建立文件
+- **明確請求例外**: 僅當使用者明確要求特定名稱或路徑的 markdown 文件時才建立
+
 ### 時區處理
 
 - 所有日期時間使用 `DateTimeOffset` 而非 `DateTime`
