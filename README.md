@@ -10,11 +10,13 @@
 - 📈 Google Sheet 同步功能
 - 🛡️ 部分失敗容錯處理
 - 📝 詳細的日誌記錄（Serilog）
+- 🔎 Seq 日誌伺服器整合 (結構化日誌查詢與視覺化)
 - ⚡ 並行查詢提升效能
 - 🔍 Verbose 模式支援 Debug 等級日誌
 - 👥 使用者對照功能（User Mapping）
 - 🏢 團隊名稱對照功能（Team Mapping）
 - 🔐 支援 User Secrets 安全管理敏感資訊
+- 🐳 Docker Compose 一鍵部署
 
 ## 快速開始
 
@@ -34,15 +36,46 @@ dotnet build
    - 複製 `appsettings.json` 到 `config/appsettings.docker.json` 並填入您的設定 (此檔案已被 git 忽略)。
    - 若需使用 Google Sheet，請將服務帳號金鑰存為 `config/google-service-account.json` (此檔案已被 git 忽略)。
 
-2. **建置映像檔**：
+2. **設定 Seq 日誌伺服器密碼** (選用，但強烈推薦)：
+   ```bash
+   # 產生密碼雜湊 (將 YourPassword 替換為您的密碼)
+   # Windows PowerShell:
+   'YourPassword' | docker run --rm -i datalust/seq:latest config hash
+
+   # Linux/macOS:
+   echo -n 'YourPassword' | docker run --rm -i datalust/seq:latest config hash
+
+   # 或使用互動式輸入 (跨平台):
+   docker run --rm -it datalust/seq:latest config hash
+   # 執行後會提示您輸入密碼
+
+   # 複製 .env.example 為 .env
+   cp .env.example .env
+
+   # 編輯 .env，將產生的雜湊值 (類似 PH+...) 填入
+   # SEQ_ADMIN_PASSWORD_HASH=PH+8XzQxMjM0NTY3ODkwMTIz...
+   ```
+
+3. **建置映像檔**：
    ```bash
    docker compose build
    ```
 
-3. **執行同步**：
+4. **啟動服務**：
+   ```bash
+   # 啟動所有服務 (包含 Seq 日誌伺服器)
+   docker compose up -d
+
+   # 檢視 Seq Web UI: http://localhost:5341
+   # 使用帳號: admin / 密碼: 您在步驟 2 設定的密碼
+   ```
+
+5. **執行同步**：
    ```bash
    # 執行同步並輸出到 output/result.json
    docker compose run --rm releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output/result.json
+
+   # 日誌會自動傳送到 Seq，可在 http://localhost:5341 即時檢視
    ```
 
 ### 3. 本機開發設定
@@ -354,6 +387,88 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 - **Repository Name** (Z 欄) - 專案名稱
 
 **注意**: 欄位位置可透過 `appsettings.json` 的 `GoogleSheet:ColumnMapping` 自訂。
+
+### Seq 日誌伺服器整合
+
+ReleaseSync 整合 Seq 結構化日誌伺服器，提供強大的日誌查詢、分析與視覺化功能。
+
+**功能特色:**
+- 📊 即時結構化日誌檢視
+- 🔍 強大的查詢語法 (支援欄位篩選、正規表示式)
+- 📈 日誌趨勢分析與圖表
+- 🔔 警報與通知設定
+- 🎯 依日誌等級、訊息、屬性快速篩選
+
+**設定方式:**
+
+1. **Docker Compose 自動部署** (推薦)：
+
+   Docker Compose 會自動啟動 Seq 服務，無需額外安裝。
+
+   ```bash
+   # 設定 Seq 管理員密碼 (產生雜湊)
+   # Windows PowerShell:
+   'YourPassword' | docker run --rm -i datalust/seq:latest config hash
+
+   # Linux/macOS:
+   echo -n 'YourPassword' | docker run --rm -i datalust/seq:latest config hash
+
+   # 或互動式輸入:
+   docker run --rm -it datalust/seq:latest config hash
+
+   # 編輯 .env 檔案，填入產生的密碼雜湊
+   echo "SEQ_ADMIN_PASSWORD_HASH=<產生的雜湊值>" > .env
+
+   # 啟動服務
+   docker compose up -d
+   ```
+
+   存取 Seq UI: `http://localhost:5341`
+   預設帳號: `admin` / 密碼: 您設定的密碼
+
+2. **本機開發設定**：
+
+   若您在本機執行應用程式 (非 Docker)，需要先啟動 Seq：
+
+   ```bash
+   # 僅啟動 Seq 服務
+   docker compose up -d seq
+
+   # 執行應用程式 (日誌會自動傳送到 Seq)
+   dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab
+   ```
+
+3. **設定檔 (appsettings.json)**：
+
+   ```json
+   {
+     "Seq": {
+       "ServerUrl": "http://localhost:5341",
+       "ApiKey": ""
+     }
+   }
+   ```
+
+   - `ServerUrl`: Seq 伺服器位址 (Docker 環境使用 `http://seq:80`)
+   - `ApiKey`: 選用，可在 Seq UI 產生 API Key 以限制存取權限
+
+**使用技巧:**
+
+- **查詢範例**:
+  - 篩選特定平台: `Platform = 'GitLab'`
+  - 搜尋錯誤日誌: `@Level = 'Error'`
+  - 搜尋特定專案: `ProjectPath like '%payment%'`
+  - 查詢時間範圍: 使用 UI 上方的時間選擇器
+
+- **日誌屬性**:
+  - `Platform`: 平台名稱 (GitLab, BitBucket, AzureDevOps)
+  - `ProjectPath` / `ProjectId`: 專案識別資訊
+  - `@MessageTemplate`: 日誌訊息範本
+  - `@Level`: 日誌等級 (Debug, Information, Warning, Error)
+
+**停用 Seq**:
+
+若不需要 Seq，可移除 `appsettings.json` 中的 `Seq` 設定區塊，或將 `ServerUrl` 留空，應用程式將僅輸出到 Console。
 
 ## 錯誤處理
 

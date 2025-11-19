@@ -26,12 +26,30 @@ class Program
             .AddUserSecrets<Program>(optional: true)
             .Build();
 
+        // 讀取 Seq 設定
+        var seqServerUrl = configuration["Seq:ServerUrl"] ?? Environment.GetEnvironmentVariable("SEQ_SERVER_URL");
+        var seqApiKey = configuration["Seq:ApiKey"];
+
         // 設定 Serilog (根據 verbose 參數設定日誌等級)
-        Log.Logger = new LoggerConfiguration()
+        var loggerConfig = new LoggerConfiguration()
             .MinimumLevel.Is(verbose ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
             .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .CreateLogger();
+            .WriteTo.Console();
+
+        // 如果設定了 Seq Server URL，則啟用 Seq Sink
+        if (!string.IsNullOrWhiteSpace(seqServerUrl))
+        {
+            if (string.IsNullOrWhiteSpace(seqApiKey))
+            {
+                loggerConfig.WriteTo.Seq(seqServerUrl);
+            }
+            else
+            {
+                loggerConfig.WriteTo.Seq(seqServerUrl, apiKey: seqApiKey);
+            }
+        }
+
+        Log.Logger = loggerConfig.CreateLogger();
 
         try
         {
