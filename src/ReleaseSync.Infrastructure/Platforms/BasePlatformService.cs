@@ -74,6 +74,10 @@ public abstract class BasePlatformService<TProjectSettings> : IPlatformService
             try
             {
                 var projectId = GetProjectIdentifier(project);
+                using var scope = _logger.BeginScope(new Dictionary<string, object>
+                {
+                    ["ProjectId"] = projectId
+                });
 
                 var pullRequests = await _repository.GetPullRequestsAsync(
                     GetRepositoryPath(project),

@@ -74,6 +74,11 @@ public class SyncOrchestrator : ISyncOrchestrator
         // 並行執行所有啟用的平台
         var platformTasks = enabledServices.Select(async service =>
         {
+            using var scope = _logger.BeginScope(new Dictionary<string, object>
+            {
+                ["Platform"] = service.PlatformName
+            });
+
             var stopwatch = Stopwatch.StartNew();
             try
             {

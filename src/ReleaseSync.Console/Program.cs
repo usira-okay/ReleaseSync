@@ -29,6 +29,7 @@ class Program
         // 設定 Serilog (根據 verbose 參數設定日誌等級)
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Is(verbose ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
+            .Enrich.FromLogContext()
             .WriteTo.Console()
             .CreateLogger();
 
