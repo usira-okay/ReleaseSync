@@ -1,0 +1,9 @@
+services:
+  releasesync:
+    build:
+      context: ./src
+      dockerfile: ReleaseSync.Console/Dockerfile
+    volumes:
+      - ./output:/app/output
+      - ./dockerConfigs/appsettings.docker.json:/app/appsettings.json
+      - ./dockerConfigs/google-service-account.json:/app/google-service-account.json

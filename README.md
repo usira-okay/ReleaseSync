@@ -26,7 +26,26 @@ cd ReleaseSync
 dotnet build
 ```
 
-### 2. 設定
+### 2. Docker 執行 (推薦)
+
+若您不想安裝 .NET SDK，可直接使用 Docker 執行：
+
+1. **準備設定檔**：
+   - 複製 `appsettings.json` 到 `config/appsettings.docker.json` 並填入您的設定 (此檔案已被 git 忽略)。
+   - 若需使用 Google Sheet，請將服務帳號金鑰存為 `config/google-service-account.json` (此檔案已被 git 忽略)。
+
+2. **建置映像檔**：
+   ```bash
+   docker compose build
+   ```
+
+3. **執行同步**：
+   ```bash
+   # 執行同步並輸出到 output/result.json
+   docker compose run --rm releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output/result.json
+   ```
+
+### 3. 本機開發設定
 
 ```bash
 cd src/ReleaseSync.Console
@@ -466,4 +485,4 @@ MIT License
 ---
 
 **版本**: 0.2.0
-**最後更新**: 2025-11-17
+**最後更新**: 2025-11-19
