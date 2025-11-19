@@ -78,6 +78,17 @@ dotnet build
    # 日誌會自動傳送到 Seq，可在 http://localhost:5341 即時檢視
    ```
 
+   **注意**: `docker compose run` 不會自動重新建置映像檔。如果您修改了程式碼，請使用以下方式：
+
+   ```bash
+   # 選項 A: 加上 --build 參數 (一次完成)
+   docker compose run --rm --build releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
+
+   # 選項 B: 先建置再執行
+   docker compose build releasesync
+   docker compose run --rm releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
+   ```
+
 ### 3. 本機開發設定
 
 ```bash
