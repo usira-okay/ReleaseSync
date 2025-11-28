@@ -106,11 +106,11 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
     {
         try
         {
-            // 計算 MergedAt 時間 (BitBucket 不直接提供,使用 UpdatedOn 作為近似值)
+            // 使用 ClosedOn 作為 MergedAt 時間 (PR 合併時的實際時間)
             DateTime? mergedAt = null;
             if (pr.State.Equals("MERGED", StringComparison.OrdinalIgnoreCase))
             {
-                mergedAt = pr.UpdatedOn;
+                mergedAt = pr.ClosedOn ?? pr.UpdatedOn;
             }
 
             var authorUserId = pr.Author?.UuId;

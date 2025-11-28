@@ -45,6 +45,12 @@ public class BitBucketPullRequest
     public DateTime UpdatedOn { get; set; }
 
     /// <summary>
+    /// 關閉/合併時間 (PR 被 Merged 或 Declined 時的時間)
+    /// </summary>
+    [JsonPropertyName("closed_on")]
+    public DateTime? ClosedOn { get; set; }
+
+    /// <summary>
     /// 來源分支資訊
     /// </summary>
     [JsonPropertyName("source")]

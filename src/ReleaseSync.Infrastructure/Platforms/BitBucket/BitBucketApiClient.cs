@@ -101,12 +101,7 @@ public class BitBucketApiClient
                     break;
                 }
 
-                // 過濾時間範圍內的 PR
-                var filteredPullRequests = result.Values
-                    .Where(pr => pr.UpdatedOn >= startDate && pr.UpdatedOn <= endDate)
-                    .ToList();
-
-                allPullRequests.AddRange(filteredPullRequests);
+                allPullRequests.AddRange(result.Values);
 
                 // 檢查是否有下一頁
                 nextPageUrl = result.Next;
@@ -120,11 +115,18 @@ public class BitBucketApiClient
                 _logger.LogInformation("已抓取 {Count} 筆 PR,繼續查詢下一頁", allPullRequests.Count);
             }
 
-            _logger.LogInformation(
-                "成功抓取 {Count} 筆 BitBucket PR - Workspace: {Workspace}, Repo: {Repository}",
-                allPullRequests.Count, workspace, repository);
+            // 使用 ClosedOn 欄位進行時間範圍過濾 (API 查詢使用 updated_on,此處精確過濾合併時間)
+            var filteredPullRequests = allPullRequests
+                .Where(pr => pr.ClosedOn.HasValue &&
+                             pr.ClosedOn.Value >= startDate &&
+                             pr.ClosedOn.Value <= endDate)
+                .ToList();
 
-            return allPullRequests;
+            _logger.LogInformation(
+                "成功抓取 {TotalCount} 筆 BitBucket PR,經 ClosedOn 時間過濾後剩餘 {FilteredCount} 筆 - Workspace: {Workspace}, Repo: {Repository}",
+                allPullRequests.Count, filteredPullRequests.Count, workspace, repository);
+
+            return filteredPullRequests;
         }
         catch (HttpRequestException ex)
         {
@@ -157,7 +159,7 @@ public class BitBucketApiClient
         var query = $"updated_on>={startDate:yyyy-MM-ddTHH:mm:ss.fffZ} AND state=\"MERGED\"";
 
         // 設定排序與分頁
-        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-updated_on&pagelen=50";
+        return $"{baseUrl}?q={Uri.EscapeDataString(query)}&sort=-updated_on&pagelen=50&fields=*.*";
     }
 
     /// <summary>
