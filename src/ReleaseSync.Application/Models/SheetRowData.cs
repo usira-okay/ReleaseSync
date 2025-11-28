@@ -111,6 +111,8 @@ public sealed record SheetRowData
         {
             Authors = mergedAuthors,
             PullRequestUrls = mergedUrls,
+            // 優先使用新資料的 FeatureUrl（因為現有資料的 FeatureUrl 無法從 HYPERLINK 公式中解析出來）
+            FeatureUrl = other.FeatureUrl ?? FeatureUrl,
         };
     }
 }
