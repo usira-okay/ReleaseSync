@@ -77,7 +77,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
 
         try
         {
-            _logger.LogDebug("正在驗證 Service Account 憑證...");
+            _logger.LogInformation("正在驗證 Service Account 憑證...");
 
             GoogleCredential credential;
             using (var stream = new FileStream(_settings.ServiceAccountCredentialPath, FileMode.Open, FileAccess.Read))
@@ -151,7 +151,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     {
         EnsureAuthenticated();
 
-        _logger.LogDebug("正在讀取工作表資料: {SheetName}", sheetName);
+        _logger.LogInformation("正在讀取工作表資料: {SheetName}", sheetName);
 
         var response = await _retryPolicy.ExecuteAsync(async () =>
         {
@@ -181,7 +181,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
             return 0;
         }
 
-        _logger.LogDebug("正在執行批次更新: {OperationCount} 個操作", operations.Count);
+        _logger.LogInformation("正在執行批次更新: {OperationCount} 個操作", operations.Count);
 
         // 分離 Insert 和 Update 操作
         var insertOperations = operations.Where(op => op.OperationType == SheetOperationType.Insert)
@@ -214,7 +214,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("正在批次插入 {Count} 個新 rows", insertOperations.Count);
+        _logger.LogInformation("正在批次插入 {Count} 個新 rows", insertOperations.Count);
 
         // 取得 SheetId
         var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
@@ -320,7 +320,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("正在更新 {Count} 個現有 rows", updateOperations.Count);
+        _logger.LogInformation("正在更新 {Count} 個現有 rows", updateOperations.Count);
 
         var sheetId = await GetSheetIdAsync(spreadsheetId, _settings.SheetName, cancellationToken);
         var requests = new List<Request>();

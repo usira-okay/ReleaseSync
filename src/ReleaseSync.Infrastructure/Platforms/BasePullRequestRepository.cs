@@ -115,7 +115,7 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
         // 如果未啟用過濾 (UserMapping 為空)，則不過濾
         if (!_userMappingService.IsFilteringEnabled())
         {
-            _logger.LogDebug(
+            _logger.LogInformation(
                 "UserMapping 過濾未啟用，保留所有 PR/MR - 平台: {Platform}, 專案: {ProjectName}",
                 PlatformName, projectName);
             return pullRequests;

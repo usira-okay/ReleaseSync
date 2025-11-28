@@ -51,7 +51,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
     /// <inheritdoc/>
     public async Task ValidateConfigurationAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("正在驗證 Google Sheet 組態...");
+        _logger.LogInformation("正在驗證 Google Sheet 組態...");
 
         // 驗證必要設定
         if (string.IsNullOrWhiteSpace(_settings.SpreadsheetId))
@@ -214,7 +214,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             }
         }
 
-        _logger.LogDebug("建立 UK 索引: {Count} 筆", index.Count);
+        _logger.LogInformation("建立 UK 索引: {Count} 筆", index.Count);
         return index;
     }
 
@@ -324,7 +324,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             }
         }
 
-        _logger.LogDebug("建立 Repository 最後行數索引: {Count} repositories", index.Count);
+        _logger.LogInformation("建立 Repository 最後行數索引: {Count} repositories", index.Count);
         return index;
     }
 }

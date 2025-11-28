@@ -61,11 +61,13 @@ public class GitLabApiClient
             }
 
             // 查詢 Merge Requests (只查詢已合併的 MR)
+            // 使用 UpdatedAfter/UpdatedBefore 先拉取資料，再用 MergedAt 過濾
+            // 這樣可以確保不會遺漏在時間範圍內合併但較早建立的 MR
             var query = new MergeRequestQuery
             {
                 State = MergeRequestState.merged,
-                CreatedAfter = startDate,
-                CreatedBefore = endDate.AddDays(1), // 確保包含結束日期當天
+                UpdatedAfter = startDate,
+                UpdatedBefore = endDate,
                 PerPage = 100 // 每頁 100 筆
             };
 
@@ -74,6 +76,19 @@ public class GitLabApiClient
             var mergeRequests = await Task.Run(() =>
                 mergeRequestClient.Get(query).ToList(),
                 cancellationToken);
+
+            _logger.LogInformation("從 API 取得 {Count} 筆 MR (UpdatedAfter 過濾後) - 專案: {ProjectPath}",
+                mergeRequests.Count, projectPath);
+
+            // 使用 MergedAt 時間進行二次過濾，確保只包含在指定時間範圍內合併的 MR
+            mergeRequests = mergeRequests
+                .Where(mr => mr.MergedAt.HasValue &&
+                             mr.MergedAt.Value >= startDate &&
+                             mr.MergedAt.Value < endDate)
+                .ToList();
+
+            _logger.LogInformation("經 MergedAt 過濾後剩餘 {Count} 筆 MR - 專案: {ProjectPath}",
+                mergeRequests.Count, projectPath);
 
             // 如果有指定目標分支,進行過濾
             if (targetBranches != null && targetBranches.Any())
