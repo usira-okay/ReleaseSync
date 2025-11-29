@@ -20,11 +20,7 @@
         ".\\output.json",
         "-f",
         "-v",
-        "--enable-google-sheet",
-        "--google-sheet-id",
-        "1yl0VGxxxxxxxxxxwSdQY",
-        "--google-sheet-name",
-        "sheet1"
+        "--enable-google-sheet"
       ],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
