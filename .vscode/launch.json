@@ -9,9 +9,9 @@
       "args": [
         "sync",
         "-s",
-        "2025-10-28T00:00:00+08:00",
+        "2025-11-25T00:00:00+08:00",
         "-e",
-        "2025-11-18T00:00:00+08:00",
+        "2025-12-02T00:00:00+08:00",
         "--enable-gitlab",
         "--enable-bitbucket",
         "--enable-azure-devops",
@@ -20,7 +20,11 @@
         ".\\output.json",
         "-f",
         "-v",
-        "--enable-google-sheet"
+        "--enable-google-sheet",
+        "--google-sheet-id",
+        "1yl0VGxxxxxxxxxxwSdQY",
+        "--google-sheet-name",
+        "sheet1"
       ],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,

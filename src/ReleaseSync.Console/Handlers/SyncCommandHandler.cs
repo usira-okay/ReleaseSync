@@ -215,7 +215,13 @@ public class SyncCommandHandler
         }
 
         _logger.LogInformation("開始同步至 Google Sheet...");
-        var result = await _googleSheetSyncService.SyncAsync(repositoryBasedData, cancellationToken);
+
+        // 使用覆蓋的設定 (若有提供命令列參數)
+        var result = await _googleSheetSyncService.SyncAsync(
+            repositoryBasedData,
+            spreadsheetIdOverride: options.GoogleSheetId,
+            sheetNameOverride: options.GoogleSheetName,
+            cancellationToken);
 
         if (result.IsSuccess)
         {

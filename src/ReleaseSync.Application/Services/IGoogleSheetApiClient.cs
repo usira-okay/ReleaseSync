@@ -49,12 +49,14 @@ public interface IGoogleSheetApiClient
     /// 批次更新工作表資料。
     /// </summary>
     /// <param name="spreadsheetId">Google Sheet ID。</param>
+    /// <param name="sheetName">工作表名稱。</param>
     /// <param name="operations">同步操作清單。</param>
     /// <param name="columnMapping">欄位對應設定。</param>
     /// <param name="cancellationToken">取消權杖。</param>
     /// <returns>更新的 row 數量。</returns>
     Task<int> BatchUpdateAsync(
         string spreadsheetId,
+        string sheetName,
         IReadOnlyList<SheetSyncOperation> operations,
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken = default);

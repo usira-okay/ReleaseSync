@@ -67,6 +67,14 @@ public static class SyncCommand
             getDefaultValue: () => false,
             description: "啟用 Google Sheet 同步功能");
 
+        var googleSheetIdOption = new Option<string?>(
+            aliases: new[] { "--google-sheet-id", "--sheet-id" },
+            description: "Google Sheet ID (覆蓋 appsettings.json 設定)");
+
+        var googleSheetNameOption = new Option<string?>(
+            aliases: new[] { "--google-sheet-name", "--sheet-name" },
+            description: "Google Sheet 工作表名稱 (預設: Sheet1)");
+
         command.AddOption(startDateOption);
         command.AddOption(endDateOption);
         command.AddOption(enableGitLabOption);
@@ -77,6 +85,8 @@ public static class SyncCommand
         command.AddOption(forceOption);
         command.AddOption(verboseOption);
         command.AddOption(enableGoogleSheetOption);
+        command.AddOption(googleSheetIdOption);
+        command.AddOption(googleSheetNameOption);
 
         return command;
     }
