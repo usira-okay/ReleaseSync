@@ -61,8 +61,8 @@ public class SyncCommandHandler
                 return 1;
             }
 
-            await ExportResultIfNeededAsync(options, repositoryBasedData, cancellationToken);
-            await SyncToGoogleSheetIfNeededAsync(options, repositoryBasedData, cancellationToken);
+            await ExportResultAsync(options, repositoryBasedData, cancellationToken);
+            await SyncToGoogleSheetAsync(options, repositoryBasedData, cancellationToken);
 
             return 0;
         }
@@ -176,7 +176,7 @@ public class SyncCommandHandler
     /// <summary>
     /// 匯出結果 (如果需要)
     /// </summary>
-    private async Task ExportResultIfNeededAsync(
+    private async Task ExportResultAsync(
         SyncCommandOptions options,
         RepositoryBasedOutputDto repositoryBasedData,
         CancellationToken cancellationToken)
@@ -198,7 +198,7 @@ public class SyncCommandHandler
     /// <summary>
     /// 同步至 Google Sheet (如果需要)
     /// </summary>
-    private async Task SyncToGoogleSheetIfNeededAsync(
+    private async Task SyncToGoogleSheetAsync(
         SyncCommandOptions options,
         RepositoryBasedOutputDto repositoryBasedData,
         CancellationToken cancellationToken)
