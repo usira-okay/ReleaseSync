@@ -32,12 +32,16 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         var team = GetCellValue(rowValues, columnMapping.TeamColumn);
         var authorsText = GetCellValue(rowValues, columnMapping.AuthorsColumn);
         var pullRequestUrlsText = GetCellValue(rowValues, columnMapping.PullRequestUrlsColumn);
+        var autoSyncText = GetCellValue(rowValues, columnMapping.AutoSyncColumn);
 
         // 解析 Authors (換行分隔)
         var authors = ParseMultiLineValues(authorsText);
 
         // 解析 PR URLs (換行分隔)
         var pullRequestUrls = ParseMultiLineValues(pullRequestUrlsText);
+
+        // 解析 AutoSync 標記
+        var isAutoSync = autoSyncText.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
 
         return new SheetRowData
         {
@@ -48,6 +52,7 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
             Team = team,
             Authors = authors,
             PullRequestUrls = pullRequestUrls,
+            IsAutoSync = isAutoSync,
         };
     }
 
@@ -80,6 +85,7 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         SetCellValue(rowValues, columnMapping.TeamColumn, rowData.Team);
         SetCellValue(rowValues, columnMapping.AuthorsColumn, string.Join("\n", rowData.Authors.OrderBy(a => a)));
         SetCellValue(rowValues, columnMapping.PullRequestUrlsColumn, string.Join("\n", rowData.PullRequestUrls.OrderBy(u => u)));
+        SetCellValue(rowValues, columnMapping.AutoSyncColumn, rowData.IsAutoSync ? "TRUE" : string.Empty);
 
         return rowValues;
     }
@@ -180,6 +186,7 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
             columnMapping.AuthorsColumn,
             columnMapping.PullRequestUrlsColumn,
             columnMapping.UniqueKeyColumn,
+            columnMapping.AutoSyncColumn,
         };
 
         return columns.Max(ColumnLetterToIndex);

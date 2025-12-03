@@ -42,6 +42,12 @@ public sealed record GoogleSheetColumnMapping
     public string UniqueKeyColumn { get; init; } = "Y";
 
     /// <summary>
+    /// 自動同步標記欄位 (預設: "F")。
+    /// 用於標記資料是否為自動同步產生，值為 "TRUE"。
+    /// </summary>
+    public string AutoSyncColumn { get; init; } = "F";
+
+    /// <summary>
     /// 驗證所有欄位設定是否有效。
     /// </summary>
     /// <returns>驗證是否通過。</returns>
@@ -56,6 +62,7 @@ public sealed record GoogleSheetColumnMapping
             AuthorsColumn,
             PullRequestUrlsColumn,
             UniqueKeyColumn,
+            AutoSyncColumn,
         };
 
         foreach (var column in columns)

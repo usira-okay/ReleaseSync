@@ -51,7 +51,16 @@ public sealed record SheetRowData
     /// </summary>
     public HashSet<string> PullRequestUrls { get; init; } = new();
 
+    /// <summary>
+    /// 合併時間。
+    /// </summary>
     public DateTime? MergedAt { get; init; }
+
+    /// <summary>
+    /// 是否為自動同步產生的資料。
+    /// 自動同步產生的資料會在對應欄位填入 "TRUE"。
+    /// </summary>
+    public bool IsAutoSync { get; init; } = true;
 
     /// <summary>
     /// 驗證 row 資料是否有效。
