@@ -262,6 +262,17 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                         operation.RowData.Feature,
                         operation.RowData.FeatureUrl));
                 }
+                else if (IsAutoSyncColumn(i, columnMapping))
+                {
+                    // AutoSync 欄位使用布林值
+                    cellDataList.Add(new CellData
+                    {
+                        UserEnteredValue = new ExtendedValue
+                        {
+                            BoolValue = operation.RowData.IsAutoSync,
+                        },
+                    });
+                }
                 else
                 {
                     // 一般儲存格
@@ -345,6 +356,17 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                         operation.RowData.Feature,
                         operation.RowData.FeatureUrl));
                 }
+                else if (IsAutoSyncColumn(i, columnMapping))
+                {
+                    // AutoSync 欄位使用布林值
+                    cellDataList.Add(new CellData
+                    {
+                        UserEnteredValue = new ExtendedValue
+                        {
+                            BoolValue = operation.RowData.IsAutoSync,
+                        },
+                    });
+                }
                 else
                 {
                     // 一般儲存格
@@ -425,6 +447,18 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     {
         var featureColumnIndex = ColumnLetterToIndex(columnMapping.FeatureColumn);
         return columnIndex == featureColumnIndex;
+    }
+
+    /// <summary>
+    /// 判斷指定的欄位索引是否為 AutoSync 欄位。
+    /// </summary>
+    /// <param name="columnIndex">欄位索引 (0-based)。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <returns>是否為 AutoSync 欄位。</returns>
+    private static bool IsAutoSyncColumn(int columnIndex, GoogleSheetColumnMapping columnMapping)
+    {
+        var autoSyncColumnIndex = ColumnLetterToIndex(columnMapping.AutoSyncColumn);
+        return columnIndex == autoSyncColumnIndex;
     }
 
     /// <summary>
