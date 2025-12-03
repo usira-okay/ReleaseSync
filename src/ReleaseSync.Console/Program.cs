@@ -118,7 +118,11 @@ class Program
                     Verbose = context.ParseResult.GetValueForOption(
                         syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v"))),
                     EnableGoogleSheet = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--google-sheet")))
+                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--google-sheet"))),
+                    GoogleSheetId = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("--google-sheet-id"))),
+                    GoogleSheetName = context.ParseResult.GetValueForOption(
+                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("--google-sheet-name")))
                 };
 
                 using var scope = serviceProvider.CreateScope();

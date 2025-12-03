@@ -114,16 +114,74 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
     /// <inheritdoc/>
     public async Task<GoogleSheetSyncResult> SyncAsync(RepositoryBasedOutputDto repositoryData, CancellationToken cancellationToken = default)
     {
+        return await SyncAsync(repositoryData, spreadsheetIdOverride: null, sheetNameOverride: null, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<GoogleSheetSyncResult> SyncAsync(
+        RepositoryBasedOutputDto repositoryData,
+        string? spreadsheetIdOverride,
+        string? sheetNameOverride,
+        CancellationToken cancellationToken = default)
+    {
         ArgumentNullException.ThrowIfNull(repositoryData);
 
         var stopwatch = Stopwatch.StartNew();
 
         try
         {
-            _logger.LogInformation("開始 Google Sheet 同步...");
+            // 決定實際使用的 SpreadsheetId 和 SheetName (命令列參數優先)
+            var effectiveSpreadsheetId = spreadsheetIdOverride ?? _settings.SpreadsheetId;
+            var effectiveSheetName = sheetNameOverride ?? _settings.SheetName;
 
-            // 驗證組態
-            await ValidateConfigurationAsync(cancellationToken);
+            // 驗證必要設定
+            if (string.IsNullOrWhiteSpace(effectiveSpreadsheetId))
+            {
+                throw new GoogleSheetConfigurationException(
+                    "Google Sheet ID 未設定。請透過 --google-sheet-id 參數提供，或在 appsettings.json 中設定 GoogleSheet:SpreadsheetId。");
+            }
+
+            if (string.IsNullOrWhiteSpace(effectiveSheetName))
+            {
+                throw new GoogleSheetConfigurationException(
+                    "工作表名稱未設定。請透過 --google-sheet-name 參數提供，或在 appsettings.json 中設定 GoogleSheet:SheetName。");
+            }
+
+            // 驗證憑證路徑 (無法透過命令列覆蓋)
+            if (string.IsNullOrWhiteSpace(_settings.ServiceAccountCredentialPath))
+            {
+                throw new GoogleSheetConfigurationException(
+                    "Service Account 憑證路徑未設定。請在 appsettings.json 或 User Secrets 中設定 GoogleSheet:ServiceAccountCredentialPath。");
+            }
+
+            if (!File.Exists(_settings.ServiceAccountCredentialPath))
+            {
+                throw new GoogleSheetCredentialNotFoundException(_settings.ServiceAccountCredentialPath);
+            }
+
+            _logger.LogInformation(
+                "開始 Google Sheet 同步... (Spreadsheet ID: {SpreadsheetId}, Sheet Name: {SheetName})",
+                effectiveSpreadsheetId,
+                effectiveSheetName);
+
+            // 驗證憑證
+            await _apiClient.AuthenticateAsync(cancellationToken);
+
+            // 驗證 Spreadsheet 是否存在 (使用有效的 SpreadsheetId)
+            var spreadsheetExists = await _apiClient.SpreadsheetExistsAsync(effectiveSpreadsheetId, cancellationToken);
+            if (!spreadsheetExists)
+            {
+                throw new GoogleSheetNotFoundException(
+                    $"Google Sheet 不存在或無法存取。ID: {effectiveSpreadsheetId}。請確認 Google Sheet ID 正確，並確保 Service Account 已被授予存取權限。");
+            }
+
+            // 驗證工作表是否存在 (使用有效的 SheetName)
+            var sheetExists = await _apiClient.SheetExistsAsync(effectiveSpreadsheetId, effectiveSheetName, cancellationToken);
+            if (!sheetExists)
+            {
+                throw new GoogleSheetNotFoundException(
+                    $"工作表不存在。名稱: {effectiveSheetName}。請在 Google Sheet 中建立此工作表，或更正設定中的工作表名稱。");
+            }
 
             // 取得欄位對應設定
             var columnMapping = new GoogleSheetColumnMapping
@@ -136,9 +194,9 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
                 UniqueKeyColumn = _settings.ColumnMapping.UniqueKeyColumn,
             };
 
-            // 讀取現有 Sheet 資料
+            // 讀取現有 Sheet 資料 (使用有效的設定)
             _logger.LogInformation("正在讀取現有 Google Sheet 資料...");
-            var existingData = await _apiClient.ReadSheetDataAsync(_settings.SpreadsheetId, _settings.SheetName, cancellationToken);
+            var existingData = await _apiClient.ReadSheetDataAsync(effectiveSpreadsheetId, effectiveSheetName, cancellationToken);
 
             // 建立 UK 索引 (跳過第一行標題列)
             var ukToRowIndex = BuildUniqueKeyIndex(existingData, columnMapping);
@@ -158,12 +216,12 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
             if (operations.Count > 0)
             {
-                await _apiClient.BatchUpdateAsync(_settings.SpreadsheetId, operations, columnMapping, cancellationToken);
+                await _apiClient.BatchUpdateAsync(effectiveSpreadsheetId, effectiveSheetName, operations, columnMapping, cancellationToken);
             }
 
             stopwatch.Stop();
 
-            var spreadsheetUrl = _apiClient.GenerateSpreadsheetUrl(_settings.SpreadsheetId);
+            var spreadsheetUrl = _apiClient.GenerateSpreadsheetUrl(effectiveSpreadsheetId);
             var processedPrCount = repositoryData.Repositories.Sum(r => r.PullRequests.Count);
 
             _logger.LogInformation(

@@ -56,6 +56,16 @@ public class SyncCommandOptions
     public bool EnableGoogleSheet { get; init; }
 
     /// <summary>
+    /// Google Sheet ID (可選,用於覆蓋 appsettings.json 設定)
+    /// </summary>
+    public string? GoogleSheetId { get; init; }
+
+    /// <summary>
+    /// Google Sheet 工作表名稱 (可選,用於覆蓋 appsettings.json 設定)
+    /// </summary>
+    public string? GoogleSheetName { get; init; }
+
+    /// <summary>
     /// 是否需要執行 PR/MR 資料抓取
     /// 條件: 任一平台啟用 (EnableGitLab 或 EnableBitBucket)
     /// </summary>
