@@ -325,7 +325,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     }
 
     /// <summary>
-    /// 更新現有 rows。
+    /// 更新現有 rows (僅更新 AuthorsColumn 和 PullRequestUrlsColumn)。
     /// </summary>
     private async Task UpdateExistingRowsAsync(
         string spreadsheetId,
@@ -334,57 +334,23 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("正在更新 {Count} 個現有 rows", updateOperations.Count);
+        _logger.LogInformation("正在更新 {Count} 個現有 rows (僅更新 Authors 和 PR URLs 欄位)", updateOperations.Count);
 
         // 取得 SheetId (使用傳入的 sheetName)
         var sheetId = await GetSheetIdAsync(spreadsheetId, sheetName, cancellationToken);
         var requests = new List<Request>();
 
+        // 取得 AuthorsColumn 和 PullRequestUrlsColumn 的索引
+        var authorsColumnIndex = ColumnLetterToIndex(columnMapping.AuthorsColumn);
+        var prUrlsColumnIndex = ColumnLetterToIndex(columnMapping.PullRequestUrlsColumn);
+
         foreach (var operation in updateOperations)
         {
-            var rowValues = _rowParser.ToRowValues(operation.RowData, columnMapping);
-            var cellDataList = new List<CellData>();
+            // 將 HashSet 轉換為換行分隔的字串
+            var authorsString = string.Join("\n", operation.RowData.Authors.OrderBy(a => a));
+            var prUrlsString = string.Join("\n", operation.RowData.PullRequestUrls.OrderBy(u => u));
 
-            for (int i = 0; i < rowValues.Count; i++)
-            {
-                // 檢查是否為 Feature 欄位且有 FeatureUrl
-                if (IsFeatureColumn(i, columnMapping) &&
-                    !string.IsNullOrWhiteSpace(operation.RowData.FeatureUrl))
-                {
-                    // 建立超連結儲存格
-                    cellDataList.Add(CreateHyperlinkCell(
-                        operation.RowData.Feature,
-                        operation.RowData.FeatureUrl));
-                }
-                else if (IsAutoSyncColumn(i, columnMapping))
-                {
-                    // AutoSync 欄位使用布林值
-                    cellDataList.Add(new CellData
-                    {
-                        UserEnteredValue = new ExtendedValue
-                        {
-                            BoolValue = operation.RowData.IsAutoSync,
-                        },
-                    });
-                }
-                else
-                {
-                    // 一般儲存格
-                    cellDataList.Add(new CellData
-                    {
-                        UserEnteredValue = new ExtendedValue
-                        {
-                            StringValue = rowValues[i]?.ToString(),
-                        },
-                    });
-                }
-            }
-
-            var rowData = new RowData
-            {
-                Values = cellDataList,
-            };
-
+            // 更新 AuthorsColumn
             requests.Add(new Request
             {
                 UpdateCells = new UpdateCellsRequest
@@ -394,10 +360,58 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                         SheetId = sheetId,
                         StartRowIndex = operation.TargetRowNumber - 1, // 0-based index
                         EndRowIndex = operation.TargetRowNumber,
-                        StartColumnIndex = 0,
-                        EndColumnIndex = rowValues.Count,
+                        StartColumnIndex = authorsColumnIndex,
+                        EndColumnIndex = authorsColumnIndex + 1,
                     },
-                    Rows = new List<RowData> { rowData },
+                    Rows = new List<RowData>
+                    {
+                        new RowData
+                        {
+                            Values = new List<CellData>
+                            {
+                                new CellData
+                                {
+                                    UserEnteredValue = new ExtendedValue
+                                    {
+                                        StringValue = authorsString,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    Fields = "userEnteredValue",
+                },
+            });
+
+            // 更新 PullRequestUrlsColumn
+            requests.Add(new Request
+            {
+                UpdateCells = new UpdateCellsRequest
+                {
+                    Range = new GridRange
+                    {
+                        SheetId = sheetId,
+                        StartRowIndex = operation.TargetRowNumber - 1, // 0-based index
+                        EndRowIndex = operation.TargetRowNumber,
+                        StartColumnIndex = prUrlsColumnIndex,
+                        EndColumnIndex = prUrlsColumnIndex + 1,
+                    },
+                    Rows = new List<RowData>
+                    {
+                        new RowData
+                        {
+                            Values = new List<CellData>
+                            {
+                                new CellData
+                                {
+                                    UserEnteredValue = new ExtendedValue
+                                    {
+                                        StringValue = prUrlsString,
+                                    },
+                                },
+                            },
+                        },
+                    },
                     Fields = "userEnteredValue",
                 },
             });
@@ -414,7 +428,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
             await request.ExecuteAsync(cancellationToken);
         });
 
-        _logger.LogInformation("更新 {Count} 個現有 rows 完成", updateOperations.Count);
+        _logger.LogInformation("更新 {Count} 個現有 rows 完成 (僅 Authors 和 PR URLs 欄位)", updateOperations.Count);
     }
 
     /// <summary>
