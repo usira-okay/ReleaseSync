@@ -67,4 +67,21 @@ public interface IGoogleSheetApiClient
     /// <param name="spreadsheetId">Google Sheet ID。</param>
     /// <returns>Google Sheet URL。</returns>
     string GenerateSpreadsheetUrl(string spreadsheetId);
+
+    /// <summary>
+    /// 批次重新排列指定區塊內的 rows。
+    /// 此方法會將指定範圍內的 rows 依照提供的順序重新排列。
+    /// </summary>
+    /// <param name="spreadsheetId">Google Sheet ID。</param>
+    /// <param name="sheetName">工作表名稱。</param>
+    /// <param name="reorderOperations">重新排列操作清單，每個操作包含區塊的 row 範圍和排序後的資料。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <param name="cancellationToken">取消權杖。</param>
+    /// <returns>重新排列的 row 數量。</returns>
+    Task<int> BatchReorderRowsAsync(
+        string spreadsheetId,
+        string sheetName,
+        IReadOnlyList<SheetBlockReorderOperation> reorderOperations,
+        GoogleSheetColumnMapping columnMapping,
+        CancellationToken cancellationToken = default);
 }

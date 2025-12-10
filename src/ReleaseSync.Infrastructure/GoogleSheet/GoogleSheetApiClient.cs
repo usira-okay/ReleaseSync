@@ -539,6 +539,139 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         return $"https://docs.google.com/spreadsheets/d/{spreadsheetId}/edit";
     }
 
+    /// <inheritdoc/>
+    public async Task<int> BatchReorderRowsAsync(
+        string spreadsheetId,
+        string sheetName,
+        IReadOnlyList<SheetBlockReorderOperation> reorderOperations,
+        GoogleSheetColumnMapping columnMapping,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureAuthenticated();
+
+        if (reorderOperations.Count == 0)
+        {
+            _logger.LogInformation("無重新排列操作需要執行");
+            return 0;
+        }
+
+        // 驗證所有操作
+        foreach (var operation in reorderOperations)
+        {
+            if (!operation.IsValid())
+            {
+                throw new ArgumentException(
+                    $"重新排列操作無效: Repository={operation.RepositoryName}, StartRow={operation.StartRowNumber}, EndRow={operation.EndRowNumber}, SortedRowsCount={operation.SortedOriginalRowNumbers.Count}");
+            }
+        }
+
+        _logger.LogInformation(
+            "正在執行區塊排序: {BlockCount} 個區塊, 共 {TotalRows} 個 rows",
+            reorderOperations.Count,
+            reorderOperations.Sum(op => op.RowCount));
+
+        // 取得 SheetId
+        var sheetId = await GetSheetIdAsync(spreadsheetId, sheetName, cancellationToken);
+
+        // 為每個區塊建立移動請求
+        // 使用 MoveDimension API 來移動行，保留所有格式和公式
+        var allRequests = new List<Request>();
+
+        foreach (var operation in reorderOperations)
+        {
+            var moveRequests = GenerateMoveRequests(sheetId, operation);
+            allRequests.AddRange(moveRequests);
+        }
+
+        if (allRequests.Count == 0)
+        {
+            _logger.LogInformation("無需移動任何行");
+            return 0;
+        }
+
+        // 執行批次更新
+        var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
+        {
+            Requests = allRequests,
+        };
+
+        await _retryPolicy.ExecuteAsync(async () =>
+        {
+            var request = _sheetsService!.Spreadsheets.BatchUpdate(batchUpdateRequest, spreadsheetId);
+            await request.ExecuteAsync(cancellationToken);
+        });
+
+        var totalRows = reorderOperations.Sum(op => op.RowCount);
+        _logger.LogInformation("區塊排序完成: {BlockCount} 個區塊, 共 {TotalRows} 個 rows", reorderOperations.Count, totalRows);
+
+        return totalRows;
+    }
+
+    /// <summary>
+    /// 產生移動行的請求清單。
+    /// 使用 selection sort 風格的移動：依序將正確的行移動到目標位置。
+    /// </summary>
+    /// <param name="sheetId">工作表 ID。</param>
+    /// <param name="operation">重新排列操作。</param>
+    /// <returns>移動請求清單。</returns>
+    private static List<Request> GenerateMoveRequests(int sheetId, SheetBlockReorderOperation operation)
+    {
+        var requests = new List<Request>();
+
+        // 建立目前行號到原始行號的映射
+        // currentPositions[i] = 目前在位置 i 的原始行號
+        var currentPositions = new List<int>();
+        for (var i = operation.StartRowNumber; i <= operation.EndRowNumber; i++)
+        {
+            currentPositions.Add(i);
+        }
+
+        // 使用 selection sort 風格的移動
+        for (var targetIndex = 0; targetIndex < operation.SortedOriginalRowNumbers.Count; targetIndex++)
+        {
+            var targetRowNumber = operation.StartRowNumber + targetIndex;
+            var desiredOriginalRowNumber = operation.SortedOriginalRowNumbers[targetIndex];
+
+            // 找到 desiredOriginalRowNumber 目前所在的位置
+            var currentIndex = currentPositions.IndexOf(desiredOriginalRowNumber);
+
+            if (currentIndex == targetIndex)
+            {
+                // 已經在正確位置，不需要移動
+                continue;
+            }
+
+            // 計算實際的行號 (0-based for API)
+            var sourceRowIndex = operation.StartRowNumber - 1 + currentIndex;
+            var destinationRowIndex = operation.StartRowNumber - 1 + targetIndex;
+
+            // 建立移動請求
+            // MoveDimension: 將 sourceRowIndex 移動到 destinationRowIndex 之前
+            // 注意：如果 source > destination，行會插入到 destination 之前
+            //       如果 source < destination，行會插入到 destination 之後
+            requests.Add(new Request
+            {
+                MoveDimension = new MoveDimensionRequest
+                {
+                    Source = new DimensionRange
+                    {
+                        SheetId = sheetId,
+                        Dimension = "ROWS",
+                        StartIndex = sourceRowIndex,
+                        EndIndex = sourceRowIndex + 1,
+                    },
+                    DestinationIndex = destinationRowIndex,
+                },
+            });
+
+            // 更新 currentPositions 以反映移動後的狀態
+            currentPositions.RemoveAt(currentIndex);
+            currentPositions.Insert(targetIndex, desiredOriginalRowNumber);
+        }
+
+        return requests;
+    }
+
     /// <summary>
     /// 確保已完成驗證。
     /// </summary>

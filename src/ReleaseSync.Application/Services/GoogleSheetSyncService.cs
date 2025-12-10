@@ -10,6 +10,7 @@ using ReleaseSync.Application.DTOs;
 using ReleaseSync.Application.Exceptions;
 using ReleaseSync.Application.Mappers;
 using ReleaseSync.Application.Models;
+using ReleaseSync.Domain.Services;
 
 namespace ReleaseSync.Application.Services;
 
@@ -23,6 +24,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
     private readonly IGoogleSheetApiClient _apiClient;
     private readonly IGoogleSheetDataMapper _dataMapper;
     private readonly IGoogleSheetRowParser _rowParser;
+    private readonly ITeamMappingService _teamMappingService;
     private readonly ILogger<GoogleSheetSyncService> _logger;
 
     /// <summary>
@@ -32,12 +34,14 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
     /// <param name="apiClient">Google Sheets API 客戶端。</param>
     /// <param name="dataMapper">資料對應器。</param>
     /// <param name="rowParser">Row 解析器。</param>
+    /// <param name="teamMappingService">團隊對應服務。</param>
     /// <param name="logger">日誌記錄器。</param>
     public GoogleSheetSyncService(
         IOptions<GoogleSheetSettings> settings,
         IGoogleSheetApiClient apiClient,
         IGoogleSheetDataMapper dataMapper,
         IGoogleSheetRowParser rowParser,
+        ITeamMappingService teamMappingService,
         ILogger<GoogleSheetSyncService> logger)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -45,6 +49,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
         _apiClient = apiClient ?? throw new ArgumentNullException(nameof(apiClient));
         _dataMapper = dataMapper ?? throw new ArgumentNullException(nameof(dataMapper));
         _rowParser = rowParser ?? throw new ArgumentNullException(nameof(rowParser));
+        _teamMappingService = teamMappingService ?? throw new ArgumentNullException(nameof(teamMappingService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -219,6 +224,18 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
                 await _apiClient.BatchUpdateAsync(effectiveSpreadsheetId, effectiveSheetName, operations, columnMapping, cancellationToken);
             }
 
+            // 在更新完成後，執行區塊排序
+            var sortedRowCount = await SortRepositoryBlocksAsync(
+                effectiveSpreadsheetId,
+                effectiveSheetName,
+                columnMapping,
+                cancellationToken);
+
+            if (sortedRowCount > 0)
+            {
+                _logger.LogInformation("區塊排序完成: {SortedRowCount} 個 rows 已重新排列", sortedRowCount);
+            }
+
             stopwatch.Stop();
 
             var spreadsheetUrl = _apiClient.GenerateSpreadsheetUrl(effectiveSpreadsheetId);
@@ -384,5 +401,273 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
         _logger.LogInformation("建立 Repository 最後行數索引: {Count} repositories", index.Count);
         return index;
+    }
+
+    /// <summary>
+    /// 對同一 Repository 的區塊內進行排序。
+    /// 排序規則: Team → UniqueKey (空排最後) → Feature (空排最後)。
+    /// </summary>
+    /// <param name="spreadsheetId">Google Sheet ID。</param>
+    /// <param name="sheetName">工作表名稱。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <param name="cancellationToken">取消權杖。</param>
+    /// <returns>重新排列的 row 數量。</returns>
+    private async Task<int> SortRepositoryBlocksAsync(
+        string spreadsheetId,
+        string sheetName,
+        GoogleSheetColumnMapping columnMapping,
+        CancellationToken cancellationToken)
+    {
+        // 讀取最新的 Sheet 資料
+        _logger.LogInformation("正在讀取 Sheet 資料以進行區塊排序...");
+        var sheetData = await _apiClient.ReadSheetDataAsync(spreadsheetId, sheetName, cancellationToken);
+
+        if (sheetData.Count <= 1)
+        {
+            _logger.LogInformation("Sheet 資料為空或僅有標題列，跳過排序");
+            return 0;
+        }
+
+        // 識別所有 Repository 區塊
+        var blocks = IdentifyRepositoryBlocks(sheetData, columnMapping);
+
+        if (blocks.Count == 0)
+        {
+            _logger.LogInformation("未識別到任何區塊，跳過排序");
+            return 0;
+        }
+
+        _logger.LogInformation("識別到 {BlockCount} 個區塊", blocks.Count);
+
+        // 對每個區塊進行排序（只處理有足夠資料列的區塊）
+        var reorderOperations = new List<SheetBlockReorderOperation>();
+
+        foreach (var block in blocks)
+        {
+            // 區塊至少需要 2 行資料才需要排序
+            if (!block.HasDataToSort)
+            {
+                _logger.LogDebug(
+                    "區塊 {RepositoryName} 資料列數不足 ({DataRowCount})，跳過排序",
+                    block.RepositoryName,
+                    block.DataRowCount);
+                continue;
+            }
+
+            var sortedOriginalRowNumbers = SortBlockRows(sheetData, block, columnMapping);
+
+            // 檢查是否需要重新排列 (比較排序前後順序)
+            var needsReorder = false;
+            for (var i = 0; i < sortedOriginalRowNumbers.Count; i++)
+            {
+                // 檢查排序後的行號是否與原始位置相同
+                var expectedRowNumber = block.DataStartRowNumber + i;
+                if (sortedOriginalRowNumbers[i] != expectedRowNumber)
+                {
+                    needsReorder = true;
+                    break;
+                }
+            }
+
+            if (needsReorder)
+            {
+                reorderOperations.Add(new SheetBlockReorderOperation
+                {
+                    // 使用 DataStartRowNumber，排序範圍不含區塊標題列
+                    StartRowNumber = block.DataStartRowNumber,
+                    EndRowNumber = block.EndRowNumber,
+                    RepositoryName = block.RepositoryName,
+                    SortedOriginalRowNumbers = sortedOriginalRowNumbers,
+                });
+            }
+        }
+
+        if (reorderOperations.Count == 0)
+        {
+            _logger.LogInformation("所有區塊已排序完成，無需重新排列");
+            return 0;
+        }
+
+        _logger.LogInformation("需要重新排列 {BlockCount} 個區塊", reorderOperations.Count);
+
+        // 執行批次重新排列
+        return await _apiClient.BatchReorderRowsAsync(spreadsheetId, sheetName, reorderOperations, columnMapping, cancellationToken);
+    }
+
+    /// <summary>
+    /// 識別 Sheet 中的所有 Repository 區塊。
+    /// 區塊以 RepositoryName 欄位的值來分組；當 RepositoryName 為空時，看 Feature 欄位是否有值。
+    /// 每個區塊的第一行是區塊標題列，不參與排序。
+    /// </summary>
+    /// <param name="sheetData">工作表資料。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <returns>區塊資訊清單。</returns>
+    private List<RepositoryBlock> IdentifyRepositoryBlocks(IList<IList<object>> sheetData, GoogleSheetColumnMapping columnMapping)
+    {
+        var blocks = new List<RepositoryBlock>();
+
+        // 跳過 Sheet 標題列 (index 0)，從 index 1 開始
+        var currentBlockHeaderIndex = -1;
+        string? currentRepositoryName = null;
+
+        for (var i = 1; i < sheetData.Count; i++)
+        {
+            var rowData = _rowParser.ParseRow(sheetData[i], i + 1, columnMapping);
+            var repositoryName = rowData.RepositoryName;
+            var feature = rowData.Feature;
+
+            // 判斷是否為有效的資料列
+            // 當 RepositoryName 為空時，看 Feature 是否有值
+            var isValidRow = !string.IsNullOrWhiteSpace(repositoryName) ||
+                             !string.IsNullOrWhiteSpace(feature);
+
+            if (!isValidRow)
+            {
+                // 結束目前區塊
+                if (currentBlockHeaderIndex >= 0 && currentRepositoryName != null)
+                {
+                    blocks.Add(new RepositoryBlock
+                    {
+                        HeaderRowIndex = currentBlockHeaderIndex,
+                        EndRowIndex = i - 1,
+                        RepositoryName = currentRepositoryName,
+                    });
+                }
+
+                currentBlockHeaderIndex = -1;
+                currentRepositoryName = null;
+                continue;
+            }
+
+            // 使用有效的 RepositoryName 或繼承前一列
+            var effectiveRepositoryName = !string.IsNullOrWhiteSpace(repositoryName)
+                ? repositoryName
+                : currentRepositoryName ?? "Unknown";
+
+            // 判斷是否開始新區塊
+            if (currentBlockHeaderIndex < 0)
+            {
+                // 開始新區塊，目前行是區塊標題列
+                currentBlockHeaderIndex = i;
+                currentRepositoryName = effectiveRepositoryName;
+            }
+            else if (!string.IsNullOrWhiteSpace(repositoryName) &&
+                     !repositoryName.Equals(currentRepositoryName, StringComparison.OrdinalIgnoreCase))
+            {
+                // RepositoryName 變更，結束目前區塊並開始新區塊
+                blocks.Add(new RepositoryBlock
+                {
+                    HeaderRowIndex = currentBlockHeaderIndex,
+                    EndRowIndex = i - 1,
+                    RepositoryName = currentRepositoryName!,
+                });
+
+                // 新區塊的標題列
+                currentBlockHeaderIndex = i;
+                currentRepositoryName = effectiveRepositoryName;
+            }
+            // 否則繼續目前區塊
+        }
+
+        // 處理最後一個區塊
+        if (currentBlockHeaderIndex >= 0 && currentRepositoryName != null)
+        {
+            blocks.Add(new RepositoryBlock
+            {
+                HeaderRowIndex = currentBlockHeaderIndex,
+                EndRowIndex = sheetData.Count - 1,
+                RepositoryName = currentRepositoryName,
+            });
+        }
+
+        return blocks;
+    }
+
+    /// <summary>
+    /// 對單一區塊內的資料列進行排序（跳過區塊標題列）。
+    /// 排序規則: Team → UniqueKey (空排最後) → Feature (空排最後)。
+    /// </summary>
+    /// <param name="sheetData">工作表資料。</param>
+    /// <param name="block">區塊資訊。</param>
+    /// <param name="columnMapping">欄位對應設定。</param>
+    /// <returns>排序後的原始 Row 編號清單 (1-based index)。</returns>
+    private List<int> SortBlockRows(
+        IList<IList<object>> sheetData,
+        RepositoryBlock block,
+        GoogleSheetColumnMapping columnMapping)
+    {
+        // 收集區塊內的資料列（跳過區塊標題列）
+        var rowsWithData = new List<(int RowNumber, SheetRowData ParsedData)>();
+
+        // 從 DataStartRowIndex 開始，跳過區塊標題列 (HeaderRowIndex)
+        for (var i = block.DataStartRowIndex; i <= block.EndRowIndex; i++)
+        {
+            var rowValues = sheetData[i];
+            var rowNumber = i + 1; // 1-based
+            var parsedData = _rowParser.ParseRow(rowValues, rowNumber, columnMapping);
+            rowsWithData.Add((rowNumber, parsedData));
+        }
+
+        // 排序: Team → UniqueKey (空排最後) → Feature (空排最後)
+        var sortedRowNumbers = rowsWithData
+            .OrderBy(x => _teamMappingService.GetTeamSortOrder(x.ParsedData.Team))
+            .ThenBy(x => string.IsNullOrWhiteSpace(x.ParsedData.UniqueKey) ? 1 : 0)
+            .ThenBy(x => x.ParsedData.UniqueKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => string.IsNullOrWhiteSpace(x.ParsedData.Feature) ? 1 : 0)
+            .ThenBy(x => x.ParsedData.Feature, StringComparer.OrdinalIgnoreCase)
+            .Select(x => x.RowNumber)
+            .ToList();
+
+        return sortedRowNumbers;
+    }
+
+    /// <summary>
+    /// Repository 區塊資訊。
+    /// </summary>
+    private sealed class RepositoryBlock
+    {
+        /// <summary>
+        /// 區塊標題列索引 (0-based)。
+        /// 區塊的第一行是標題列，不參與排序。
+        /// </summary>
+        public int HeaderRowIndex { get; init; }
+
+        /// <summary>
+        /// 資料起始索引 (0-based)。
+        /// 從區塊標題列的下一行開始。
+        /// </summary>
+        public int DataStartRowIndex => HeaderRowIndex + 1;
+
+        /// <summary>
+        /// 區塊結束索引 (0-based，含)。
+        /// </summary>
+        public int EndRowIndex { get; init; }
+
+        /// <summary>
+        /// 資料起始 Row 編號 (1-based)。
+        /// 用於 API 呼叫。
+        /// </summary>
+        public int DataStartRowNumber => DataStartRowIndex + 1;
+
+        /// <summary>
+        /// 區塊結束 Row 編號 (1-based)。
+        /// </summary>
+        public int EndRowNumber => EndRowIndex + 1;
+
+        /// <summary>
+        /// Repository 名稱。
+        /// </summary>
+        public string RepositoryName { get; init; } = string.Empty;
+
+        /// <summary>
+        /// 資料列數量（不含區塊標題列）。
+        /// </summary>
+        public int DataRowCount => EndRowIndex - DataStartRowIndex + 1;
+
+        /// <summary>
+        /// 是否有資料列需要排序。
+        /// 區塊至少要有 2 行資料才需要排序。
+        /// </summary>
+        public bool HasDataToSort => DataRowCount >= 2;
     }
 }
