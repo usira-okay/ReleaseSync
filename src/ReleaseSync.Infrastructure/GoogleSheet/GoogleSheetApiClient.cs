@@ -325,7 +325,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     }
 
     /// <summary>
-    /// 更新現有 rows (僅更新 AuthorsColumn 和 PullRequestUrlsColumn)。
+    /// 更新現有 rows (更新 AuthorsColumn、PullRequestUrlsColumn 和 MergedAtColumn)。
     /// </summary>
     private async Task UpdateExistingRowsAsync(
         string spreadsheetId,
@@ -334,21 +334,23 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         GoogleSheetColumnMapping columnMapping,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("正在更新 {Count} 個現有 rows (僅更新 Authors 和 PR URLs 欄位)", updateOperations.Count);
+        _logger.LogInformation("正在更新 {Count} 個現有 rows (更新 Authors、PR URLs 和 MergedAt 欄位)", updateOperations.Count);
 
         // 取得 SheetId (使用傳入的 sheetName)
         var sheetId = await GetSheetIdAsync(spreadsheetId, sheetName, cancellationToken);
         var requests = new List<Request>();
 
-        // 取得 AuthorsColumn 和 PullRequestUrlsColumn 的索引
+        // 取得各欄位的索引
         var authorsColumnIndex = ColumnLetterToIndex(columnMapping.AuthorsColumn);
         var prUrlsColumnIndex = ColumnLetterToIndex(columnMapping.PullRequestUrlsColumn);
+        var mergedAtColumnIndex = ColumnLetterToIndex(columnMapping.MergedAtColumn);
 
         foreach (var operation in updateOperations)
         {
             // 將 HashSet 轉換為換行分隔的字串
             var authorsString = string.Join("\n", operation.RowData.Authors.OrderBy(a => a));
             var prUrlsString = string.Join("\n", operation.RowData.PullRequestUrls.OrderBy(u => u));
+            var mergedAtString = FormatDateTime(operation.RowData.MergedAt);
 
             // 更新 AuthorsColumn
             requests.Add(new Request
@@ -415,6 +417,42 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
                     Fields = "userEnteredValue",
                 },
             });
+
+            // 更新 MergedAtColumn (僅當有值時更新)
+            if (operation.RowData.MergedAt.HasValue)
+            {
+                requests.Add(new Request
+                {
+                    UpdateCells = new UpdateCellsRequest
+                    {
+                        Range = new GridRange
+                        {
+                            SheetId = sheetId,
+                            StartRowIndex = operation.TargetRowNumber - 1, // 0-based index
+                            EndRowIndex = operation.TargetRowNumber,
+                            StartColumnIndex = mergedAtColumnIndex,
+                            EndColumnIndex = mergedAtColumnIndex + 1,
+                        },
+                        Rows = new List<RowData>
+                        {
+                            new RowData
+                            {
+                                Values = new List<CellData>
+                                {
+                                    new CellData
+                                    {
+                                        UserEnteredValue = new ExtendedValue
+                                        {
+                                            StringValue = mergedAtString,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        Fields = "userEnteredValue",
+                    },
+                });
+            }
         }
 
         var batchUpdateRequest = new BatchUpdateSpreadsheetRequest
@@ -428,7 +466,7 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
             await request.ExecuteAsync(cancellationToken);
         });
 
-        _logger.LogInformation("更新 {Count} 個現有 rows 完成 (僅 Authors 和 PR URLs 欄位)", updateOperations.Count);
+        _logger.LogInformation("更新 {Count} 個現有 rows 完成 (Authors、PR URLs 和 MergedAt 欄位)", updateOperations.Count);
     }
 
     /// <summary>
@@ -526,6 +564,43 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
         }
 
         return index - 1; // 轉換為 0-based
+    }
+
+    /// <summary>
+    /// 格式化 DateTime 為字串。
+    /// 使用格式: "yyyy-MM-dd (週) HH:mm"，例如 "2025-12-12 (五) 13:30"。
+    /// </summary>
+    /// <param name="dateTime">要格式化的日期時間。</param>
+    /// <returns>格式化後的字串，若為 null 則返回空字串。</returns>
+    private static string FormatDateTime(DateTime? dateTime)
+    {
+        if (dateTime == null)
+        {
+            return string.Empty;
+        }
+
+        var chineseWeekDay = GetChineseWeekDay(dateTime.Value.DayOfWeek);
+        return $"{dateTime.Value:yyyy-MM-dd} ({chineseWeekDay}) {dateTime.Value:HH:mm}";
+    }
+
+    /// <summary>
+    /// 取得中文星期幾的簡稱。
+    /// </summary>
+    /// <param name="dayOfWeek">星期幾。</param>
+    /// <returns>中文簡稱 (日、一、二、三、四、五、六)。</returns>
+    private static string GetChineseWeekDay(DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            DayOfWeek.Sunday => "日",
+            DayOfWeek.Monday => "一",
+            DayOfWeek.Tuesday => "二",
+            DayOfWeek.Wednesday => "三",
+            DayOfWeek.Thursday => "四",
+            DayOfWeek.Friday => "五",
+            DayOfWeek.Saturday => "六",
+            _ => string.Empty,
+        };
     }
 
     /// <inheritdoc/>

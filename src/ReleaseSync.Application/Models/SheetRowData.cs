@@ -90,7 +90,7 @@ public sealed record SheetRowData
     }
 
     /// <summary>
-    /// 合併另一個 SheetRowData 的 Authors 和 PullRequestUrls。
+    /// 合併另一個 SheetRowData 的 Authors、PullRequestUrls 和 MergedAt。
     /// 用於當現有 row 與新資料 UK 相同時的資料合併。
     /// </summary>
     /// <param name="other">要合併的資料。</param>
@@ -116,12 +116,44 @@ public sealed record SheetRowData
             mergedUrls.Add(url);
         }
 
+        // 合併 MergedAt (取較新的時間)
+        var mergedMergedAt = GetLatestDateTime(MergedAt, other.MergedAt);
+
         return this with
         {
             Authors = mergedAuthors,
             PullRequestUrls = mergedUrls,
             // 優先使用新資料的 FeatureUrl（因為現有資料的 FeatureUrl 無法從 HYPERLINK 公式中解析出來）
             FeatureUrl = other.FeatureUrl ?? FeatureUrl,
+            MergedAt = mergedMergedAt,
         };
+    }
+
+    /// <summary>
+    /// 取得兩個 DateTime 中較新的一個。
+    /// 若其中一個為 null，則返回非 null 的那個。
+    /// 若兩個都為 null，則返回 null。
+    /// </summary>
+    /// <param name="first">第一個日期時間。</param>
+    /// <param name="second">第二個日期時間。</param>
+    /// <returns>較新的日期時間。</returns>
+    private static DateTime? GetLatestDateTime(DateTime? first, DateTime? second)
+    {
+        if (first == null && second == null)
+        {
+            return null;
+        }
+
+        if (first == null)
+        {
+            return second;
+        }
+
+        if (second == null)
+        {
+            return first;
+        }
+
+        return first > second ? first : second;
     }
 }
