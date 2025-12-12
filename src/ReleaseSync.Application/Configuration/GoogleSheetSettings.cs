@@ -49,6 +49,14 @@ public sealed class GoogleSheetSettings
     /// 欄位對應設定。
     /// </summary>
     public GoogleSheetColumnMappingSettings ColumnMapping { get; set; } = new();
+
+    /// <summary>
+    /// 顯示時區設定。
+    /// 用於將 UTC 時間轉換為指定時區的顯示時間。
+    /// 格式為 UTC 偏移小時數，例如 8 表示 UTC+8 (台灣時間)。
+    /// 預設為 8 (UTC+8)。
+    /// </summary>
+    public int DisplayTimeZoneOffset { get; set; } = 8;
 }
 
 /// <summary>

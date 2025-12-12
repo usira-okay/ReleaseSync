@@ -3,6 +3,8 @@
 // </copyright>
 
 using Google.Apis.Sheets.v4.Data;
+using Microsoft.Extensions.Options;
+using ReleaseSync.Application.Configuration;
 using ReleaseSync.Application.Models;
 using ReleaseSync.Application.Services;
 
@@ -14,6 +16,18 @@ namespace ReleaseSync.Infrastructure.GoogleSheet;
 /// </summary>
 public class GoogleSheetRowParser : IGoogleSheetRowParser
 {
+    private readonly TimeSpan _displayTimeZoneOffset;
+
+    /// <summary>
+    /// 初始化 GoogleSheetRowParser。
+    /// </summary>
+    /// <param name="settings">Google Sheet 設定。</param>
+    public GoogleSheetRowParser(IOptions<GoogleSheetSettings> settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        _displayTimeZoneOffset = TimeSpan.FromHours(settings.Value.DisplayTimeZoneOffset);
+    }
+
     /// <inheritdoc/>
     public SheetRowData ParseRow(IList<object> rowValues, int rowNumber, GoogleSheetColumnMapping columnMapping)
     {
@@ -44,8 +58,8 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         // 解析 AutoSync 標記
         var isAutoSync = autoSyncText.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
 
-        // 解析 MergedAt 時間
-        var mergedAt = ParseDateTime(mergedAtText);
+        // 解析 MergedAt 時間 (將本地時間轉換回 UTC)
+        var mergedAt = ParseDateTime(mergedAtText, _displayTimeZoneOffset);
 
         return new SheetRowData
         {
@@ -90,7 +104,7 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         SetCellValue(rowValues, columnMapping.TeamColumn, rowData.Team);
         SetCellValue(rowValues, columnMapping.AuthorsColumn, string.Join("\n", rowData.Authors.OrderBy(a => a)));
         SetCellValue(rowValues, columnMapping.PullRequestUrlsColumn, string.Join("\n", rowData.PullRequestUrls.OrderBy(u => u)));
-        SetCellValue(rowValues, columnMapping.MergedAtColumn, FormatDateTime(rowData.MergedAt));
+        SetCellValue(rowValues, columnMapping.MergedAtColumn, FormatDateTime(rowData.MergedAt, _displayTimeZoneOffset));
         SetCellValue(rowValues, columnMapping.AutoSyncColumn, rowData.IsAutoSync ? "TRUE" : string.Empty);
 
         return rowValues;
@@ -219,41 +233,71 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
     }
 
     /// <summary>
-    /// 解析日期時間字串。
-    /// 支援多種格式: "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "yyyy/MM/dd", "yyyy-MM-ddTHH:mm:ss"。
+    /// 解析日期時間字串，並將本地時間轉換為 UTC。
+    /// 支援多種格式:
+    /// - "yyyy-MM-dd (週) HH:mm" (本程式輸出格式，如 "2025-01-15 (三) 10:30")
+    /// - "yyyy-MM-dd HH:mm:ss"
+    /// - "yyyy-MM-dd"
+    /// - "yyyy/MM/dd"
+    /// - "yyyy-MM-ddTHH:mm:ss"
+    /// Sheet 中儲存的是本地時間（經過時區轉換），讀取時需轉回 UTC 以確保時間比較正確。
     /// </summary>
-    /// <param name="text">日期時間字串。</param>
-    /// <returns>解析成功返回 DateTime，否則返回 null。</returns>
-    private static DateTime? ParseDateTime(string text)
+    /// <param name="text">日期時間字串 (本地時間)。</param>
+    /// <param name="timeZoneOffset">時區偏移量。</param>
+    /// <returns>解析成功返回 UTC DateTime，否則返回 null。</returns>
+    private static DateTime? ParseDateTime(string text, TimeSpan timeZoneOffset)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return null;
         }
 
-        if (DateTime.TryParse(text, out var result))
+        DateTime localDateTime;
+
+        // 嘗試解析本程式輸出的格式: "yyyy-MM-dd (週) HH:mm"
+        // 先移除中文星期幾的部分
+        var normalizedText = System.Text.RegularExpressions.Regex.Replace(
+            text,
+            @"\s*\([日一二三四五六]\)\s*",
+            " ");
+
+        if (DateTime.TryParse(normalizedText.Trim(), out localDateTime))
         {
-            return result;
+            // 將本地時間轉換回 UTC (減去時區偏移)
+            var utcDateTime = localDateTime.Subtract(timeZoneOffset);
+            return DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
+        }
+
+        // 嘗試直接解析原始文字
+        if (DateTime.TryParse(text, out localDateTime))
+        {
+            // 將本地時間轉換回 UTC (減去時區偏移)
+            var utcDateTime = localDateTime.Subtract(timeZoneOffset);
+            return DateTime.SpecifyKind(utcDateTime, DateTimeKind.Utc);
         }
 
         return null;
     }
 
     /// <summary>
-    /// 格式化 DateTime 為字串。
+    /// 格式化 DateTime 為字串，並轉換為指定時區。
     /// 使用格式: "yyyy-MM-dd (週) HH:mm"，例如 "2025-12-12 (五) 13:30"。
     /// </summary>
-    /// <param name="dateTime">要格式化的日期時間。</param>
+    /// <param name="dateTime">要格式化的日期時間 (UTC)。</param>
+    /// <param name="timeZoneOffset">時區偏移量。</param>
     /// <returns>格式化後的字串，若為 null 則返回空字串。</returns>
-    private static string FormatDateTime(DateTime? dateTime)
+    private static string FormatDateTime(DateTime? dateTime, TimeSpan timeZoneOffset)
     {
         if (dateTime == null)
         {
             return string.Empty;
         }
 
-        var chineseWeekDay = GetChineseWeekDay(dateTime.Value.DayOfWeek);
-        return $"{dateTime.Value:yyyy-MM-dd} ({chineseWeekDay}) {dateTime.Value:HH:mm}";
+        // 將 UTC 時間轉換為指定時區
+        var localDateTime = dateTime.Value.Add(timeZoneOffset);
+
+        var chineseWeekDay = GetChineseWeekDay(localDateTime.DayOfWeek);
+        return $"{localDateTime:yyyy-MM-dd} ({chineseWeekDay}) {localDateTime:HH:mm}";
     }
 
     /// <summary>
