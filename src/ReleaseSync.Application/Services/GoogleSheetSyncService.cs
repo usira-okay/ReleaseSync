@@ -405,7 +405,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
     /// <summary>
     /// 對同一 Repository 的區塊內進行排序。
-    /// 排序規則: Team → MergedAt (空排最後)。
+    /// 排序規則: Team → UniqueKey (空排最後) → Feature (空排最後)。
     /// </summary>
     /// <param name="spreadsheetId">Google Sheet ID。</param>
     /// <param name="sheetName">工作表名稱。</param>
@@ -585,7 +585,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
 
     /// <summary>
     /// 對單一區塊內的資料列進行排序（跳過區塊標題列）。
-    /// 排序規則: Team → MergedAt (空排最後)。
+    /// 排序規則: Team → UniqueKey (空排最後) → Feature (空排最後)。
     /// </summary>
     /// <param name="sheetData">工作表資料。</param>
     /// <param name="block">區塊資訊。</param>
@@ -608,11 +608,13 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             rowsWithData.Add((rowNumber, parsedData));
         }
 
-        // 排序: Team → MergedAt (空排最後)
+        // 排序: Team → UniqueKey (空排最後) → Feature (空排最後)
         var sortedRowNumbers = rowsWithData
             .OrderBy(x => _teamMappingService.GetTeamSortOrder(x.ParsedData.Team))
-            .ThenBy(x => x.ParsedData.MergedAt == null ? 1 : 0)
-            .ThenBy(x => x.ParsedData.MergedAt)
+            .ThenBy(x => string.IsNullOrWhiteSpace(x.ParsedData.UniqueKey) ? 1 : 0)
+            .ThenBy(x => x.ParsedData.UniqueKey, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(x => string.IsNullOrWhiteSpace(x.ParsedData.Feature) ? 1 : 0)
+            .ThenBy(x => x.ParsedData.Feature, StringComparer.OrdinalIgnoreCase)
             .Select(x => x.RowNumber)
             .ToList();
 

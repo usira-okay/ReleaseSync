@@ -33,7 +33,6 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         var authorsText = GetCellValue(rowValues, columnMapping.AuthorsColumn);
         var pullRequestUrlsText = GetCellValue(rowValues, columnMapping.PullRequestUrlsColumn);
         var autoSyncText = GetCellValue(rowValues, columnMapping.AutoSyncColumn);
-        var mergedAtText = GetCellValue(rowValues, columnMapping.MergedAtColumn);
 
         // 解析 Authors (換行分隔)
         var authors = ParseMultiLineValues(authorsText);
@@ -44,9 +43,6 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         // 解析 AutoSync 標記
         var isAutoSync = autoSyncText.Equals("TRUE", StringComparison.OrdinalIgnoreCase);
 
-        // 解析 MergedAt 時間
-        var mergedAt = ParseDateTime(mergedAtText);
-
         return new SheetRowData
         {
             RowNumber = rowNumber,
@@ -56,7 +52,6 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
             Team = team,
             Authors = authors,
             PullRequestUrls = pullRequestUrls,
-            MergedAt = mergedAt,
             IsAutoSync = isAutoSync,
         };
     }
@@ -90,7 +85,6 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
         SetCellValue(rowValues, columnMapping.TeamColumn, rowData.Team);
         SetCellValue(rowValues, columnMapping.AuthorsColumn, string.Join("\n", rowData.Authors.OrderBy(a => a)));
         SetCellValue(rowValues, columnMapping.PullRequestUrlsColumn, string.Join("\n", rowData.PullRequestUrls.OrderBy(u => u)));
-        SetCellValue(rowValues, columnMapping.MergedAtColumn, FormatDateTime(rowData.MergedAt));
         SetCellValue(rowValues, columnMapping.AutoSyncColumn, rowData.IsAutoSync ? "TRUE" : string.Empty);
 
         return rowValues;
@@ -193,7 +187,6 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
             columnMapping.PullRequestUrlsColumn,
             columnMapping.UniqueKeyColumn,
             columnMapping.AutoSyncColumn,
-            columnMapping.MergedAtColumn,
         };
 
         return columns.Max(ColumnLetterToIndex);
@@ -216,63 +209,5 @@ public class GoogleSheetRowParser : IGoogleSheetRowParser
                          .Where(v => !string.IsNullOrEmpty(v));
 
         return new HashSet<string>(values, StringComparer.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// 解析日期時間字串。
-    /// 支援多種格式: "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd", "yyyy/MM/dd", "yyyy-MM-ddTHH:mm:ss"。
-    /// </summary>
-    /// <param name="text">日期時間字串。</param>
-    /// <returns>解析成功返回 DateTime，否則返回 null。</returns>
-    private static DateTime? ParseDateTime(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return null;
-        }
-
-        if (DateTime.TryParse(text, out var result))
-        {
-            return result;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// 格式化 DateTime 為字串。
-    /// 使用格式: "yyyy-MM-dd (週) HH:mm"，例如 "2025-12-12 (五) 13:30"。
-    /// </summary>
-    /// <param name="dateTime">要格式化的日期時間。</param>
-    /// <returns>格式化後的字串，若為 null 則返回空字串。</returns>
-    private static string FormatDateTime(DateTime? dateTime)
-    {
-        if (dateTime == null)
-        {
-            return string.Empty;
-        }
-
-        var chineseWeekDay = GetChineseWeekDay(dateTime.Value.DayOfWeek);
-        return $"{dateTime.Value:yyyy-MM-dd} ({chineseWeekDay}) {dateTime.Value:HH:mm}";
-    }
-
-    /// <summary>
-    /// 取得中文星期幾的簡稱。
-    /// </summary>
-    /// <param name="dayOfWeek">星期幾。</param>
-    /// <returns>中文簡稱 (日、一、二、三、四、五、六)。</returns>
-    private static string GetChineseWeekDay(DayOfWeek dayOfWeek)
-    {
-        return dayOfWeek switch
-        {
-            DayOfWeek.Sunday => "日",
-            DayOfWeek.Monday => "一",
-            DayOfWeek.Tuesday => "二",
-            DayOfWeek.Wednesday => "三",
-            DayOfWeek.Thursday => "四",
-            DayOfWeek.Friday => "五",
-            DayOfWeek.Saturday => "六",
-            _ => string.Empty,
-        };
     }
 }

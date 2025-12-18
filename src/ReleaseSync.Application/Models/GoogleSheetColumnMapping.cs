@@ -48,12 +48,6 @@ public sealed record GoogleSheetColumnMapping
     public string AutoSyncColumn { get; init; } = "F";
 
     /// <summary>
-    /// 合併時間欄位 (預設: "G")。
-    /// 記錄 PR/MR 的合併時間。
-    /// </summary>
-    public string MergedAtColumn { get; init; } = "G";
-
-    /// <summary>
     /// 驗證所有欄位設定是否有效。
     /// </summary>
     /// <returns>驗證是否通過。</returns>
@@ -69,7 +63,6 @@ public sealed record GoogleSheetColumnMapping
             PullRequestUrlsColumn,
             UniqueKeyColumn,
             AutoSyncColumn,
-            MergedAtColumn,
         };
 
         foreach (var column in columns)
