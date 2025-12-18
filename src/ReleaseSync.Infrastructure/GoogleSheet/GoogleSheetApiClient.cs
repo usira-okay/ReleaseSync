@@ -567,24 +567,20 @@ public class GoogleSheetApiClient : IGoogleSheetApiClient, IDisposable
     }
 
     /// <summary>
-    /// 格式化 DateTime 為字串，並轉換為指定時區。
+    /// 格式化 DateTime 為字串。
     /// 使用格式: "yyyy-MM-dd (週) HH:mm"，例如 "2025-12-12 (五) 13:30"。
     /// </summary>
-    /// <param name="dateTime">要格式化的日期時間 (UTC)。</param>
+    /// <param name="dateTime">要格式化的日期時間。</param>
     /// <returns>格式化後的字串，若為 null 則返回空字串。</returns>
-    private string FormatDateTime(DateTime? dateTime)
+    private static string FormatDateTime(DateTime? dateTime)
     {
         if (dateTime == null)
         {
             return string.Empty;
         }
 
-        // 將 UTC 時間轉換為指定時區
-        var timeZoneOffset = TimeSpan.FromHours(_settings.DisplayTimeZoneOffset);
-        var localDateTime = dateTime.Value.Add(timeZoneOffset);
-
-        var chineseWeekDay = GetChineseWeekDay(localDateTime.DayOfWeek);
-        return $"{localDateTime:yyyy-MM-dd} ({chineseWeekDay}) {localDateTime:HH:mm}";
+        var chineseWeekDay = GetChineseWeekDay(dateTime.Value.DayOfWeek);
+        return $"{dateTime.Value:yyyy-MM-dd} ({chineseWeekDay}) {dateTime.Value:HH:mm}";
     }
 
     /// <summary>
