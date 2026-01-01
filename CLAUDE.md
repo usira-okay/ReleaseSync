@@ -108,23 +108,41 @@ dotnet test src/tests/ReleaseSync.Integration.Tests/ReleaseSync.Integration.Test
 
 ### 執行應用程式
 
+**重要**: 所有執行參數都從 `appsettings.json` 的 `SyncOptions` 區塊讀取,不再使用命令列參數。
+
 ```bash
 # 從專案根目錄執行 (推薦)
-dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output.json
+# 先在 appsettings.json 中設定 SyncOptions 參數
+dotnet run --project src/ReleaseSync.Console -- sync
 
 # 或從 ReleaseSync.Console 目錄執行
 cd src/ReleaseSync.Console
-dotnet run -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output.json
-
-# 啟用 verbose 模式 (Debug 等級日誌)
-dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
-
-# 多平台同步
-dotnet run --project src/ReleaseSync.Console -- sync -s 2025-01-01 -e 2025-01-31 --gitlab --bitbucket --azdo -o output.json
+dotnet run -- sync
 
 # 顯示說明
 dotnet run --project src/ReleaseSync.Console -- --help
 dotnet run --project src/ReleaseSync.Console -- sync --help
+```
+
+**參數設定範例** (appsettings.json):
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true,
+    "EnableBitBucket": false,
+    "EnableAzureDevOps": false,
+    "EnableExport": true,
+    "OutputFile": "output.json",
+    "Force": false,
+    "Verbose": false,
+    "EnableGoogleSheet": false,
+    "GoogleSheetId": null,
+    "GoogleSheetName": null
+  }
+}
 ```
 
 ### User Secrets 管理

@@ -71,9 +71,26 @@ dotnet build
    ```
 
 5. **執行同步**：
+
+   **重要**: 先在 `config/appsettings.docker.json` 中設定 `SyncOptions` 參數:
+
+   ```json
+   {
+     "SyncOptions": {
+       "StartDate": "2025-01-01",
+       "EndDate": "2025-01-31",
+       "EnableGitLab": true,
+       "EnableExport": true,
+       "OutputFile": "output/result.json"
+     }
+   }
+   ```
+
+   然後執行:
+
    ```bash
-   # 執行同步並輸出到 output/result.json
-   docker compose run --rm releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -o output/result.json
+   # 執行同步
+   docker compose run --rm releasesync sync
 
    # 日誌會自動傳送到 Seq，可在 http://localhost:5341 即時檢視
    ```
@@ -82,11 +99,11 @@ dotnet build
 
    ```bash
    # 選項 A: 加上 --build 參數 (一次完成)
-   docker compose run --rm --build releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
+   docker compose run --rm --build releasesync sync
 
    # 選項 B: 先建置再執行
    docker compose build releasesync
-   docker compose run --rm releasesync sync -s 2025-01-01 -e 2025-01-31 --gitlab -v
+   docker compose run --rm releasesync sync
    ```
 
 ### 3. 本機開發設定
@@ -105,14 +122,27 @@ dotnet user-secrets set "AzureDevOps:PersonalAccessToken" "<YOUR_TOKEN>"
 
 ### 3. 執行
 
+**重要**: 所有執行參數都在 `appsettings.json` 的 `SyncOptions` 區塊中設定。
+
+先在 `appsettings.json` 中設定執行參數:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true,
+    "EnableBitBucket": true,
+    "EnableExport": true,
+    "OutputFile": "output.json"
+  }
+}
+```
+
+然後執行:
+
 ```bash
-dotnet run --project src/ReleaseSync.Console -- sync \
-  --start-date 2025-01-01 \
-  --end-date 2025-01-31 \
-  --enable-gitlab \
-  --enable-bitbucket \
-  --export \
-  --output-file output.json
+dotnet run --project src/ReleaseSync.Console -- sync
 ```
 
 ## 使用範例
@@ -121,71 +151,119 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 
 從 GitLab 抓取過去 30 天的 MR 資訊:
 
+在 `appsettings.json` 中設定:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true
+  }
+}
+```
+
+執行:
+
 ```bash
-dotnet run --project src/ReleaseSync.Console -- sync \
-  -s 2025-01-01 \
-  -e 2025-01-31 \
-  --gitlab
+dotnet run --project src/ReleaseSync.Console -- sync
 ```
 
 ### 匯出 JSON 格式
 
 同時抓取 GitLab 與 BitBucket 並匯出為 JSON:
 
-```bash
-dotnet run --project src/ReleaseSync.Console -- sync \
-  -s 2025-01-01 \
-  -e 2025-01-31 \
-  --gitlab \
-  --bitbucket \
-  --export \
-  -o ./output/sync-result.json
+在 `appsettings.json` 中設定:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true,
+    "EnableBitBucket": true,
+    "EnableExport": true,
+    "OutputFile": "./output/sync-result.json"
+  }
+}
 ```
 
-**注意**: 使用 `--export` 參數啟用 JSON 匯出功能,並透過 `-o` 指定輸出檔案路徑。
+執行:
+
+```bash
+dotnet run --project src/ReleaseSync.Console -- sync
+```
 
 ### Azure DevOps Work Item 整合
 
 啟用 Work Item 整合,從 Branch 名稱解析並抓取 Work Item 資訊:
 
+在 `appsettings.json` 中設定:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true,
+    "EnableAzureDevOps": true,
+    "EnableExport": true,
+    "OutputFile": "./output/full-sync.json",
+    "Verbose": true
+  }
+}
+```
+
+執行:
+
 ```bash
-dotnet run --project src/ReleaseSync.Console -- sync \
-  -s 2025-01-01 \
-  -e 2025-01-31 \
-  --gitlab \
-  --azdo \
-  --export \
-  -o ./output/full-sync.json \
-  --verbose
+dotnet run --project src/ReleaseSync.Console -- sync
 ```
 
 ### Google Sheet 同步
 
 同步資料到 Google Sheet (需先設定服務帳號憑證):
 
-```bash
-dotnet run --project src/ReleaseSync.Console -- sync \
-  -s 2025-01-01 \
-  -e 2025-01-31 \
-  --gitlab \
-  --bitbucket \
-  --google-sheet
+在 `appsettings.json` 中設定:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "EnableGitLab": true,
+    "EnableBitBucket": true,
+    "EnableGoogleSheet": true
+  }
+}
 ```
 
-## 命令列參數
+執行:
 
-| 參數 | 別名 | 說明 |
+```bash
+dotnet run --project src/ReleaseSync.Console -- sync
+```
+
+## 執行參數設定
+
+**重要變更**: 所有執行參數現在都在 `appsettings.json` 的 `SyncOptions` 區塊中設定,不再使用命令列參數。
+
+### SyncOptions 參數說明
+
+| 參數 | 型別 | 說明 |
 |------|------|------|
-| `--start-date` | `-s` | 查詢起始日期 (必填) |
-| `--end-date` | `-e` | 查詢結束日期 (必填) |
-| `--enable-gitlab` | `--gitlab` | 啟用 GitLab 平台 |
-| `--enable-bitbucket` | `--bitbucket` | 啟用 BitBucket 平台 |
-| `--enable-azure-devops` | `--azdo` | 啟用 Azure DevOps Work Item 整合 |
-| `--enable-export` | `--export` | 啟用 JSON 匯出功能 |
-| `--output-file` | `-o` | JSON 匯出檔案路徑 |
-| `--force` | `-f` | 強制覆蓋已存在的輸出檔案 |
-| `--verbose` | `-v` | 啟用詳細日誌輸出 (Debug 等級) |
-| `--enable-google-sheet` | `--google-sheet` | 啟用 Google Sheet 同步功能 |
+| `StartDate` | DateTime | 查詢起始日期 (包含) |
+| `EndDate` | DateTime | 查詢結束日期 (包含) |
+| `EnableGitLab` | bool | 啟用 GitLab 平台 |
+| `EnableBitBucket` | bool | 啟用 BitBucket 平台 |
+| `EnableAzureDevOps` | bool | 啟用 Azure DevOps Work Item 整合 |
+| `EnableExport` | bool | 啟用 JSON 匯出功能 |
+| `OutputFile` | string? | JSON 匯出檔案路徑 |
+| `Force` | bool | 強制覆蓋已存在的輸出檔案 |
+| `Verbose` | bool | 啟用詳細日誌輸出 (Debug 等級) |
+| `EnableGoogleSheet` | bool | 啟用 Google Sheet 同步功能 |
+| `GoogleSheetId` | string? | Google Sheet ID (覆蓋 GoogleSheet 設定) |
+| `GoogleSheetName` | string? | Google Sheet 工作表名稱 |
 
 ## 組態設定
 
