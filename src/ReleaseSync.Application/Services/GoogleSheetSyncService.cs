@@ -89,6 +89,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
             AuthorsColumn = _settings.ColumnMapping.AuthorsColumn,
             PullRequestUrlsColumn = _settings.ColumnMapping.PullRequestUrlsColumn,
             UniqueKeyColumn = _settings.ColumnMapping.UniqueKeyColumn,
+            AutoSyncColumn = _settings.ColumnMapping.AutoSyncColumn,
         };
 
         if (!columnMapping.IsValid())
@@ -197,6 +198,7 @@ public class GoogleSheetSyncService : IGoogleSheetSyncService
                 AuthorsColumn = _settings.ColumnMapping.AuthorsColumn,
                 PullRequestUrlsColumn = _settings.ColumnMapping.PullRequestUrlsColumn,
                 UniqueKeyColumn = _settings.ColumnMapping.UniqueKeyColumn,
+                AutoSyncColumn = _settings.ColumnMapping.AutoSyncColumn,
             };
 
             // 讀取現有 Sheet 資料 (使用有效的設定)
