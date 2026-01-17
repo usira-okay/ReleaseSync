@@ -58,9 +58,9 @@ public class SyncOptionsIntegrationTests
 
         // Assert
         syncOptions.Should().NotBeNull();
-        // Boolean properties are value types and cannot be null, no need to assert NotBeNull
-        syncOptions!.StartDate.Should().NotBeNullOrEmpty();
-        syncOptions.EndDate.Should().NotBeNullOrEmpty();
+        // Date properties should be loaded correctly (not default DateTime)
+        syncOptions!.StartDate.Should().NotBe(default(DateTime));
+        syncOptions.EndDate.Should().NotBe(default(DateTime));
     }
 
     /// <summary>
