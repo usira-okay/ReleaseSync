@@ -58,13 +58,9 @@ public class SyncOptionsIntegrationTests
 
         // Assert
         syncOptions.Should().NotBeNull();
-        syncOptions!.EnableGitLab.Should().NotBeNull();
-        syncOptions.EnableBitBucket.Should().NotBeNull();
-        syncOptions.EnableAzureDevOps.Should().NotBeNull();
-        syncOptions.EnableExport.Should().NotBeNull();
-        syncOptions.Force.Should().NotBeNull();
-        syncOptions.Verbose.Should().NotBeNull();
-        syncOptions.EnableGoogleSheet.Should().NotBeNull();
+        // Boolean properties are value types and cannot be null, no need to assert NotBeNull
+        syncOptions!.StartDate.Should().NotBeNullOrEmpty();
+        syncOptions.EndDate.Should().NotBeNullOrEmpty();
     }
 
     /// <summary>
