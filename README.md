@@ -600,6 +600,108 @@ src/
     └── Handlers/                # 命令處理器
 ```
 
+## 移轉指南
+
+### 從命令列參數移轉到 appsettings.json
+
+**重大變更**: 從 0.2.0 版本開始，ReleaseSync 不再支援命令列參數，所有執行參數都必須在 `appsettings.json` 的 `SyncOptions` 區塊中設定。
+
+#### 移轉步驟
+
+1. **查看您目前使用的命令列參數**
+
+   例如，如果您之前使用：
+   ```bash
+   dotnet run -- sync --start-date 2025-01-01 --end-date 2025-01-31 \
+     --enable-gitlab --enable-azure-devops \
+     --enable-export --output-file output.json \
+     --verbose
+   ```
+
+2. **在 appsettings.json 中建立對應的 SyncOptions 設定**
+
+   ```json
+   {
+     "SyncOptions": {
+       "StartDate": "2025-01-01",
+       "EndDate": "2025-01-31",
+       "EnableGitLab": true,
+       "EnableBitBucket": false,
+       "EnableAzureDevOps": true,
+       "EnableExport": true,
+       "OutputFile": "output.json",
+       "Force": false,
+       "Verbose": true,
+       "EnableGoogleSheet": false,
+       "GoogleSheetId": null,
+       "GoogleSheetName": null
+     }
+   }
+   ```
+
+3. **執行新版本的命令（不帶參數）**
+
+   ```bash
+   dotnet run -- sync
+   ```
+
+#### 命令列參數對照表
+
+| 舊的命令列參數              | 新的組態設定                       |
+|---------------------------|-----------------------------------|
+| `--start-date <date>`     | `SyncOptions.StartDate`           |
+| `--end-date <date>`       | `SyncOptions.EndDate`             |
+| `--enable-gitlab`         | `SyncOptions.EnableGitLab: true`  |
+| `--enable-bitbucket`      | `SyncOptions.EnableBitBucket: true` |
+| `--enable-azure-devops`   | `SyncOptions.EnableAzureDevOps: true` |
+| `--enable-export`         | `SyncOptions.EnableExport: true`  |
+| `--output-file <path>`    | `SyncOptions.OutputFile`          |
+| `--force`                 | `SyncOptions.Force: true`         |
+| `--verbose`               | `SyncOptions.Verbose: true`       |
+| `--enable-google-sheet`   | `SyncOptions.EnableGoogleSheet: true` |
+| `--google-sheet-id <id>`  | `SyncOptions.GoogleSheetId`       |
+| `--google-sheet-name <name>` | `SyncOptions.GoogleSheetName`  |
+
+#### 優點
+
+使用組態檔方式的優點：
+
+- ✅ **可重複執行**: 設定儲存在檔案中，不需每次重新輸入參數
+- ✅ **版本控制**: 組態可納入版本控制（敏感資訊除外）
+- ✅ **環境變數覆蓋**: 支援透過環境變數覆蓋特定設定
+- ✅ **IDE 支援**: 支援 JSON Schema 自動完成與驗證
+- ✅ **減少錯誤**: 避免長指令導致的打字錯誤
+
+#### 常見問題
+
+**Q: 我想在不同環境使用不同的設定怎麼辦？**
+
+A: 您可以建立多個組態檔（如 `appsettings.Development.json`, `appsettings.Production.json`），並使用 `DOTNET_ENVIRONMENT` 環境變數切換：
+
+```bash
+export DOTNET_ENVIRONMENT=Production
+dotnet run -- sync
+```
+
+**Q: 我可以使用環境變數覆蓋特定設定嗎？**
+
+A: 可以。使用雙底線 `__` 分隔階層：
+
+```bash
+export SyncOptions__Verbose=true
+export SyncOptions__OutputFile=custom-output.json
+dotnet run -- sync
+```
+
+**Q: 如何驗證我的組態設定是否正確？**
+
+A: 執行應用程式時，程式會自動驗證組態：
+- 日期範圍必須有效 (StartDate <= EndDate)
+- 至少必須啟用一個平台
+- 若啟用匯出，必須指定輸出檔案
+
+若組態無效，應用程式會顯示錯誤訊息並退出。
+
 ## 開發指南
 
 ### 前置需求

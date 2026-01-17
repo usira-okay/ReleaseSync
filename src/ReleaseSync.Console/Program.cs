@@ -32,6 +32,17 @@ class Program
             return 1;
         }
 
+        // 驗證組態有效性
+        try
+        {
+            syncOptions.Validate();
+        }
+        catch (ArgumentException ex)
+        {
+            System.Console.WriteLine($"組態驗證失敗: {ex.Message}");
+            return 1;
+        }
+
         // 從 SyncOptions 取得 verbose 設定
         var verbose = syncOptions.Verbose;
 
@@ -103,24 +114,10 @@ class Program
             var syncCommand = SyncCommand.Create();
             rootCommand.AddCommand(syncCommand);
 
-            // 設定 handler - 從組態讀取參數
+            // 設定 handler - 使用 ToCommandOptions 轉換
             syncCommand.SetHandler(async () =>
             {
-                var options = new SyncCommandOptions
-                {
-                    StartDate = syncOptions.StartDate,
-                    EndDate = syncOptions.EndDate,
-                    EnableGitLab = syncOptions.EnableGitLab,
-                    EnableBitBucket = syncOptions.EnableBitBucket,
-                    EnableAzureDevOps = syncOptions.EnableAzureDevOps,
-                    EnableExport = syncOptions.EnableExport,
-                    OutputFile = syncOptions.OutputFile,
-                    Force = syncOptions.Force,
-                    Verbose = syncOptions.Verbose,
-                    EnableGoogleSheet = syncOptions.EnableGoogleSheet,
-                    GoogleSheetId = syncOptions.GoogleSheetId,
-                    GoogleSheetName = syncOptions.GoogleSheetName
-                };
+                var options = syncOptions.ToCommandOptions();
 
                 using var scope = serviceProvider.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<SyncCommandHandler>();

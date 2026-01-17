@@ -1,3 +1,5 @@
+using ReleaseSync.Console.Handlers;
+
 namespace ReleaseSync.Console.Configuration;
 
 /// <summary>
@@ -36,7 +38,7 @@ public class SyncOptions
     public bool EnableExport { get; init; }
 
     /// <summary>
-    /// 輸出檔案路徑
+    /// 輸出檔案路徑 (當 EnableExport 為 true 時必須提供有效路徑)
     /// </summary>
     public string? OutputFile { get; init; }
 
@@ -64,4 +66,60 @@ public class SyncOptions
     /// Google Sheet 工作表名稱 (可選,用於覆蓋 appsettings.json 設定)
     /// </summary>
     public string? GoogleSheetName { get; init; }
+
+    /// <summary>
+    /// 驗證組態有效性
+    /// </summary>
+    /// <exception cref="ArgumentException">當組態無效時拋出</exception>
+    public void Validate()
+    {
+        // 驗證日期範圍
+        if (StartDate > EndDate)
+        {
+            throw new ArgumentException($"起始日期 ({StartDate:yyyy-MM-dd}) 不能晚於結束日期 ({EndDate:yyyy-MM-dd})");
+        }
+
+        // 驗證至少啟用一個平台
+        if (!EnableGitLab && !EnableBitBucket && !EnableAzureDevOps)
+        {
+            throw new ArgumentException("至少必須啟用一個平台 (GitLab, BitBucket 或 Azure DevOps)");
+        }
+
+        // 驗證匯出設定
+        if (EnableExport)
+        {
+            if (string.IsNullOrWhiteSpace(OutputFile))
+            {
+                throw new ArgumentException("啟用匯出功能時必須指定輸出檔案路徑");
+            }
+
+            if (OutputFile.Trim() == string.Empty)
+            {
+                throw new ArgumentException("輸出檔案路徑不能為空白");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 轉換為 SyncCommandOptions
+    /// </summary>
+    /// <returns>對映後的 SyncCommandOptions 物件</returns>
+    public SyncCommandOptions ToCommandOptions()
+    {
+        return new SyncCommandOptions
+        {
+            StartDate = StartDate,
+            EndDate = EndDate,
+            EnableGitLab = EnableGitLab,
+            EnableBitBucket = EnableBitBucket,
+            EnableAzureDevOps = EnableAzureDevOps,
+            EnableExport = EnableExport,
+            OutputFile = OutputFile,
+            Force = Force,
+            Verbose = Verbose,
+            EnableGoogleSheet = EnableGoogleSheet,
+            GoogleSheetId = GoogleSheetId,
+            GoogleSheetName = GoogleSheetName
+        };
+    }
 }
