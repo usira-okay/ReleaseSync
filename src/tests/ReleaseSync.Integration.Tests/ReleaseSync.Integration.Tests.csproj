@@ -33,6 +33,7 @@
     <ProjectReference Include="../../ReleaseSync.Domain/ReleaseSync.Domain.csproj" />
     <ProjectReference Include="../../ReleaseSync.Application/ReleaseSync.Application.csproj" />
     <ProjectReference Include="../../ReleaseSync.Infrastructure/ReleaseSync.Infrastructure.csproj" />
+    <ProjectReference Include="../../ReleaseSync.Console/ReleaseSync.Console.csproj" />
   </ItemGroup>
 
   <ItemGroup>
