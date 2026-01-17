@@ -86,17 +86,9 @@ public class SyncOptions
         }
 
         // 驗證匯出設定
-        if (EnableExport)
+        if (EnableExport && string.IsNullOrWhiteSpace(OutputFile))
         {
-            if (string.IsNullOrWhiteSpace(OutputFile))
-            {
-                throw new ArgumentException("啟用匯出功能時必須指定輸出檔案路徑");
-            }
-
-            if (OutputFile.Trim() == string.Empty)
-            {
-                throw new ArgumentException("輸出檔案路徑不能為空白");
-            }
+            throw new ArgumentException("輸出檔案路徑不能為空白");
         }
     }
 
