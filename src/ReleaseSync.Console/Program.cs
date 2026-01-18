@@ -6,6 +6,7 @@ using ReleaseSync.Application.Exporters;
 using ReleaseSync.Application.Importers;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Console.Commands;
+using ReleaseSync.Console.Configuration;
 using ReleaseSync.Console.Handlers;
 using ReleaseSync.Console.Services;
 using ReleaseSync.Infrastructure.DependencyInjection;
@@ -17,22 +18,27 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        // 檢查是否有 --verbose 參數以設定日誌等級
-        var verbose = args.Contains("--verbose") || args.Contains("-v");
-
         // 建立設定
         var configuration = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddUserSecrets<Program>(optional: true)
             .Build();
 
+        // 讀取 SyncOptions
+        var syncOptions = configuration.GetSection("SyncOptions").Get<SyncOptions>();
+        if (syncOptions == null)
+        {
+            System.Console.WriteLine("錯誤: appsettings.json 中未找到 SyncOptions 設定區塊");
+            return 1;
+        }
+
         // 讀取 Seq 設定
         var seqServerUrl = configuration["Seq:ServerUrl"] ?? Environment.GetEnvironmentVariable("SEQ_SERVER_URL");
         var seqApiKey = configuration["Seq:ApiKey"];
 
-        // 設定 Serilog (根據 verbose 參數設定日誌等級)
+        // 設定 Serilog (根據 SyncOptions.Verbose 參數設定日誌等級)
         var loggerConfig = new LoggerConfiguration()
-            .MinimumLevel.Is(verbose ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
+            .MinimumLevel.Is(syncOptions.Verbose ? Serilog.Events.LogEventLevel.Debug : Serilog.Events.LogEventLevel.Information)
             .Enrich.FromLogContext()
             .WriteTo.Console();
 
@@ -60,11 +66,14 @@ class Program
             services.AddLogging(builder =>
             {
                 builder.AddSerilog(dispose: true);
-                builder.SetMinimumLevel(verbose ? LogLevel.Debug : LogLevel.Information);
+                builder.SetMinimumLevel(syncOptions.Verbose ? LogLevel.Debug : LogLevel.Information);
             });
 
             // 註冊 Configuration
             services.AddSingleton<IConfiguration>(configuration);
+
+            // 註冊 SyncOptions
+            services.AddSingleton(syncOptions);
 
             // 註冊 Infrastructure 平台服務 (使用 Extension Methods)
             services.AddGitLabServices(configuration);
@@ -94,40 +103,15 @@ class Program
             var syncCommand = SyncCommand.Create();
             rootCommand.AddCommand(syncCommand);
 
-            // 設定 handler
+            // 設定 handler - 從設定檔讀取參數
             syncCommand.SetHandler(async (context) =>
             {
-                var options = new SyncCommandOptions
-                {
-                    StartDate = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-s"))),
-                    EndDate = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<DateTime>>().First(o => o.HasAlias("-e"))),
-                    EnableGitLab = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--gitlab"))),
-                    EnableBitBucket = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--bitbucket"))),
-                    EnableAzureDevOps = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--azdo"))),
-                    EnableExport = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--export"))),
-                    OutputFile = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("-o"))),
-                    Force = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-f"))),
-                    Verbose = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("-v"))),
-                    EnableGoogleSheet = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<bool>>().First(o => o.HasAlias("--google-sheet"))),
-                    GoogleSheetId = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("--google-sheet-id"))),
-                    GoogleSheetName = context.ParseResult.GetValueForOption(
-                        syncCommand.Options.OfType<Option<string?>>().First(o => o.HasAlias("--google-sheet-name")))
-                };
+                var options = SyncCommandOptions.FromConfiguration(syncOptions, configuration);
 
                 using var scope = serviceProvider.CreateScope();
                 var handler = scope.ServiceProvider.GetRequiredService<SyncCommandHandler>();
-                await handler.HandleAsync(options, CancellationToken.None);
+                var exitCode = await handler.HandleAsync(options, CancellationToken.None);
+                context.ExitCode = exitCode;
             });
 
             // 執行命令
