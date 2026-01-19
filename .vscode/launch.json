@@ -7,20 +7,7 @@
       "preLaunchTask": "dotnet: build",
       "program": "${workspaceFolder}/src/ReleaseSync.Console/bin/Debug/net9.0/ReleaseSync.Console.dll",
       "args": [
-        "sync",
-        "-s",
-        "2025-12-01T00:00:00+08:00",
-        "-e",
-        "2025-12-10T00:00:00+08:00",
-        "--enable-gitlab",
-        "--enable-bitbucket",
-        "--enable-azure-devops",
-        "--enable-export",
-        "-o",
-        ".\\output.json",
-        "-f",
-        "-v",
-        "--enable-google-sheet"
+        "sync"
       ],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
