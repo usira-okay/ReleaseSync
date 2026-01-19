@@ -8,6 +8,11 @@
 - 🔗 Azure DevOps Work Item 整合
 - 📊 JSON 格式匯出/匯入
 - 📈 Google Sheet 同步功能
+- 🎯 **Release Branch 差異比對功能** (新增)
+  - 支援時間範圍 (DateRange) 與 Release Branch 兩種抓取模式
+  - 最新版 Release ↔ TargetBranch 比對
+  - 歷史版本 Release 比對 (舊版 ↔ 新版)
+  - Repository 層級配置覆寫
 - 🛡️ 部分失敗容錯處理
 - 📝 詳細的日誌記錄（Serilog）
 - 🔎 Seq 日誌伺服器整合 (結構化日誌查詢與視覺化)
@@ -195,12 +200,24 @@ dotnet run --project src/ReleaseSync.Console -- sync \
 
 ```json
 {
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "ReleaseBranch": "release/20260120"
+  },
   "GitLab": {
     "ApiUrl": "https://gitlab.com/api/v4",
     "Projects": [
       {
         "ProjectPath": "mygroup/backend-api",
-        "TargetBranches": ["main", "develop"]
+        "TargetBranch": "main",
+        "FetchMode": "DateRange"
+      },
+      {
+        "ProjectPath": "mygroup/frontend-app",
+        "TargetBranch": "main",
+        "FetchMode": "ReleaseBranch",
+        "ReleaseBranch": "release/20260118"
       }
     ]
   },
@@ -209,7 +226,8 @@ dotnet run --project src/ReleaseSync.Console -- sync \
     "Projects": [
       {
         "WorkspaceAndRepo": "myworkspace/myrepo",
-        "TargetBranches": ["main"]
+        "TargetBranch": "main",
+        "FetchMode": "ReleaseBranch"
       }
     ]
   },
@@ -281,6 +299,116 @@ dotnet user-secrets set "GoogleSheet:ServiceAccountCredentialPath" "/path/to/ser
 若您不想使用 User Secrets,也可以直接將 Token 寫入 `appsettings.json` 的對應區段,但請務必確保該檔案不會被提交至版本控制。
 
 ## 進階功能
+
+### Release Branch 差異比對
+
+ReleaseSync 支援兩種 PR 資料抓取模式,適用於不同的開發流程需求:
+
+#### 1. DateRange 模式 (時間範圍抓取)
+
+使用指定的時間範圍抓取 PR 資料,適合一般的週期性同步需求:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31"
+  },
+  "GitLab": {
+    "Projects": [
+      {
+        "ProjectPath": "mygroup/backend-api",
+        "TargetBranch": "main",
+        "FetchMode": "DateRange"
+      }
+    ]
+  }
+}
+```
+
+#### 2. ReleaseBranch 模式 (Release 版本比對)
+
+透過 Git commit hash 比對兩個 branch 之間的差異,支援以下場景:
+
+**場景 A: 最新版 Release 比對**
+
+比對 TargetBranch 與最新 Release Branch 的差異,找出「尚未進入 release」的 commits:
+
+```json
+{
+  "SyncOptions": {
+    "ReleaseBranch": "release/20260120"
+  },
+  "GitLab": {
+    "Projects": [
+      {
+        "ProjectPath": "mygroup/backend-api",
+        "TargetBranch": "main",
+        "FetchMode": "ReleaseBranch"
+      }
+    ]
+  }
+}
+```
+
+**場景 B: 歷史版本 Release 比對**
+
+比對兩個 Release 版本之間的差異 (需手動實作 `IGitRepository` 並提供 `NextReleaseBranch`):
+
+```json
+{
+  "FetchMode": "ReleaseBranch",
+  "ReleaseBranch": "release/20260113",
+  "NextReleaseBranch": "release/20260120"
+}
+```
+
+#### Release Branch 命名規範
+
+Release Branch 必須遵循 `release/yyyyMMdd` 格式:
+- ✅ `release/20260120` (正確)
+- ❌ `release/2026-01-20` (錯誤)
+- ❌ `release-20260120` (錯誤)
+
+#### Repository 層級配置覆寫
+
+每個 repository 可獨立覆寫全域設定:
+
+```json
+{
+  "SyncOptions": {
+    "StartDate": "2025-01-01",
+    "EndDate": "2025-01-31",
+    "ReleaseBranch": "release/20260120"
+  },
+  "GitLab": {
+    "Projects": [
+      {
+        "ProjectPath": "mygroup/backend-api",
+        "TargetBranch": "main",
+        "FetchMode": "DateRange"
+      },
+      {
+        "ProjectPath": "mygroup/frontend-app",
+        "TargetBranch": "main",
+        "FetchMode": "ReleaseBranch",
+        "ReleaseBranch": "release/20260118",
+        "StartDate": "2025-01-10",
+        "EndDate": "2025-01-17"
+      }
+    ]
+  }
+}
+```
+
+**優先權規則**: Repository 層級設定 > SyncOptions 全域設定
+
+#### 錯誤處理
+
+當指定的 Release Branch 不存在時,系統會拋出錯誤並終止執行,錯誤訊息會包含:
+- Repository 識別
+- 不存在的 Branch 名稱
+- 建議的除錯步驟
 
 ### JSON 檔案匯入
 
