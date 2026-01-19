@@ -1,7 +1,9 @@
+using ReleaseSync.Console.Configuration;
+
 namespace ReleaseSync.Console.Handlers;
 
 /// <summary>
-/// Sync 命令選項參數
+/// Sync 命令選項參數 (從 appsettings.json 讀取)
 /// </summary>
 public class SyncCommandOptions
 {
@@ -64,6 +66,32 @@ public class SyncCommandOptions
     /// Google Sheet 工作表名稱 (可選,用於覆蓋 appsettings.json 設定)
     /// </summary>
     public string? GoogleSheetName { get; init; }
+
+    /// <summary>
+    /// 從 SyncOptions 設定建立 SyncCommandOptions
+    /// </summary>
+    /// <param name="syncOptions">同步選項設定</param>
+    /// <param name="configuration">組態物件 (用於讀取 Google Sheet 覆蓋設定)</param>
+    /// <returns>命令選項</returns>
+    public static SyncCommandOptions FromConfiguration(SyncOptions syncOptions, Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        return new SyncCommandOptions
+        {
+            StartDate = syncOptions.StartDate,
+            EndDate = syncOptions.EndDate,
+            EnableGitLab = syncOptions.EnabledPlatforms.GitLab,
+            EnableBitBucket = syncOptions.EnabledPlatforms.BitBucket,
+            EnableAzureDevOps = syncOptions.EnabledPlatforms.AzureDevOps,
+            EnableExport = syncOptions.Export.Enabled,
+            OutputFile = syncOptions.Export.OutputFile,
+            Force = syncOptions.Export.Force,
+            Verbose = syncOptions.Verbose,
+            EnableGoogleSheet = syncOptions.GoogleSheet.Enabled,
+            // Google Sheet ID 與 Name 從 GoogleSheet 設定區塊讀取
+            GoogleSheetId = configuration["GoogleSheet:SpreadsheetId"],
+            GoogleSheetName = configuration["GoogleSheet:SheetName"]
+        };
+    }
 
     /// <summary>
     /// 是否需要執行 PR/MR 資料抓取
