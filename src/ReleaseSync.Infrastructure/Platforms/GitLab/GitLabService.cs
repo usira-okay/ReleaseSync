@@ -49,5 +49,11 @@ public class GitLabService : BasePlatformService<GitLabProjectSettings>
     /// <summary>
     /// 取得專案的目標分支清單
     /// </summary>
-    protected override List<string> GetTargetBranches(GitLabProjectSettings project) => project.TargetBranches;
+    protected override List<string> GetTargetBranches(GitLabProjectSettings project)
+    {
+        // 將單一 TargetBranch 轉換為清單
+        return string.IsNullOrWhiteSpace(project.TargetBranch)
+            ? new List<string>()
+            : new List<string> { project.TargetBranch };
+    }
 }

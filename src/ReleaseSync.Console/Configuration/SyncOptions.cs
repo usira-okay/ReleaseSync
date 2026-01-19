@@ -16,6 +16,12 @@ public class SyncOptions
     public required DateTime EndDate { get; init; }
 
     /// <summary>
+    /// Release Branch 名稱 (選填,全域設定)
+    /// 格式: release/yyyyMMdd
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
+
+    /// <summary>
     /// 啟用的平台設定
     /// </summary>
     public required EnabledPlatformsSettings EnabledPlatforms { get; init; }

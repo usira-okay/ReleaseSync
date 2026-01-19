@@ -37,7 +37,27 @@ public class BitBucketProjectSettings
     public required string WorkspaceAndRepo { get; init; }
 
     /// <summary>
-    /// 需要同步的目標分支清單 (空陣列表示所有分支)
+    /// 目標分支 (用於與 Release Branch 比對)
     /// </summary>
-    public List<string> TargetBranches { get; init; } = new();
+    public required string TargetBranch { get; init; }
+
+    /// <summary>
+    /// PR 資料抓取模式
+    /// </summary>
+    public required string FetchMode { get; init; }
+
+    /// <summary>
+    /// Release Branch 名稱 (選填,覆寫全域設定)
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
+
+    /// <summary>
+    /// 開始時間 (選填,覆寫全域設定)
+    /// </summary>
+    public DateTimeOffset? StartDate { get; init; }
+
+    /// <summary>
+    /// 結束時間 (選填,覆寫全域設定)
+    /// </summary>
+    public DateTimeOffset? EndDate { get; init; }
 }
