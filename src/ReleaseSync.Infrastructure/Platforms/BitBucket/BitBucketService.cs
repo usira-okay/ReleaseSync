@@ -49,5 +49,6 @@ public class BitBucketService : BasePlatformService<BitBucketProjectSettings>
     /// <summary>
     /// 取得專案的目標分支清單
     /// </summary>
-    protected override List<string> GetTargetBranches(BitBucketProjectSettings project) => project.TargetBranches;
+    protected override List<string> GetTargetBranches(BitBucketProjectSettings project) =>
+        new List<string> { project.TargetBranch };
 }

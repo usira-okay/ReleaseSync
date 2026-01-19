@@ -32,7 +32,27 @@ public class GitLabProjectSettings
     public required string ProjectPath { get; init; }
 
     /// <summary>
-    /// 需要同步的目標分支清單 (空陣列表示所有分支)
+    /// 目標分支 (單一分支)
     /// </summary>
-    public List<string> TargetBranches { get; init; } = new();
+    public required string TargetBranch { get; init; }
+
+    /// <summary>
+    /// PR 資料抓取模式 (預設: DateRange)
+    /// </summary>
+    public string FetchMode { get; init; } = "DateRange";
+
+    /// <summary>
+    /// Release Branch 名稱 (選填,覆寫全域設定)
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
+
+    /// <summary>
+    /// 查詢起始日期 (選填,覆寫全域設定)
+    /// </summary>
+    public DateTime? StartDate { get; init; }
+
+    /// <summary>
+    /// 查詢結束日期 (選填,覆寫全域設定)
+    /// </summary>
+    public DateTime? EndDate { get; init; }
 }
