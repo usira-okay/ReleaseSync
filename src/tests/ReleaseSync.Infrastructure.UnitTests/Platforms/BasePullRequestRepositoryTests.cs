@@ -232,5 +232,36 @@ public class BasePullRequestRepositoryTests
                 Url = null
             };
         }
+
+        protected override Task<IEnumerable<ReleaseSync.Infrastructure.Platforms.Models.BranchInfo>> GetBranchesAsync(
+            string projectName,
+            string? searchPattern,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Enumerable.Empty<ReleaseSync.Infrastructure.Platforms.Models.BranchInfo>());
+        }
+
+        protected override Task<ReleaseSync.Infrastructure.Platforms.Models.BranchCompareResult> CompareBranchesAsync(
+            string projectName,
+            string fromBranch,
+            string toBranch,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new ReleaseSync.Infrastructure.Platforms.Models.BranchCompareResult
+            {
+                FromBranch = fromBranch,
+                ToBranch = toBranch,
+                Commits = Array.Empty<ReleaseSync.Infrastructure.Platforms.Models.CommitInfo>()
+            });
+        }
+
+        protected override Task<IEnumerable<PullRequestInfo>> GetPullRequestsFromCommitsAsync(
+            string projectName,
+            IReadOnlyList<ReleaseSync.Infrastructure.Platforms.Models.CommitInfo> commits,
+            string targetBranch,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(Enumerable.Empty<PullRequestInfo>());
+        }
     }
 }

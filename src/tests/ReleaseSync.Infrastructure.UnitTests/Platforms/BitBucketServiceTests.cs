@@ -35,8 +35,8 @@ public class BitBucketServiceTests
             AccessToken = "test-password",
             Projects = new List<BitBucketProjectSettings>
             {
-                new() { WorkspaceAndRepo = "workspace/repo1", TargetBranches = new List<string> { "main", "master" } },
-                new() { WorkspaceAndRepo = "workspace/repo2", TargetBranches = new List<string> { "main", "master" } }
+                new() { WorkspaceAndRepo = "workspace/repo1", TargetBranch = "main" },
+                new() { WorkspaceAndRepo = "workspace/repo2", TargetBranch = "main" }
             }
         };
 

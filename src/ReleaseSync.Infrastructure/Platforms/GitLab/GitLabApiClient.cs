@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using NGitLab;
 using NGitLab.Models;
+using LocalModels = ReleaseSync.Infrastructure.Platforms.Models;
 
 namespace ReleaseSync.Infrastructure.Platforms.GitLab;
 
@@ -131,6 +132,129 @@ public class GitLabApiClient
         {
             _logger.LogError(ex, "GitLab 連線測試失敗");
             return false;
+        }
+    }
+
+    /// <summary>
+    /// 取得指定專案的所有分支
+    /// </summary>
+    /// <param name="projectPath">專案路徑 (例如: mygroup/myproject)</param>
+    /// <param name="searchPattern">搜尋模式（例如: "release" 會搜尋包含 release 的分支）</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支資訊清單</returns>
+    public async Task<IEnumerable<LocalModels.BranchInfo>> GetBranchesAsync(
+        string projectPath,
+        string? searchPattern = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("開始抓取 GitLab 分支 - 專案: {ProjectPath}, 搜尋模式: {SearchPattern}",
+                projectPath, searchPattern ?? "(全部)");
+
+            var project = _client.Projects[projectPath];
+            if (project == null)
+            {
+                _logger.LogWarning("找不到 GitLab 專案: {ProjectPath}", projectPath);
+                return Enumerable.Empty<LocalModels.BranchInfo>();
+            }
+
+            var branchClient = _client.GetRepository(project.Id).Branches;
+
+            // 使用搜尋功能或取得全部分支
+            List<Branch> branches;
+            if (!string.IsNullOrEmpty(searchPattern))
+            {
+                branches = await Task.Run(() =>
+                    branchClient.Search(searchPattern).ToList(),
+                    cancellationToken);
+            }
+            else
+            {
+                branches = await Task.Run(() =>
+                    branchClient.All.ToList(),
+                    cancellationToken);
+            }
+
+            _logger.LogInformation("成功抓取 {Count} 個分支 - 專案: {ProjectPath}",
+                branches.Count, projectPath);
+
+            return branches.Select(b => new LocalModels.BranchInfo
+            {
+                Name = b.Name,
+                CommitSha = b.Commit?.Id.ToString() ?? string.Empty,
+                CommitDate = b.Commit?.CommittedDate
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "抓取 GitLab 分支失敗 - 專案: {ProjectPath}", projectPath);
+            throw new InvalidOperationException($"抓取 GitLab 分支失敗: {projectPath}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 比對兩個分支之間的差異
+    /// </summary>
+    /// <param name="projectPath">專案路徑</param>
+    /// <param name="fromBranch">起始分支</param>
+    /// <param name="toBranch">目標分支</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支比對結果</returns>
+    public async Task<LocalModels.BranchCompareResult> CompareBranchesAsync(
+        string projectPath,
+        string fromBranch,
+        string toBranch,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("開始比對分支 - 專案: {ProjectPath}, 從 {FromBranch} 到 {ToBranch}",
+                projectPath, fromBranch, toBranch);
+
+            var project = _client.Projects[projectPath];
+            if (project == null)
+            {
+                _logger.LogWarning("找不到 GitLab 專案: {ProjectPath}", projectPath);
+                return new LocalModels.BranchCompareResult
+                {
+                    FromBranch = fromBranch,
+                    ToBranch = toBranch,
+                    Commits = Array.Empty<LocalModels.CommitInfo>()
+                };
+            }
+
+            var repositoryClient = _client.GetRepository(project.Id);
+            var compareQuery = new CompareQuery(fromBranch, toBranch);
+
+            var compareResult = await Task.Run(() =>
+                repositoryClient.Compare(compareQuery),
+                cancellationToken);
+
+            var commits = compareResult.Commits?
+                .Select(c => new LocalModels.CommitInfo
+                {
+                    Sha = c.Id.ToString(),
+                    Title = c.Title ?? string.Empty,
+                    AuthorName = c.AuthorName,
+                    Date = c.CommittedDate
+                })
+                .ToList() ?? new List<LocalModels.CommitInfo>();
+
+            _logger.LogInformation("分支比對完成 - 專案: {ProjectPath}, 差異 Commit 數: {Count}",
+                projectPath, commits.Count);
+
+            return new LocalModels.BranchCompareResult
+            {
+                FromBranch = fromBranch,
+                ToBranch = toBranch,
+                Commits = commits
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "比對 GitLab 分支失敗 - 專案: {ProjectPath}", projectPath);
+            throw new InvalidOperationException($"比對 GitLab 分支失敗: {projectPath}", ex);
         }
     }
 }

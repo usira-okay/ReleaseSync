@@ -200,3 +200,129 @@ public class BitBucketPaginatedResponse<T>
     [JsonPropertyName("next")]
     public string Next { get; set; }
 }
+
+/// <summary>
+/// BitBucket Refs/Branches API 回應模型
+/// </summary>
+public class BitBucketRef
+{
+    /// <summary>
+    /// 分支名稱
+    /// </summary>
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 分支類型 (branch, tag)
+    /// </summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 最新 Commit 資訊
+    /// </summary>
+    [JsonPropertyName("target")]
+    public BitBucketRefTarget? Target { get; set; }
+}
+
+/// <summary>
+/// BitBucket Ref Target (Commit) 資訊
+/// </summary>
+public class BitBucketRefTarget
+{
+    /// <summary>
+    /// Commit Hash
+    /// </summary>
+    [JsonPropertyName("hash")]
+    public string Hash { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Commit 訊息
+    /// </summary>
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    /// <summary>
+    /// Commit 日期
+    /// </summary>
+    [JsonPropertyName("date")]
+    public DateTimeOffset? Date { get; set; }
+
+    /// <summary>
+    /// 作者資訊
+    /// </summary>
+    [JsonPropertyName("author")]
+    public BitBucketCommitAuthor? Author { get; set; }
+}
+
+/// <summary>
+/// BitBucket Commit 作者資訊
+/// </summary>
+public class BitBucketCommitAuthor
+{
+    /// <summary>
+    /// 作者原始字串 (格式: "Name <email>")
+    /// </summary>
+    [JsonPropertyName("raw")]
+    public string? Raw { get; set; }
+
+    /// <summary>
+    /// 使用者資訊
+    /// </summary>
+    [JsonPropertyName("user")]
+    public BitBucketUser? User { get; set; }
+}
+
+/// <summary>
+/// BitBucket Diff Stat 回應模型
+/// </summary>
+public class BitBucketDiffStat
+{
+    /// <summary>
+    /// 差異狀態 (added, removed, modified, renamed)
+    /// </summary>
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 新增行數
+    /// </summary>
+    [JsonPropertyName("lines_added")]
+    public int LinesAdded { get; set; }
+
+    /// <summary>
+    /// 刪除行數
+    /// </summary>
+    [JsonPropertyName("lines_removed")]
+    public int LinesRemoved { get; set; }
+}
+
+/// <summary>
+/// BitBucket Commits 列表回應中的 Commit 模型
+/// </summary>
+public class BitBucketCommitInfo
+{
+    /// <summary>
+    /// Commit Hash
+    /// </summary>
+    [JsonPropertyName("hash")]
+    public string Hash { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Commit 訊息
+    /// </summary>
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    /// <summary>
+    /// Commit 日期
+    /// </summary>
+    [JsonPropertyName("date")]
+    public DateTimeOffset? Date { get; set; }
+
+    /// <summary>
+    /// 作者資訊
+    /// </summary>
+    [JsonPropertyName("author")]
+    public BitBucketCommitAuthor? Author { get; set; }
+}

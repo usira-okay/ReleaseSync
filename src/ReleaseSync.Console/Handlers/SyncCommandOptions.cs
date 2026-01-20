@@ -1,4 +1,5 @@
 using ReleaseSync.Console.Configuration;
+using ReleaseSync.Domain.Models;
 
 namespace ReleaseSync.Console.Handlers;
 
@@ -16,6 +17,16 @@ public class SyncCommandOptions
     /// 結束日期
     /// </summary>
     public required DateTime EndDate { get; init; }
+
+    /// <summary>
+    /// 抓取模式 (DateRange 或 ReleaseBranch)
+    /// </summary>
+    public FetchMode FetchMode { get; init; } = FetchMode.DateRange;
+
+    /// <summary>
+    /// Release Branch 名稱 (當 FetchMode = ReleaseBranch 時使用)
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
 
     /// <summary>
     /// 是否啟用 GitLab
@@ -79,6 +90,8 @@ public class SyncCommandOptions
         {
             StartDate = syncOptions.StartDate,
             EndDate = syncOptions.EndDate,
+            FetchMode = syncOptions.FetchMode,
+            ReleaseBranch = syncOptions.ReleaseBranch,
             EnableGitLab = syncOptions.EnabledPlatforms.GitLab,
             EnableBitBucket = syncOptions.EnabledPlatforms.BitBucket,
             EnableAzureDevOps = syncOptions.EnabledPlatforms.AzureDevOps,
@@ -92,6 +105,11 @@ public class SyncCommandOptions
             GoogleSheetName = configuration["GoogleSheet:SheetName"]
         };
     }
+
+    /// <summary>
+    /// 是否為 Release Branch 抓取模式
+    /// </summary>
+    public bool IsReleaseBranchMode => FetchMode == FetchMode.ReleaseBranch;
 
     /// <summary>
     /// 是否需要執行 PR/MR 資料抓取

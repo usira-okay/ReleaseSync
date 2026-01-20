@@ -46,12 +46,28 @@ public class SyncOrchestrator : ISyncOrchestrator
             throw new ArgumentException("至少須啟用一個平台 (GitLab 或 BitBucket)");
         }
 
+        // 根據抓取模式執行不同的同步邏輯
+        if (request.FetchMode == FetchMode.ReleaseBranch)
+        {
+            return await SyncByReleaseBranchAsync(request, cancellationToken);
+        }
+
+        return await SyncByDateRangeAsync(request, cancellationToken);
+    }
+
+    /// <summary>
+    /// 依日期範圍執行同步 (DateRange 模式)
+    /// </summary>
+    private async Task<SyncResultDto> SyncByDateRangeAsync(
+        SyncRequest request,
+        CancellationToken cancellationToken)
+    {
         // 建立 DateRange
         var dateRange = new DateRange(request.StartDate, request.EndDate);
         dateRange.Validate();
 
         _logger.LogInformation(
-            "開始同步作業 - 時間範圍: {StartDate} - {EndDate}, 啟用平台: {Platforms}",
+            "開始同步作業 (DateRange 模式) - 時間範圍: {StartDate} - {EndDate}, 啟用平台: {Platforms}",
             dateRange.StartDate, dateRange.EndDate,
             GetEnabledPlatformsDescription(request));
 
@@ -185,5 +201,118 @@ public class SyncOrchestrator : ISyncOrchestrator
         if (request.EnableGitLab) platforms.Add("GitLab");
         if (request.EnableBitBucket) platforms.Add("BitBucket");
         return string.Join(", ", platforms);
+    }
+
+    /// <summary>
+    /// 依 Release Branch 執行同步 (ReleaseBranch 模式)
+    /// </summary>
+    /// <remarks>
+    /// 此模式會比對指定 Release Branch 與下一個版本之間的差異，
+    /// 找出該版本包含的所有 PR/MR。
+    /// </remarks>
+    private async Task<SyncResultDto> SyncByReleaseBranchAsync(
+        SyncRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.ReleaseBranch))
+        {
+            throw new ArgumentException("ReleaseBranch 模式必須指定 Release Branch 名稱");
+        }
+
+        _logger.LogInformation(
+            "開始同步作業 (ReleaseBranch 模式) - Release Branch: {ReleaseBranch}, 啟用平台: {Platforms}",
+            request.ReleaseBranch,
+            GetEnabledPlatformsDescription(request));
+
+        // 建立 SyncResult (使用假的日期範圍，因為 ReleaseBranch 模式不使用日期)
+        var syncResult = new SyncResult
+        {
+            SyncDateRange = new DateRange(DateTime.UtcNow.AddYears(-1), DateTime.UtcNow)
+        };
+
+        // 篩選要執行的平台
+        var enabledServices = FilterEnabledServices(request).ToList();
+
+        if (!enabledServices.Any())
+        {
+            _logger.LogWarning("沒有啟用的平台服務");
+            syncResult.MarkAsCompleted();
+            return SyncResultDto.FromDomain(syncResult);
+        }
+
+        // 並行執行所有啟用的平台
+        var platformTasks = enabledServices.Select(async service =>
+        {
+            using var scope = _logger.BeginScope(new Dictionary<string, object>
+            {
+                ["Platform"] = service.PlatformName
+            });
+
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                var pullRequests = await service.GetPullRequestsByReleaseBranchAsync(
+                    request.ReleaseBranch,
+                    cancellationToken);
+
+                var prList = pullRequests.ToList();
+                stopwatch.Stop();
+
+                _logger.LogInformation("平台 {Platform} 完成 - {Count} 筆 PR/MR, {ElapsedMs} ms",
+                    service.PlatformName, prList.Count, stopwatch.ElapsedMilliseconds);
+
+                return (
+                    Success: true,
+                    Service: service,
+                    PullRequests: prList,
+                    Status: PlatformSyncStatus.Success(
+                        service.PlatformName,
+                        prList.Count,
+                        stopwatch.ElapsedMilliseconds)
+                );
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.LogError(ex, "平台 {Platform} 失敗 - {ElapsedMs} ms",
+                    service.PlatformName, stopwatch.ElapsedMilliseconds);
+
+                return (
+                    Success: false,
+                    Service: service,
+                    PullRequests: new List<PullRequestInfo>(),
+                    Status: PlatformSyncStatus.Failure(
+                        service.PlatformName,
+                        ex.Message,
+                        stopwatch.ElapsedMilliseconds)
+                );
+            }
+        });
+
+        // 等待所有平台完成
+        var platformResults = await Task.WhenAll(platformTasks);
+
+        // 彙整結果
+        foreach (var result in platformResults)
+        {
+            if (result.Success)
+            {
+                syncResult.AddPullRequests(result.PullRequests);
+            }
+            syncResult.RecordPlatformStatus(result.Status);
+        }
+
+        syncResult.MarkAsCompleted();
+
+        // 計算總耗時與效能指標
+        var totalElapsedMs = syncResult.PlatformStatuses
+            .Sum(s => s.ElapsedMilliseconds);
+        var totalPRCount = syncResult.PullRequests.Count();
+
+        _logger.LogInformation(
+            "同步作業完成 (ReleaseBranch 模式) - Release Branch: {ReleaseBranch}, {Summary}, 總耗時: {TotalMs} ms, PR/MR: {Count} 筆",
+            request.ReleaseBranch, syncResult.GetSummary(), totalElapsedMs, totalPRCount);
+
+        return SyncResultDto.FromDomain(syncResult);
     }
 }

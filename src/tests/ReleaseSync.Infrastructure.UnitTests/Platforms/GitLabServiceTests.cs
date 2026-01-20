@@ -34,8 +34,8 @@ public class GitLabServiceTests
             PersonalAccessToken = "test-token",
             Projects = new List<GitLabProjectSettings>
             {
-                new() { ProjectPath = "group/project1", TargetBranches = new List<string> { "main", "develop" } },
-                new() { ProjectPath = "group/project2", TargetBranches = new List<string> { "main", "develop" } }
+                new() { ProjectPath = "group/project1", TargetBranch = "main" },
+                new() { ProjectPath = "group/project2", TargetBranch = "main" }
             }
         };
 

@@ -1,3 +1,5 @@
+using ReleaseSync.Domain.Models;
+
 namespace ReleaseSync.Console.Configuration;
 
 /// <summary>
@@ -14,6 +16,16 @@ public class SyncOptions
     /// 查詢結束日期
     /// </summary>
     public required DateTime EndDate { get; init; }
+
+    /// <summary>
+    /// 抓取模式 (DateRange 或 ReleaseBranch)
+    /// </summary>
+    public FetchMode FetchMode { get; init; } = FetchMode.DateRange;
+
+    /// <summary>
+    /// Release Branch 名稱 (當 FetchMode = ReleaseBranch 時使用)
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
 
     /// <summary>
     /// 啟用的平台設定

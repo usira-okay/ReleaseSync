@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using NGitLab.Models;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Domain.Models;
+using LocalModels = ReleaseSync.Infrastructure.Platforms.Models;
 
 namespace ReleaseSync.Infrastructure.Platforms.GitLab;
 
@@ -87,4 +88,95 @@ public class GitLabPullRequestRepository : BasePullRequestRepository<MergeReques
         }
     }
 
+    /// <summary>
+    /// 取得專案的分支清單
+    /// </summary>
+    protected override async Task<IEnumerable<LocalModels.BranchInfo>> GetBranchesAsync(
+        string projectName,
+        string? searchPattern,
+        CancellationToken cancellationToken)
+    {
+        return await _apiClient.GetBranchesAsync(projectName, searchPattern, cancellationToken);
+    }
+
+    /// <summary>
+    /// 比對兩個分支之間的差異
+    /// </summary>
+    protected override async Task<LocalModels.BranchCompareResult> CompareBranchesAsync(
+        string projectName,
+        string fromBranch,
+        string toBranch,
+        CancellationToken cancellationToken)
+    {
+        return await _apiClient.CompareBranchesAsync(projectName, fromBranch, toBranch, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根據 Commits 找出對應的 Merge Requests
+    /// </summary>
+    /// <remarks>
+    /// GitLab 的 Merge Commit 訊息格式通常為:
+    /// "Merge branch 'feature/xxx' into 'main'"
+    /// 或包含 "See merge request !123" 的訊息
+    /// </remarks>
+    protected override async Task<IEnumerable<PullRequestInfo>> GetPullRequestsFromCommitsAsync(
+        string projectName,
+        IReadOnlyList<LocalModels.CommitInfo> commits,
+        string targetBranch,
+        CancellationToken cancellationToken)
+    {
+        if (commits.Count == 0)
+        {
+            return Enumerable.Empty<PullRequestInfo>();
+        }
+
+        // 從 Commit 訊息中提取 MR IID
+        var mrIids = new HashSet<int>();
+        foreach (var commit in commits)
+        {
+            // 嘗試從 "See merge request !123" 格式提取
+            var match = System.Text.RegularExpressions.Regex.Match(
+                commit.Title ?? string.Empty,
+                @"See merge request\s+[^!]*!(\d+)");
+
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var iid))
+            {
+                mrIids.Add(iid);
+            }
+        }
+
+        _logger.LogInformation(
+            "從 {CommitCount} 個 Commits 中提取到 {MrCount} 個 MR IID - 專案: {ProjectName}",
+            commits.Count, mrIids.Count, projectName);
+
+        if (mrIids.Count == 0)
+        {
+            // 如果無法從 commit 訊息提取 MR IID，嘗試取得最近的 MRs 並比對 merge commit
+            _logger.LogWarning(
+                "無法從 Commit 訊息提取 MR IID，將返回空結果 - 專案: {ProjectName}",
+                projectName);
+            return Enumerable.Empty<PullRequestInfo>();
+        }
+
+        // 取得對應的 MR 詳細資訊
+        // 注意：這裡使用較大的時間範圍來確保能找到對應的 MR
+        var now = DateTime.UtcNow;
+        var dateRange = new DateRange(now.AddYears(-1), now);
+
+        var allMrs = await FetchPullRequestsFromApiAsync(
+            projectName,
+            dateRange,
+            new[] { targetBranch },
+            cancellationToken);
+
+        var matchedMrs = allMrs
+            .Where(mr => mrIids.Contains((int)mr.Iid))
+            .ToList();
+
+        _logger.LogInformation(
+            "找到 {MatchedCount} 個對應的 MR - 專案: {ProjectName}",
+            matchedMrs.Count, projectName);
+
+        return matchedMrs.Select(mr => ConvertToPullRequestInfo(mr, projectName));
+    }
 }

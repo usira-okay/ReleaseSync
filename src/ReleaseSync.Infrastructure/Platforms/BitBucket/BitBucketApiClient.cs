@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using ReleaseSync.Infrastructure.Platforms.BitBucket.Models;
+using ReleaseSync.Infrastructure.Platforms.Models;
 
 namespace ReleaseSync.Infrastructure.Platforms.BitBucket;
 
@@ -180,6 +181,197 @@ public class BitBucketApiClient
             _logger.LogError(ex, "BitBucket 連線測試失敗");
             return false;
         }
+    }
+
+    /// <summary>
+    /// 取得指定 Repository 的所有分支
+    /// </summary>
+    /// <param name="workspace">Workspace ID</param>
+    /// <param name="repository">Repository 名稱</param>
+    /// <param name="searchPattern">搜尋模式（例如: "release" 會搜尋包含 release 的分支）</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支資訊清單</returns>
+    public async Task<IEnumerable<BranchInfo>> GetBranchesAsync(
+        string workspace,
+        string repository,
+        string? searchPattern = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(workspace, nameof(workspace));
+        ArgumentException.ThrowIfNullOrWhiteSpace(repository, nameof(repository));
+
+        try
+        {
+            _logger.LogInformation("開始抓取 BitBucket 分支 - Workspace: {Workspace}, Repo: {Repository}, 搜尋模式: {SearchPattern}",
+                workspace, repository, searchPattern ?? "(全部)");
+
+            var allBranches = new List<BitBucketRef>();
+            var baseUrl = $"https://api.bitbucket.org/2.0/repositories/{workspace}/{repository}/refs/branches";
+
+            // 如果有搜尋模式，使用 q 參數
+            string url;
+            if (!string.IsNullOrEmpty(searchPattern))
+            {
+                var query = $"name~\"{searchPattern}\"";
+                url = $"{baseUrl}?q={Uri.EscapeDataString(query)}&pagelen=100";
+            }
+            else
+            {
+                url = $"{baseUrl}?pagelen=100";
+            }
+
+            string? nextPageUrl = url;
+
+            // 處理分頁
+            while (!string.IsNullOrEmpty(nextPageUrl))
+            {
+                var response = await _httpClient.GetAsync(nextPageUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                var result = JsonSerializer.Deserialize<BitBucketPaginatedResponse<BitBucketRef>>(json, _jsonOptions);
+
+                if (result?.Values == null)
+                {
+                    break;
+                }
+
+                allBranches.AddRange(result.Values);
+                nextPageUrl = result.Next;
+            }
+
+            _logger.LogInformation("成功抓取 {Count} 個分支 - Workspace: {Workspace}, Repo: {Repository}",
+                allBranches.Count, workspace, repository);
+
+            return allBranches.Select(b => new BranchInfo
+            {
+                Name = b.Name,
+                CommitSha = b.Target?.Hash ?? string.Empty,
+                CommitDate = b.Target?.Date
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "抓取 BitBucket 分支失敗 - Workspace: {Workspace}, Repo: {Repository}",
+                workspace, repository);
+            throw new InvalidOperationException($"抓取 BitBucket 分支失敗: {workspace}/{repository}", ex);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "解析 BitBucket 分支 API 回應失敗 - Workspace: {Workspace}, Repo: {Repository}",
+                workspace, repository);
+            throw new InvalidOperationException($"解析 BitBucket 分支 API 回應失敗: {workspace}/{repository}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 比對兩個分支之間的差異
+    /// </summary>
+    /// <param name="workspace">Workspace ID</param>
+    /// <param name="repository">Repository 名稱</param>
+    /// <param name="fromBranch">起始分支</param>
+    /// <param name="toBranch">目標分支</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支比對結果</returns>
+    public async Task<BranchCompareResult> CompareBranchesAsync(
+        string workspace,
+        string repository,
+        string fromBranch,
+        string toBranch,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(workspace, nameof(workspace));
+        ArgumentException.ThrowIfNullOrWhiteSpace(repository, nameof(repository));
+        ArgumentException.ThrowIfNullOrWhiteSpace(fromBranch, nameof(fromBranch));
+        ArgumentException.ThrowIfNullOrWhiteSpace(toBranch, nameof(toBranch));
+
+        try
+        {
+            _logger.LogInformation("開始比對分支 - Workspace: {Workspace}, Repo: {Repository}, 從 {FromBranch} 到 {ToBranch}",
+                workspace, repository, fromBranch, toBranch);
+
+            // BitBucket API: 使用 commits endpoint 取得兩個 ref 之間的 commits
+            // 語法: /2.0/repositories/{workspace}/{repo_slug}/commits/{revision}?include={toBranch}&exclude={fromBranch}
+            // 這會取得在 toBranch 但不在 fromBranch 的 commits
+            var allCommits = new List<BitBucketCommitInfo>();
+            var baseUrl = $"https://api.bitbucket.org/2.0/repositories/{workspace}/{repository}/commits";
+            var url = $"{baseUrl}?include={Uri.EscapeDataString(toBranch)}&exclude={Uri.EscapeDataString(fromBranch)}&pagelen=100";
+
+            string? nextPageUrl = url;
+
+            // 處理分頁
+            while (!string.IsNullOrEmpty(nextPageUrl))
+            {
+                var response = await _httpClient.GetAsync(nextPageUrl, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                var result = JsonSerializer.Deserialize<BitBucketPaginatedResponse<BitBucketCommitInfo>>(json, _jsonOptions);
+
+                if (result?.Values == null || result.Values.Count == 0)
+                {
+                    break;
+                }
+
+                allCommits.AddRange(result.Values);
+                nextPageUrl = result.Next;
+            }
+
+            var commits = allCommits.Select(c => new CommitInfo
+            {
+                Sha = c.Hash,
+                Title = ExtractCommitTitle(c.Message),
+                AuthorName = c.Author?.User?.DisplayName ?? ExtractAuthorName(c.Author?.Raw),
+                Date = c.Date
+            }).ToList();
+
+            _logger.LogInformation("分支比對完成 - Workspace: {Workspace}, Repo: {Repository}, 差異 Commit 數: {Count}",
+                workspace, repository, commits.Count);
+
+            return new BranchCompareResult
+            {
+                FromBranch = fromBranch,
+                ToBranch = toBranch,
+                Commits = commits
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "比對 BitBucket 分支失敗 - Workspace: {Workspace}, Repo: {Repository}",
+                workspace, repository);
+            throw new InvalidOperationException($"比對 BitBucket 分支失敗: {workspace}/{repository}", ex);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "解析 BitBucket 比對 API 回應失敗 - Workspace: {Workspace}, Repo: {Repository}",
+                workspace, repository);
+            throw new InvalidOperationException($"解析 BitBucket 比對 API 回應失敗: {workspace}/{repository}", ex);
+        }
+    }
+
+    /// <summary>
+    /// 從完整 Commit 訊息提取標題 (第一行)
+    /// </summary>
+    private static string ExtractCommitTitle(string? message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return string.Empty;
+
+        var firstLineEnd = message.IndexOf('\n');
+        return firstLineEnd > 0 ? message[..firstLineEnd].Trim() : message.Trim();
+    }
+
+    /// <summary>
+    /// 從 raw 字串提取作者名稱
+    /// </summary>
+    private static string? ExtractAuthorName(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        // raw 格式: "Name <email>"
+        var emailStart = raw.IndexOf('<');
+        return emailStart > 0 ? raw[..emailStart].Trim() : raw.Trim();
     }
 }
 

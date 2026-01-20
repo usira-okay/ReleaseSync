@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.Services;
+using ReleaseSync.Domain.Exceptions;
 using ReleaseSync.Domain.Models;
 using ReleaseSync.Domain.Repositories;
+using ReleaseSync.Infrastructure.Platforms.Models;
 
 namespace ReleaseSync.Infrastructure.Platforms;
 
@@ -148,6 +150,130 @@ public abstract class BasePullRequestRepository<TApiDto> : IPullRequestRepositor
 
         return filteredPullRequests;
     }
+
+    /// <summary>
+    /// 根據 Release Branch 比對取得待發布的 Pull Requests
+    /// </summary>
+    /// <param name="projectName">專案名稱 (例如: owner/repo)</param>
+    /// <param name="releaseBranch">Release Branch 名稱</param>
+    /// <param name="targetBranch">目標分支名稱</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>在目標分支但不在 Release Branch 的 Pull Request 清單</returns>
+    public async Task<IEnumerable<PullRequestInfo>> GetByReleaseBranchAsync(
+        string projectName,
+        string releaseBranch,
+        string targetBranch,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectName, nameof(projectName));
+        ArgumentException.ThrowIfNullOrWhiteSpace(releaseBranch, nameof(releaseBranch));
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetBranch, nameof(targetBranch));
+
+        try
+        {
+            _logger.LogInformation(
+                "開始 Release Branch 比對 - 平台: {Platform}, 專案: {ProjectName}, Release: {ReleaseBranch}, Target: {TargetBranch}",
+                PlatformName, projectName, releaseBranch, targetBranch);
+
+            // 取得所有分支以驗證 Release Branch 存在
+            var branches = await GetBranchesAsync(projectName, "release", cancellationToken);
+            var branchList = branches.ToList();
+
+            var releaseBranchExists = branchList.Any(b =>
+                b.Name.Equals(releaseBranch, StringComparison.OrdinalIgnoreCase));
+
+            if (!releaseBranchExists)
+            {
+                var availableReleaseBranches = branchList
+                    .Select(b => b.Name)
+                    .OrderByDescending(n => n)
+                    .Take(10)
+                    .ToList();
+
+                throw new ReleaseBranchNotFoundException(
+                    releaseBranch,
+                    projectName,
+                    availableReleaseBranches);
+            }
+
+            // 比對兩個分支之間的差異
+            var compareResult = await CompareBranchesAsync(
+                projectName,
+                releaseBranch,
+                targetBranch,
+                cancellationToken);
+
+            _logger.LogInformation(
+                "分支比對完成 - 平台: {Platform}, 專案: {ProjectName}, 差異 Commit 數: {Count}",
+                PlatformName, projectName, compareResult.Commits.Count);
+
+            // 根據差異的 Commits 找出對應的 PR/MR
+            var pullRequests = await GetPullRequestsFromCommitsAsync(
+                projectName,
+                compareResult.Commits,
+                targetBranch,
+                cancellationToken);
+
+            // 套用 UserMapping 過濾
+            var userFilteredPullRequests = ApplyUserMappingFilter(pullRequests.ToList(), projectName);
+
+            _logger.LogInformation(
+                "取得 {Count} 筆待發布 PR/MR - 平台: {Platform}, 專案: {ProjectName}",
+                userFilteredPullRequests.Count, PlatformName, projectName);
+
+            return userFilteredPullRequests;
+        }
+        catch (ReleaseBranchNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Release Branch 比對失敗 - 平台: {Platform}, 專案: {ProjectName}",
+                PlatformName, projectName);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 取得專案的分支清單
+    /// </summary>
+    /// <param name="projectName">專案名稱</param>
+    /// <param name="searchPattern">搜尋模式</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支資訊清單</returns>
+    protected abstract Task<IEnumerable<BranchInfo>> GetBranchesAsync(
+        string projectName,
+        string? searchPattern,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// 比對兩個分支之間的差異
+    /// </summary>
+    /// <param name="projectName">專案名稱</param>
+    /// <param name="fromBranch">起始分支</param>
+    /// <param name="toBranch">目標分支</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>分支比對結果</returns>
+    protected abstract Task<BranchCompareResult> CompareBranchesAsync(
+        string projectName,
+        string fromBranch,
+        string toBranch,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// 根據 Commits 找出對應的 Pull Requests
+    /// </summary>
+    /// <param name="projectName">專案名稱</param>
+    /// <param name="commits">Commit 清單</param>
+    /// <param name="targetBranch">目標分支</param>
+    /// <param name="cancellationToken">取消權杖</param>
+    /// <returns>對應的 Pull Request 清單</returns>
+    protected abstract Task<IEnumerable<PullRequestInfo>> GetPullRequestsFromCommitsAsync(
+        string projectName,
+        IReadOnlyList<CommitInfo> commits,
+        string targetBranch,
+        CancellationToken cancellationToken);
 
 }
 

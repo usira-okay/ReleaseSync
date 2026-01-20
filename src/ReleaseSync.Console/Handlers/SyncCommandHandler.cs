@@ -5,6 +5,7 @@ using ReleaseSync.Application.Exporters;
 using ReleaseSync.Application.Importers;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Console.Services;
+using ReleaseSync.Domain.Models;
 
 namespace ReleaseSync.Console.Handlers;
 
@@ -104,14 +105,28 @@ public class SyncCommandHandler
     private void LogStartup(SyncCommandOptions options)
     {
         _logger.LogInformation("=== ReleaseSync 同步工具 ===");
-        _logger.LogInformation(
-            "時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}, GoogleSheet={GoogleSheet}",
-            options.StartDate,
-            options.EndDate,
-            options.EnableGitLab,
-            options.EnableBitBucket,
-            options.EnableAzureDevOps,
-            options.EnableGoogleSheet);
+
+        if (options.IsReleaseBranchMode)
+        {
+            _logger.LogInformation(
+                "模式: ReleaseBranch, Release Branch: {ReleaseBranch}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}, GoogleSheet={GoogleSheet}",
+                options.ReleaseBranch,
+                options.EnableGitLab,
+                options.EnableBitBucket,
+                options.EnableAzureDevOps,
+                options.EnableGoogleSheet);
+        }
+        else
+        {
+            _logger.LogInformation(
+                "模式: DateRange, 時間範圍: {StartDate:yyyy-MM-dd} ~ {EndDate:yyyy-MM-dd}, 平台: GitLab={GitLab}, BitBucket={BitBucket}, AzureDevOps={AzureDevOps}, GoogleSheet={GoogleSheet}",
+                options.StartDate,
+                options.EndDate,
+                options.EnableGitLab,
+                options.EnableBitBucket,
+                options.EnableAzureDevOps,
+                options.EnableGoogleSheet);
+        }
     }
 
     /// <summary>
@@ -121,12 +136,21 @@ public class SyncCommandHandler
         SyncCommandOptions options,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("開始抓取 PR/MR 資料...");
+        if (options.IsReleaseBranchMode)
+        {
+            _logger.LogInformation("開始抓取 PR/MR 資料 (ReleaseBranch 模式)...");
+        }
+        else
+        {
+            _logger.LogInformation("開始抓取 PR/MR 資料 (DateRange 模式)...");
+        }
 
         var request = new SyncRequest
         {
             StartDate = options.StartDate,
             EndDate = options.EndDate,
+            FetchMode = options.FetchMode,
+            ReleaseBranch = options.ReleaseBranch,
             EnableGitLab = options.EnableGitLab,
             EnableBitBucket = options.EnableBitBucket,
             EnableAzureDevOps = options.EnableAzureDevOps

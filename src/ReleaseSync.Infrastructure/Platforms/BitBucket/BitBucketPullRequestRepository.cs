@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using ReleaseSync.Application.Services;
 using ReleaseSync.Domain.Models;
 using ReleaseSync.Infrastructure.Platforms.BitBucket.Models;
+using ReleaseSync.Infrastructure.Platforms.Models;
 
 namespace ReleaseSync.Infrastructure.Platforms.BitBucket;
 
@@ -180,5 +181,111 @@ public class BitBucketPullRequestRepository : BasePullRequestRepository<BitBucke
             "SUPERSEDED" => "Superseded",
             _ => state ?? "Unknown"
         };
+    }
+
+    /// <summary>
+    /// 解析 workspace 和 repository 名稱
+    /// </summary>
+    private static (string workspace, string repository) ParseProjectName(string projectName)
+    {
+        var parts = projectName.Split('/', 2);
+        if (parts.Length != 2)
+        {
+            throw new ArgumentException(
+                $"BitBucket 專案名稱格式錯誤,應為 'workspace/repository': {projectName}",
+                nameof(projectName));
+        }
+        return (parts[0], parts[1]);
+    }
+
+    /// <summary>
+    /// 取得專案的分支清單
+    /// </summary>
+    protected override async Task<IEnumerable<BranchInfo>> GetBranchesAsync(
+        string projectName,
+        string? searchPattern,
+        CancellationToken cancellationToken)
+    {
+        var (workspace, repository) = ParseProjectName(projectName);
+        return await _apiClient.GetBranchesAsync(workspace, repository, searchPattern, cancellationToken);
+    }
+
+    /// <summary>
+    /// 比對兩個分支之間的差異
+    /// </summary>
+    protected override async Task<BranchCompareResult> CompareBranchesAsync(
+        string projectName,
+        string fromBranch,
+        string toBranch,
+        CancellationToken cancellationToken)
+    {
+        var (workspace, repository) = ParseProjectName(projectName);
+        return await _apiClient.CompareBranchesAsync(workspace, repository, fromBranch, toBranch, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根據 Commits 找出對應的 Pull Requests
+    /// </summary>
+    /// <remarks>
+    /// BitBucket 的 Merge Commit 訊息格式通常為:
+    /// "Merged in feature/xxx (pull request #123)"
+    /// </remarks>
+    protected override async Task<IEnumerable<PullRequestInfo>> GetPullRequestsFromCommitsAsync(
+        string projectName,
+        IReadOnlyList<CommitInfo> commits,
+        string targetBranch,
+        CancellationToken cancellationToken)
+    {
+        if (commits.Count == 0)
+        {
+            return Enumerable.Empty<PullRequestInfo>();
+        }
+
+        // 從 Commit 訊息中提取 PR ID
+        var prIds = new HashSet<int>();
+        foreach (var commit in commits)
+        {
+            // 嘗試從 "(pull request #123)" 格式提取
+            var match = System.Text.RegularExpressions.Regex.Match(
+                commit.Title ?? string.Empty,
+                @"\(pull request #(\d+)\)");
+
+            if (match.Success && int.TryParse(match.Groups[1].Value, out var id))
+            {
+                prIds.Add(id);
+            }
+        }
+
+        _logger.LogInformation(
+            "從 {CommitCount} 個 Commits 中提取到 {PrCount} 個 PR ID - 專案: {ProjectName}",
+            commits.Count, prIds.Count, projectName);
+
+        if (prIds.Count == 0)
+        {
+            _logger.LogWarning(
+                "無法從 Commit 訊息提取 PR ID，將返回空結果 - 專案: {ProjectName}",
+                projectName);
+            return Enumerable.Empty<PullRequestInfo>();
+        }
+
+        // 取得對應的 PR 詳細資訊
+        var now = DateTime.UtcNow;
+        var dateRange = new DateRange(now.AddYears(-1), now);
+
+        var allPrs = await FetchPullRequestsFromApiAsync(
+            projectName,
+            dateRange,
+            new[] { targetBranch },
+            cancellationToken);
+
+        var matchedPrs = allPrs
+            .Where(pr => prIds.Contains(pr.Id))
+            .ToList();
+
+        _logger.LogInformation(
+            "找到 {MatchedCount} 個對應的 PR - 專案: {ProjectName}",
+            matchedPrs.Count, projectName);
+
+        return matchedPrs.Select(pr => ConvertToPullRequestInfo(pr, projectName));
     }
 }

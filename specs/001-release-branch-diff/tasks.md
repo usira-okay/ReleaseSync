@@ -22,8 +22,8 @@
 
 **Purpose**: 專案初始化與測試專案設定
 
-- [ ] T001 建立測試專案結構 src/tests/ReleaseSync.Domain.UnitTests/Models/ [Build: ✅] [Tests: N/A]
-- [ ] T002 [P] 建立測試專案結構 src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/ [Build: ✅] [Tests: N/A]
+- [X] T001 建立測試專案結構 src/tests/ReleaseSync.Domain.UnitTests/Models/ [Build: ✅] [Tests: N/A]
+- [X] T002 [P] 建立測試專案結構 src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/ [Build: ✅] [Tests: N/A]
 
 ---
 
@@ -37,13 +37,13 @@
 
 > **NOTE: 根據憲章 TDD 原則，先寫測試並確保測試失敗**
 
-- [ ] T003 [P] 撰寫 FetchMode 列舉單元測試 src/tests/ReleaseSync.Domain.UnitTests/Models/FetchModeTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T004 [P] 撰寫 ReleaseBranchName 值物件單元測試（格式驗證、日期解析、比較運算）src/tests/ReleaseSync.Domain.UnitTests/Models/ReleaseBranchNameTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T003 [P] 撰寫 FetchMode 列舉單元測試 src/tests/ReleaseSync.Domain.UnitTests/Models/FetchModeTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T004 [P] 撰寫 ReleaseBranchName 值物件單元測試（格式驗證、日期解析、比較運算）src/tests/ReleaseSync.Domain.UnitTests/Models/ReleaseBranchNameTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for Foundational (TDD: Green Phase)
 
-- [ ] T005 [P] 實作 FetchMode 列舉 src/ReleaseSync.Domain/Models/FetchMode.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T006 [P] 實作 ReleaseBranchName 值物件（含 Parse、TryParse、FromDate、比較運算子）src/ReleaseSync.Domain/Models/ReleaseBranchName.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T005 [P] 實作 FetchMode 列舉 src/ReleaseSync.Domain/Models/FetchMode.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T006 [P] 實作 ReleaseBranchName 值物件（含 Parse、TryParse、FromDate、比較運算子）src/ReleaseSync.Domain/Models/ReleaseBranchName.cs [Build: ✅] [Tests: ✅ (Green)]
 
 **Checkpoint**: Domain Layer 基礎元件完成，所有測試通過
 
@@ -59,20 +59,20 @@
 
 ### Tests for User Story 4 (TDD: Red Phase)
 
-- [ ] T007 [P] [US4] 撰寫 SyncOptionsSettings 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/SyncOptionsSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T008 [P] [US4] 撰寫 GitLabProjectSettings 單元測試（TargetBranch 單一值、向後相容 TargetBranches）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/GitLabProjectSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T009 [P] [US4] 撰寫 BitBucketProjectSettings 單元測試（TargetBranch 單一值、向後相容 TargetBranches）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/BitBucketProjectSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T007 [P] [US4] 撰寫 SyncOptionsSettings 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/SyncOptionsSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T008 [P] [US4] 撰寫 GitLabProjectSettings 單元測試（TargetBranch 單一值、向後相容 TargetBranches）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/GitLabProjectSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T009 [P] [US4] 撰寫 BitBucketProjectSettings 單元測試（TargetBranch 單一值、向後相容 TargetBranches）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/BitBucketProjectSettingsTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 4 (TDD: Green Phase)
 
-- [ ] T010 [P] [US4] 建立 SyncOptionsSettings 配置類別 src/ReleaseSync.Infrastructure/Configuration/SyncOptionsSettings.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T011 [P] [US4] 修改 GitLabProjectSettings（TargetBranches → TargetBranch + 新增 FetchMode、ReleaseBranch、StartDate、EndDate 覆寫屬性）src/ReleaseSync.Infrastructure/Configuration/GitLabSettings.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T012 [P] [US4] 修改 BitBucketProjectSettings（TargetBranches → TargetBranch + 新增 FetchMode、ReleaseBranch、StartDate、EndDate 覆寫屬性）src/ReleaseSync.Infrastructure/Configuration/BitBucketSettings.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T013 [US4] 更新 GitLabServiceExtensions 註冊 SyncOptionsSettings src/ReleaseSync.Infrastructure/DependencyInjection/GitLabServiceExtensions.cs [Build: ✅] [Tests: ✅]
-- [ ] T014 [US4] 更新 BitBucketServiceExtensions 註冊 SyncOptionsSettings src/ReleaseSync.Infrastructure/DependencyInjection/BitBucketServiceExtensions.cs [Build: ✅] [Tests: ✅]
-- [ ] T015 [US4] 修改 GitLabService 使用 TargetBranch 單一值 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs [Build: ✅] [Tests: ✅]
-- [ ] T016 [US4] 修改 BitBucketService 使用 TargetBranch 單一值 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs [Build: ✅] [Tests: ✅]
-- [ ] T017 [US4] 更新 appsettings.json 配置結構（SyncOptions 節點、TargetBranch 單一值）src/ReleaseSync.Console/appsettings.json [Build: ✅] [Tests: ✅]
+- [X] T010 [P] [US4] 建立 SyncOptionsSettings 配置類別 src/ReleaseSync.Infrastructure/Configuration/SyncOptionsSettings.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T011 [P] [US4] 修改 GitLabProjectSettings（TargetBranches → TargetBranch + 新增 FetchMode、ReleaseBranch、StartDate、EndDate 覆寫屬性）src/ReleaseSync.Infrastructure/Configuration/GitLabSettings.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T012 [P] [US4] 修改 BitBucketProjectSettings（TargetBranches → TargetBranch + 新增 FetchMode、ReleaseBranch、StartDate、EndDate 覆寫屬性）src/ReleaseSync.Infrastructure/Configuration/BitBucketSettings.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T013 [US4] 更新 GitLabServiceExtensions 註冊 SyncOptionsSettings src/ReleaseSync.Infrastructure/DependencyInjection/GitLabServiceExtensions.cs [Build: ✅] [Tests: ✅]
+- [X] T014 [US4] 更新 BitBucketServiceExtensions 註冊 SyncOptionsSettings src/ReleaseSync.Infrastructure/DependencyInjection/BitBucketServiceExtensions.cs [Build: ✅] [Tests: ✅]
+- [X] T015 [US4] 修改 GitLabService 使用 TargetBranch 單一值 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs [Build: ✅] [Tests: ✅]
+- [X] T016 [US4] 修改 BitBucketService 使用 TargetBranch 單一值 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs [Build: ✅] [Tests: ✅]
+- [X] T017 [US4] 更新 appsettings.json 配置結構（SyncOptions 節點、TargetBranch 單一值）src/ReleaseSync.Console/appsettings.json [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: User Story 4 完成，配置結構已更新，向後相容測試通過
 
@@ -88,14 +88,14 @@
 
 ### Tests for User Story 2 (TDD: Red Phase)
 
-- [ ] T018 [P] [US2] 撰寫 EffectiveProjectConfig 配置覆寫解析單元測試（DateRange 模式）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/EffectiveProjectConfigTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T018 [P] [US2] 撰寫 EffectiveProjectConfig 配置覆寫解析單元測試（DateRange 模式）src/tests/ReleaseSync.Infrastructure.UnitTests/Configuration/EffectiveProjectConfigTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 2 (TDD: Green Phase)
 
-- [ ] T019 [P] [US2] 建立 EffectiveProjectConfig 記錄類別（配置覆寫解析邏輯）src/ReleaseSync.Infrastructure/Configuration/EffectiveProjectConfig.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T020 [US2] 修改 SyncRequest DTO 新增 FetchMode 屬性 src/ReleaseSync.Application/DTOs/SyncRequest.cs [Build: ✅] [Tests: ✅]
-- [ ] T021 [US2] 修改 BasePlatformService 支援 EffectiveProjectConfig 解析 src/ReleaseSync.Infrastructure/Platforms/BasePlatformService.cs [Build: ✅] [Tests: ✅]
-- [ ] T022 [US2] 修改 SyncOrchestrator 使用 FetchMode 與配置覆寫邏輯 src/ReleaseSync.Application/Services/SyncOrchestrator.cs [Build: ✅] [Tests: ✅]
+- [X] T019 [P] [US2] 建立 EffectiveProjectConfig 記錄類別（配置覆寫解析邏輯）src/ReleaseSync.Infrastructure/Configuration/EffectiveProjectConfig.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T020 [US2] 修改 SyncRequest DTO 新增 FetchMode 屬性 src/ReleaseSync.Application/DTOs/SyncRequest.cs [Build: ✅] [Tests: ✅]
+- [X] T021 [US2] 修改 BasePlatformService 支援 EffectiveProjectConfig 解析 src/ReleaseSync.Infrastructure/Platforms/BasePlatformService.cs [Build: ✅] [Tests: ✅]
+- [X] T022 [US2] 修改 SyncOrchestrator 使用 FetchMode 與配置覆寫邏輯 src/ReleaseSync.Application/Services/SyncOrchestrator.cs [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: User Story 2 完成，DateRange 模式（向後相容）正常運作
 
@@ -109,26 +109,26 @@
 
 ### Tests for User Story 1 (TDD: Red Phase)
 
-- [ ] T023 [P] [US1] 撰寫 GitLabApiClient.GetBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLab/GitLabApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T024 [P] [US1] 撰寫 GitLabApiClient.CompareBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLab/GitLabApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T025 [P] [US1] 撰寫 BitBucketApiClient.GetBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucket/BitBucketApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
-- [ ] T026 [P] [US1] 撰寫 BitBucketApiClient.CompareBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucket/BitBucketApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T023 [P] [US1] 撰寫 GitLabApiClient.GetBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLab/GitLabApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T024 [P] [US1] 撰寫 GitLabApiClient.CompareBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/GitLab/GitLabApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T025 [P] [US1] 撰寫 BitBucketApiClient.GetBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucket/BitBucketApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T026 [P] [US1] 撰寫 BitBucketApiClient.CompareBranchesAsync 單元測試 src/tests/ReleaseSync.Infrastructure.UnitTests/Platforms/BitBucket/BitBucketApiClientTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 1 (TDD: Green Phase)
 
-- [ ] T027 [P] [US1] 建立 BranchInfo 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/BranchInfo.cs [Build: ✅] [Tests: ✅]
-- [ ] T028 [P] [US1] 建立 BranchCompareResult 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/BranchCompareResult.cs [Build: ✅] [Tests: ✅]
-- [ ] T029 [P] [US1] 建立 CommitInfo 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/CommitInfo.cs [Build: ✅] [Tests: ✅]
-- [ ] T030 [US1] 在 GitLabApiClient 新增 GetBranchesAsync 方法（呼叫 /repository/branches API）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T031 [US1] 在 GitLabApiClient 新增 CompareBranchesAsync 方法（呼叫 /repository/compare API）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T032 [US1] 在 BitBucketApiClient 新增 GetBranchesAsync 方法（呼叫 /refs/branches API）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T033 [US1] 在 BitBucketApiClient 新增 CompareBranchesAsync 方法（呼叫 /diffstat API）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T034 [US1] 修改 GitLabPullRequestRepository 新增 GetByReleaseBranchAsync 方法（最新版比對 TargetBranch）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs [Build: ✅] [Tests: ✅]
-- [ ] T035 [US1] 修改 BitBucketPullRequestRepository 新增 GetByReleaseBranchAsync 方法（最新版比對 TargetBranch）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs [Build: ✅] [Tests: ✅]
-- [ ] T036 [US1] 建立 ReleaseBranchNotFoundException 自訂例外類別 src/ReleaseSync.Domain/Exceptions/ReleaseBranchNotFoundException.cs [Build: ✅] [Tests: ✅]
-- [ ] T037 [US1] 更新 IPlatformService 介面支援 FetchMode 參數 src/ReleaseSync.Domain/Services/IPlatformService.cs [Build: ✅] [Tests: ✅]
-- [ ] T038 [US1] 更新 GitLabService 根據 FetchMode 選擇抓取策略 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs [Build: ✅] [Tests: ✅]
-- [ ] T039 [US1] 更新 BitBucketService 根據 FetchMode 選擇抓取策略 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs [Build: ✅] [Tests: ✅]
+- [X] T027 [P] [US1] 建立 BranchInfo 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/BranchInfo.cs [Build: ✅] [Tests: ✅]
+- [X] T028 [P] [US1] 建立 BranchCompareResult 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/BranchCompareResult.cs [Build: ✅] [Tests: ✅]
+- [X] T029 [P] [US1] 建立 CommitInfo 記錄類別 src/ReleaseSync.Infrastructure/Platforms/Models/CommitInfo.cs [Build: ✅] [Tests: ✅]
+- [X] T030 [US1] 在 GitLabApiClient 新增 GetBranchesAsync 方法（呼叫 /repository/branches API）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T031 [US1] 在 GitLabApiClient 新增 CompareBranchesAsync 方法（呼叫 /repository/compare API）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T032 [US1] 在 BitBucketApiClient 新增 GetBranchesAsync 方法（呼叫 /refs/branches API）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T033 [US1] 在 BitBucketApiClient 新增 CompareBranchesAsync 方法（呼叫 /diffstat API）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketApiClient.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T034 [US1] 修改 GitLabPullRequestRepository 新增 GetByReleaseBranchAsync 方法（最新版比對 TargetBranch）src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs [Build: ✅] [Tests: ✅]
+- [X] T035 [US1] 修改 BitBucketPullRequestRepository 新增 GetByReleaseBranchAsync 方法（最新版比對 TargetBranch）src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs [Build: ✅] [Tests: ✅]
+- [X] T036 [US1] 建立 ReleaseBranchNotFoundException 自訂例外類別 src/ReleaseSync.Domain/Exceptions/ReleaseBranchNotFoundException.cs [Build: ✅] [Tests: ✅]
+- [X] T037 [US1] 更新 IPlatformService 介面支援 FetchMode 參數 src/ReleaseSync.Domain/Services/IPlatformService.cs [Build: ✅] [Tests: ✅]
+- [X] T038 [US1] 更新 GitLabService 根據 FetchMode 選擇抓取策略 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabService.cs [Build: ✅] [Tests: ✅]
+- [X] T039 [US1] 更新 BitBucketService 根據 FetchMode 選擇抓取策略 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketService.cs [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: User Story 1 完成，Release Branch 比對（最新版）正常運作
 
@@ -142,13 +142,13 @@
 
 ### Tests for User Story 3 (TDD: Red Phase)
 
-- [ ] T040 [P] [US3] 撰寫 ReleaseBranchVersionResolver 單元測試（找出下一版 release branch）src/tests/ReleaseSync.Infrastructure.UnitTests/Services/ReleaseBranchVersionResolverTests.cs [Build: ✅] [Tests: ❌ (Red)]
+- [X] T040 [P] [US3] 撰寫 ReleaseBranchVersionResolver 單元測試（找出下一版 release branch）src/tests/ReleaseSync.Infrastructure.UnitTests/Services/ReleaseBranchVersionResolverTests.cs [Build: ✅] [Tests: ❌ (Red)]
 
 ### Implementation for User Story 3 (TDD: Green Phase)
 
-- [ ] T041 [US3] 建立 IReleaseBranchVersionResolver 介面與實作（判斷是否為最新版、找出下一版）src/ReleaseSync.Infrastructure/Services/ReleaseBranchVersionResolver.cs [Build: ✅] [Tests: ✅ (Green)]
-- [ ] T042 [US3] 修改 GitLabPullRequestRepository.GetByReleaseBranchAsync 支援歷史版比對 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs [Build: ✅] [Tests: ✅]
-- [ ] T043 [US3] 修改 BitBucketPullRequestRepository.GetByReleaseBranchAsync 支援歷史版比對 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs [Build: ✅] [Tests: ✅]
+- [X] T041 [US3] 建立 IReleaseBranchVersionResolver 介面與實作（判斷是否為最新版、找出下一版）src/ReleaseSync.Infrastructure/Services/ReleaseBranchVersionResolver.cs [Build: ✅] [Tests: ✅ (Green)]
+- [X] T042 [US3] 修改 GitLabPullRequestRepository.GetByReleaseBranchAsync 支援歷史版比對 src/ReleaseSync.Infrastructure/Platforms/GitLab/GitLabPullRequestRepository.cs [Build: ✅] [Tests: ✅]
+- [X] T043 [US3] 修改 BitBucketPullRequestRepository.GetByReleaseBranchAsync 支援歷史版比對 src/ReleaseSync.Infrastructure/Platforms/BitBucket/BitBucketPullRequestRepository.cs [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: User Story 3 完成，歷史版 Release Branch 比對正常運作
 
@@ -158,9 +158,9 @@
 
 **Purpose**: 命令列介面整合，讓使用者能透過 CLI 使用新功能
 
-- [ ] T044 修改 SyncCommand 新增 --release-branch 參數 src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ✅]
-- [ ] T045 修改 SyncCommand 新增 --fetch-mode 參數 src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ✅]
-- [ ] T046 更新 Program.cs 註冊 SyncOptionsSettings 與相關服務 src/ReleaseSync.Console/Program.cs [Build: ✅] [Tests: ✅]
+- [X] T044 修改 SyncCommand 新增 --release-branch 參數 src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ✅]
+- [X] T045 修改 SyncCommand 新增 --fetch-mode 參數 src/ReleaseSync.Console/Commands/SyncCommand.cs [Build: ✅] [Tests: ✅]
+- [X] T046 更新 Program.cs 註冊 SyncOptionsSettings 與相關服務 src/ReleaseSync.Console/Program.cs [Build: ✅] [Tests: ✅]
 
 **Checkpoint**: CLI 整合完成，可透過命令列使用所有新功能
 
@@ -170,11 +170,13 @@
 
 **Purpose**: 跨 User Story 的改進與完善
 
-- [ ] T047 [P] 撰寫整合測試（GitLab ReleaseBranch 模式）src/tests/ReleaseSync.Integration.Tests/GitLabReleaseBranchIntegrationTests.cs [Build: ✅] [Tests: ✅]
-- [ ] T048 [P] 撰寫整合測試（BitBucket ReleaseBranch 模式）src/tests/ReleaseSync.Integration.Tests/BitBucketReleaseBranchIntegrationTests.cs [Build: ✅] [Tests: ✅]
-- [ ] T049 [P] 更新 XML 註解確保所有公開類別與方法都有繁體中文說明 [Build: ✅] [Tests: ✅]
-- [ ] T050 [P] 執行 quickstart.md 驗證所有使用案例 [Build: ✅] [Tests: ✅]
-- [ ] T051 驗證向後相容性（現有 DateRange 模式使用者無需修改配置）[Build: ✅] [Tests: ✅]
+- [X] T047 [P] 撰寫整合測試（GitLab ReleaseBranch 模式）src/tests/ReleaseSync.Integration.Tests/EndToEnd/GitLabReleaseBranchIntegrationTests.cs [Build: ✅] [Tests: ✅]
+- [X] T048 [P] 撰寫整合測試（BitBucket ReleaseBranch 模式）src/tests/ReleaseSync.Integration.Tests/EndToEnd/BitBucketReleaseBranchIntegrationTests.cs [Build: ✅] [Tests: ✅]
+- [X] T049 [P] 更新 XML 註解確保所有公開類別與方法都有繁體中文說明 [Build: ✅] [Tests: ✅]
+- [X] T050 [P] 執行 quickstart.md 驗證所有使用案例 [Build: ✅] [Tests: ✅]
+- [X] T051 驗證向後相容性（現有 DateRange 模式使用者無需修改配置）[Build: ✅] [Tests: ✅]
+
+**Checkpoint**: 所有任務完成，功能實作完畢
 
 ---
 

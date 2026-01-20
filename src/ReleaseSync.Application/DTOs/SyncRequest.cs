@@ -1,3 +1,5 @@
+using ReleaseSync.Domain.Models;
+
 namespace ReleaseSync.Application.DTOs;
 
 /// <summary>
@@ -14,6 +16,16 @@ public class SyncRequest
     /// 結束日期 (包含)
     /// </summary>
     public required DateTime EndDate { get; init; }
+
+    /// <summary>
+    /// 抓取模式
+    /// </summary>
+    public FetchMode FetchMode { get; init; } = FetchMode.DateRange;
+
+    /// <summary>
+    /// Release Branch 名稱（僅在 FetchMode = ReleaseBranch 時使用）
+    /// </summary>
+    public string? ReleaseBranch { get; init; }
 
     /// <summary>
     /// 是否啟用 GitLab 平台同步

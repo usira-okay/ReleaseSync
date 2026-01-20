@@ -49,5 +49,41 @@ public class BitBucketService : BasePlatformService<BitBucketProjectSettings>
     /// <summary>
     /// 取得專案的目標分支清單
     /// </summary>
-    protected override List<string> GetTargetBranches(BitBucketProjectSettings project) => project.TargetBranches;
+    /// <remarks>
+    /// 優先使用新的 TargetBranch 單一值屬性，
+    /// 若未設定則回退至舊的 TargetBranches 陣列（向後相容）
+    /// </remarks>
+#pragma warning disable CS0618 // 允許存取已標記為 Obsolete 的 TargetBranches 屬性以提供向後相容性
+    protected override List<string> GetTargetBranches(BitBucketProjectSettings project)
+    {
+        // 優先使用 TargetBranch 單一值
+        if (!string.IsNullOrWhiteSpace(project.TargetBranch))
+        {
+            return new List<string> { project.TargetBranch };
+        }
+
+        // 向後相容：使用舊的 TargetBranches 陣列
+        return project.TargetBranches;
+    }
+#pragma warning restore CS0618
+
+    /// <summary>
+    /// 取得專案的目標分支（單一）
+    /// </summary>
+    /// <remarks>
+    /// 用於 Release Branch 比對模式，需要單一目標分支
+    /// </remarks>
+#pragma warning disable CS0618 // 允許存取已標記為 Obsolete 的 TargetBranches 屬性以提供向後相容性
+    protected override string GetTargetBranch(BitBucketProjectSettings project)
+    {
+        // 優先使用 TargetBranch 單一值
+        if (!string.IsNullOrWhiteSpace(project.TargetBranch))
+        {
+            return project.TargetBranch;
+        }
+
+        // 向後相容：使用舊的 TargetBranches 陣列的第一個元素
+        return project.TargetBranches.FirstOrDefault() ?? "main";
+    }
+#pragma warning restore CS0618
 }
