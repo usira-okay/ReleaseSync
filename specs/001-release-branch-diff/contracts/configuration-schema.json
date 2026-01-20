@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://releasesync.local/schemas/appsettings.json",
+  "title": "ReleaseSync Configuration",
+  "description": "Configuration schema for ReleaseSync application",
+  "type": "object",
+  "properties": {
+    "SyncOptions": {
+      "type": "object",
+      "description": "全域同步選項設定",
+      "properties": {
+        "ReleaseBranch": {
+          "type": "string",
+          "pattern": "^release/\\d{8}$",
+          "description": "預設的 Release Branch 名稱（格式：release/yyyyMMdd）",
+          "examples": ["release/20260120"]
+        },
+        "StartDate": {
+          "type": "string",
+          "format": "date",
+          "description": "預設的開始日期（ISO 8601 格式）",
+          "examples": ["2026-01-13"]
+        },
+        "EndDate": {
+          "type": "string",
+          "format": "date",
+          "description": "預設的結束日期（ISO 8601 格式）",
+          "examples": ["2026-01-20"]
+        },
+        "DefaultFetchMode": {
+          "type": "string",
+          "enum": ["DateRange", "ReleaseBranch"],
+          "default": "DateRange",
+          "description": "預設的抓取模式"
+        }
+      }
+    },
+    "GitLab": {
+      "type": "object",
+      "description": "GitLab 平台設定",
+      "required": ["ApiUrl", "Projects"],
+      "properties": {
+        "ApiUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "GitLab API 位址",
+          "examples": ["https://gitlab.com/api/v4"]
+        },
+        "PersonalAccessToken": {
+          "type": "string",
+          "description": "GitLab Personal Access Token（建議使用 User Secrets）"
+        },
+        "Projects": {
+          "type": "array",
+          "description": "GitLab 專案清單",
+          "items": {
+            "$ref": "#/$defs/GitLabProject"
+          }
+        }
+      }
+    },
+    "BitBucket": {
+      "type": "object",
+      "description": "BitBucket 平台設定",
+      "required": ["ApiUrl", "Projects"],
+      "properties": {
+        "ApiUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "BitBucket API 位址",
+          "default": "https://api.bitbucket.org/2.0"
+        },
+        "Email": {
+          "type": "string",
+          "format": "email",
+          "description": "BitBucket 帳號 Email"
+        },
+        "AccessToken": {
+          "type": "string",
+          "description": "BitBucket Access Token（建議使用 User Secrets）"
+        },
+        "Projects": {
+          "type": "array",
+          "description": "BitBucket 專案清單",
+          "items": {
+            "$ref": "#/$defs/BitBucketProject"
+          }
+        }
+      }
+    },
+    "AzureDevOps": {
+      "type": "object",
+      "description": "Azure DevOps 平台設定（Work Item 整合）"
+    }
+  },
+  "$defs": {
+    "GitLabProject": {
+      "type": "object",
+      "description": "GitLab 專案設定",
+      "required": ["ProjectPath", "TargetBranch"],
+      "properties": {
+        "ProjectPath": {
+          "type": "string",
+          "description": "專案路徑（格式：group/project）",
+          "examples": ["payment/payment.adminapi"]
+        },
+        "TargetBranch": {
+          "type": "string",
+          "description": "目標分支（單一值）",
+          "examples": ["master", "main", "develop"]
+        },
+        "FetchMode": {
+          "type": "string",
+          "enum": ["DateRange", "ReleaseBranch"],
+          "description": "抓取模式（覆寫全域設定）"
+        },
+        "ReleaseBranch": {
+          "type": "string",
+          "pattern": "^release/\\d{8}$",
+          "description": "Release Branch（覆寫全域設定）",
+          "examples": ["release/20260118"]
+        },
+        "StartDate": {
+          "type": "string",
+          "format": "date",
+          "description": "開始日期（覆寫全域設定）"
+        },
+        "EndDate": {
+          "type": "string",
+          "format": "date",
+          "description": "結束日期（覆寫全域設定）"
+        },
+        "TargetBranches": {
+          "type": "array",
+          "items": { "type": "string" },
+          "deprecated": true,
+          "description": "已棄用，請使用 TargetBranch（單一值）"
+        }
+      }
+    },
+    "BitBucketProject": {
+      "type": "object",
+      "description": "BitBucket 專案設定",
+      "required": ["WorkspaceAndRepo", "TargetBranch"],
+      "properties": {
+        "WorkspaceAndRepo": {
+          "type": "string",
+          "description": "工作區與 Repository（格式：workspace/repository）",
+          "examples": ["store/webstore.webmall"]
+        },
+        "TargetBranch": {
+          "type": "string",
+          "description": "目標分支（單一值）",
+          "examples": ["master", "main", "develop"]
+        },
+        "FetchMode": {
+          "type": "string",
+          "enum": ["DateRange", "ReleaseBranch"],
+          "description": "抓取模式（覆寫全域設定）"
+        },
+        "ReleaseBranch": {
+          "type": "string",
+          "pattern": "^release/\\d{8}$",
+          "description": "Release Branch（覆寫全域設定）",
+          "examples": ["release/20260120"]
+        },
+        "StartDate": {
+          "type": "string",
+          "format": "date",
+          "description": "開始日期（覆寫全域設定）"
+        },
+        "EndDate": {
+          "type": "string",
+          "format": "date",
+          "description": "結束日期（覆寫全域設定）"
+        },
+        "TargetBranches": {
+          "type": "array",
+          "items": { "type": "string" },
+          "deprecated": true,
+          "description": "已棄用，請使用 TargetBranch（單一值）"
+        }
+      }
+    }
+  }
+}
