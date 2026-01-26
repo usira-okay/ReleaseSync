@@ -2,6 +2,38 @@
 
 從 GitLab、BitBucket 和 Azure DevOps 抓取 Pull Request / Merge Request 變更資訊,並匯出為結構化 JSON 格式。
 
+## 專案簡介
+
+### 這個專案在幹嘛？
+
+ReleaseSync 是一個 **多平台版控資訊聚合工具**，專為需要追蹤與統計軟體發布變更的團隊設計。
+
+### 解決什麼問題？
+
+在現代軟體開發中，團隊經常使用多個版控平台（GitLab、BitBucket、Azure DevOps）管理不同專案。當需要：
+
+- 📊 **統計特定時間範圍內的所有程式碼變更**（例如：月報、季報、年度報告）
+- 🔍 **追蹤哪些需求（Work Items）在這段時間內被實作**
+- 👥 **了解團隊成員的貢獻分佈**
+- 📈 **將技術資料同步到協作工具**（如 Google Sheet）進行分析
+
+傳統做法需要手動登入各個平台逐一查詢，既耗時又容易遺漏。ReleaseSync **自動化這個過程**，一次抓取所有平台的資料並整合成統一格式。
+
+### 適合誰使用？
+
+- **專案經理 / Scrum Master**：需要彙整跨平台的發布資訊
+- **Tech Lead / 技術主管**：需要追蹤團隊產出與程式碼品質
+- **DevOps / Release Engineer**：需要自動化發布報告產生流程
+- **稽核 / 合規團隊**：需要追溯變更歷史與責任歸屬
+
+### 核心功能
+
+- ✅ 從 GitLab、BitBucket、Azure DevOps 抓取 Pull Request / Merge Request
+- ✅ 自動從 Branch 名稱解析並關聯 Azure DevOps Work Items
+- ✅ 統一使用者身份（跨平台的同一開發者對照）
+- ✅ 匯出為 JSON 格式，方便後續處理
+- ✅ 同步到 Google Sheet，供團隊協作與視覺化分析
+
 ## 功能特色
 
 - 🔄 支援多平台: GitLab, BitBucket Cloud
